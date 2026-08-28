@@ -1,0 +1,12 @@
+dist/
+node_modules/
+.astro/
+.env
+.env.*
+!.env.example
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+result
+result-*

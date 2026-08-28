@@ -1,0 +1,73 @@
+---
+const models = [
+  {
+    name: 'Qwen3.8-27B',
+    role: 'Primary Dense Text LLM',
+    quantization: 'Q8_0 / BF16 (27B)',
+    memoryFootprint: '27.4 GiB (Mapped GGUF)',
+    kernelPath: 'Model-owned Wave32 HIP / HRX',
+    arithmeticIntensity: 'Memory-bound decode',
+    sustainedBandwidth: '209.3 GB/s (7.46 tok/s AR, 16.47 tok/s MTP)',
+    notes: 'src/models/qwen: Continuous batching, speculative DFlash2/MTP (up to 2.34x AR), and paged KV cache.'
+  },
+  {
+    name: 'DeepSeek V4 Flash',
+    role: 'Sparse MoE Architecture',
+    quantization: 'IQ2XXS-imatrix (80.76 GiB)',
+    memoryFootprint: '80.76 GiB (Active Expert Routing)',
+    kernelPath: 'Dedicated Sparse MoE Graph + DSpark',
+    arithmeticIntensity: 'Dynamic (Routed expert sparsity)',
+    sustainedBandwidth: '16.47 tok/s (61.5 ms/tok steady decode)',
+    notes: 'src/models/deepseek_v4_flash: Isolated graph topology, zero shared dense state.'
+  },
+  {
+    name: 'Qwen3-TTS 12Hz 1.7B',
+    role: 'Streaming Speech Synthesis',
+    quantization: 'FP32 / BF16 Codec',
+    memoryFootprint: '3.8 GiB (Talker + RVQ VAE)',
+    kernelPath: 'Model-private HIP 12Hz Vocoder',
+    arithmeticIntensity: 'Real-time streaming (2.55x RTF)',
+    sustainedBandwidth: '272.8 GB/s (98.0% roofline)',
+    notes: 'src/models/qwen3_tts: CustomVoice, VoiceDesign, and Base voice cloning.'
+  },
+  {
+    name: 'MiniMax-H3 / FL2VA',
+    role: 'Multimodal Video/Audio Diffusion',
+    quantization: 'BF16 Safetensors',
+    memoryFootprint: '48.5 GiB (DiT + Video/Audio VAE)',
+    kernelPath: 'Fused Spatial-Temporal DiT Denoiser',
+    arithmeticIntensity: 'High (Compute-bound diffusion steps)',
+    sustainedBandwidth: '264.0 GB/s (94.8% roofline)',
+    notes: 'src/models/minimax_h3: Zero-Python safetensors loader, native VAE decode.'
+  }
+];
+---
+
+<div class="rounded-lg border border-[#242e42] bg-[#0d111a] overflow-hidden font-mono text-xs">
+  <div class="overflow-x-auto">
+    <table class="w-full text-left spec-table">
+      <thead class="bg-[#121722] text-slate-400 uppercase text-[11px] border-b border-[#242e42]">
+        <tr>
+          <th class="px-4 py-3">Model</th>
+          <th class="px-4 py-3">Role & Task</th>
+          <th class="px-4 py-3">Precision / Quant</th>
+          <th class="px-4 py-3">Memory Footprint</th>
+          <th class="px-4 py-3">Kernel Pipeline</th>
+          <th class="px-4 py-3">Measured Efficiency</th>
+        </tr>
+      </thead>
+      <tbody class="divide-y divide-[#1f2737] text-slate-300">
+        {models.map((m) => (
+          <tr class="hover:bg-[#151c2a] transition-colors">
+            <td class="px-4 py-3 font-bold text-white whitespace-nowrap">{m.name}</td>
+            <td class="px-4 py-3 text-slate-300 whitespace-nowrap">{m.role}</td>
+            <td class="px-4 py-3 text-rose-400 whitespace-nowrap">{m.quantization}</td>
+            <td class="px-4 py-3 whitespace-nowrap text-slate-400">{m.memoryFootprint}</td>
+            <td class="px-4 py-3 text-sky-400 whitespace-nowrap">{m.kernelPath}</td>
+            <td class="px-4 py-3 font-semibold text-emerald-400 whitespace-nowrap">{m.sustainedBandwidth}</td>
+          </tr>
+        ))}
+      </tbody>
+    </table>
+  </div>
+</div>

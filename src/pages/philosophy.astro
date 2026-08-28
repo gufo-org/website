@@ -1,0 +1,160 @@
+---
+import Layout from '../layouts/Layout.astro';
+import Navbar from '../components/Navbar.astro';
+import Footer from '../components/Footer.astro';
+
+const pillars = [
+  {
+    id: 'single-target',
+    number: '01',
+    title: 'Extreme Hardware Specialization',
+    subtitle: 'Refusing generalization to extract 100% of physical silicon limits',
+    content: [
+      'Most machine learning inference engines attempt to be universal: supporting NVIDIA CUDA, Apple Metal, Intel oneAPI, and generic CPU fallback paths within a single codebase. While broad compatibility has utility, it introduces unavoidable compromises: leaky runtime abstractions, indirect kernel dispatch tables, excessive branching, and memory layouts dictated by the lowest common denominator.',
+      'gufo takes the opposite stance: Linux x86-64 on AMD Strix Halo (RDNA 3.5 gfx1151 GPU and XDNA2 NPU) is the only planned production target. Windows, macOS, and CUDA are explicitly out of scope.',
+      'By focusing 100% of engineering effort on one monolithic APU architecture, we can schedule memory access down to the exact 256-bit channel interleaving of LPDDR5X, tune SIMD vector registers to Wave32 warps, and eliminate PCIe host-staging overhead entirely.'
+    ]
+  },
+  {
+    id: 'unified-memory',
+    number: '02',
+    title: 'Unified Memory First',
+    subtitle: 'Why unified APU architecture represents the future of personal AI',
+    content: [
+      'Discrete graphics cards are physically constrained by the narrow PCIe interface connecting CPU system memory to onboard VRAM. For modern multi-gigabyte open-weight models, this architecture imposes heavy staging buffer penalties, fragmentation, and severe limits on context depth.',
+      'Strix Halo unifies up to 128 GiB of high-speed LPDDR5X memory across the CPU, GPU, and NPU. In gufo, weights and KV caches are mapped directly into pinned HSA virtual address descriptors with zero intermediate host copies.',
+      'This architectural reality allows dense 27B parameters, 80 GiB Mixture of Experts (MoE) graphs, streaming TTS decoders, and multimodal diffusion models to run side-by-side with near-zero latency overhead.'
+    ]
+  },
+  {
+    id: 'model-owned',
+    number: '03',
+    title: 'Model-Owned Architectures',
+    subtitle: 'Handcrafted, isolated compute graphs over generic operator runtimes',
+    content: [
+      'In conventional frameworks, new models are forced into standardized operator abstractions (e.g. generic MatMul, standard RMSNorm). When models employ non-standard sparse routing, specialized quantization formats, or multimodal attention schedules, generic frameworks incur significant overhead.',
+      'In gufo, each supported model family owns its execution pipeline under src/models/. DeepSeek V4 Flash MoE does not share mutable state or operator code with dense Qwen models; Qwen3-TTS implements its own float32 RVQ audio decoder; MiniMax-H3 manages its own diffusion transformer spatial-temporal graph.',
+      'We prioritize curated excellence over quantity: we support only the highest-quality open-weight models that run comfortably within 128 GiB unified memory, and optimize each to the metal.'
+    ]
+  },
+  {
+    id: 'evidence-gated',
+    number: '04',
+    title: 'Evidence-Gated Performance Engineering',
+    subtitle: 'Never trust vendor spec-sheets; celebrate rejection with empirical proof',
+    content: [
+      'Every kernel optimization and scheduling change in gufo is evaluated against empirical roofline ceilings measured directly on silicon (tools/bench/gfx1151_peak.hip) under real thermal and power limits.',
+      'We operate on a strict evidence-gating policy: an optimization card is completed either by proving sustained throughput/latency gains on hardware or by rejecting the change with verified profiler traces (tools/prof/prof.py). Rejection with evidence is considered a successful engineering outcome.',
+      'Crucially, performance is never accepted at the cost of correctness. Every microbenchmark and model route incorporates frozen quality oracles and bit-exact validation gates (such as --validate-hrx 1 and CTest cpu-sanitizer / gpu-full passes).'
+    ]
+  },
+  {
+    id: 'nix-and-ux',
+    number: '05',
+    title: 'Hermetic Reproducibility & Accessible UX',
+    subtitle: 'Nix-first development integrity paired with effortless container toolboxes',
+    content: [
+      'Software rot and driver drift are rampant in GPU development. In gufo, direct host builds are unsupported; all builds, test presets, and PR validation gates are evaluated hermetically via Nix Flakes.',
+      'However, Nix purity for developers does not mean friction for users. Through the companion gufo-org/toolboxes project, pre-built OCI container images (gufo-runtime and gufo-dev) provide instant out-of-the-box support for Fedora Toolbx, Ubuntu/Arch Distrobox, and Docker/Podman with pre-configured Strix Halo hardware passthroughs.',
+      'We maintain strict licensing and boundary separation: clean-room implementations, complete adherence to model vendor community licenses, and zero distribution of proprietary weights.'
+    ]
+  }
+];
+---
+
+<Layout title="Project Philosophy — gufo">
+  <Navbar currentPath="/philosophy" />
+
+  <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+    <div class="grid grid-cols-1 lg:grid-cols-4 gap-8">
+      <!-- Left Sidebar (Docusaurus Philosophy Sidebar) -->
+      <aside class="lg:col-span-1 border-r border-[#3e4042]/50 pr-4 space-y-6 text-sm">
+        <div>
+          <div class="font-bold text-white uppercase text-xs tracking-wider mb-2 text-slate-400">
+            Core Philosophy
+          </div>
+          <ul class="space-y-1">
+            {pillars.map((p) => (
+              <li>
+                <a
+                  href={`#${p.id}`}
+                  class="block px-2.5 py-1.5 rounded text-slate-300 hover:text-[#25c2a0] hover:bg-[#242526] transition-colors"
+                >
+                  {p.number}. {p.title}
+                </a>
+              </li>
+            ))}
+          </ul>
+        </div>
+
+        <div class="p-3.5 bg-[#242526] rounded-lg border border-[#3e4042] text-xs space-y-2">
+          <div class="text-white font-bold font-mono">The Gufo Invariant</div>
+          <p class="text-slate-400 text-[11px] leading-relaxed font-sans">
+            "Optimize for hardware reality, not framework abstractions. Prove gains against physical rooflines, never spec-sheets."
+          </p>
+        </div>
+      </aside>
+
+      <!-- Main Philosophy Content -->
+      <main class="lg:col-span-3 space-y-12">
+        <!-- Breadcrumbs -->
+        <div class="flex items-center gap-2 text-xs text-slate-400">
+          <a href="/" class="hover:text-white">Home</a>
+          <span>/</span>
+          <span class="text-slate-200">About</span>
+          <span>/</span>
+          <span class="text-[#25c2a0] font-semibold">Engineering Philosophy</span>
+        </div>
+
+        <!-- Header -->
+        <div class="border-b border-[#3e4042]/50 pb-8 space-y-3">
+          <h1 class="text-3xl sm:text-4xl font-extrabold text-white tracking-tight">
+            Engineering Philosophy &amp; Principles
+          </h1>
+          <p class="text-base text-slate-300 leading-relaxed max-w-3xl">
+            Why gufo exists, the architectural principles behind our design decisions, and how evidence-gated development shapes our runtime.
+          </p>
+        </div>
+
+        <!-- Pillars -->
+        <div class="space-y-12">
+          {pillars.map((p) => (
+            <section id={p.id} class="space-y-4 border-b border-[#3e4042]/50 pb-10">
+              <div class="flex items-center gap-3">
+                <span class="text-xs font-mono font-bold px-2 py-1 rounded bg-[#25c2a0]/10 text-[#25c2a0] border border-[#25c2a0]/30">
+                  SECTION {p.number}
+                </span>
+                <h2 class="text-2xl font-bold text-white tracking-tight">{p.title}</h2>
+              </div>
+              <p class="text-sm font-semibold text-slate-300 italic">{p.subtitle}</p>
+
+              <div class="space-y-3 text-sm text-slate-300 leading-relaxed font-sans">
+                {p.content.map((paragraph) => (
+                  <p>{paragraph}</p>
+                ))}
+              </div>
+            </section>
+          ))}
+        </div>
+
+        <!-- Callout Banner -->
+        <div class="admonition admonition-tip">
+          <div class="admonition-title">
+            <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z" />
+            </svg>
+            <span>Summary: The Gufo Engineering Contract</span>
+          </div>
+          <ul class="text-xs text-slate-300 space-y-1.5 list-disc list-inside mt-2">
+            <li><b>Single Platform:</b> AMD Strix Halo (<code class="text-[#25c2a0] font-mono">gfx1151</code> + <code class="text-[#25c2a0] font-mono">XDNA2</code>) on Linux x86-64.</li>
+            <li><b>Model Curation:</b> Only the best open weights; each model owns its isolated compute graph.</li>
+            <li><b>Empirical Rooflines:</b> Verify against measured silicon ceilings, celebrate evidence-based rejection.</li>
+            <li><b>Nix Purity + Container UX:</b> 100% reproducible derivations with Docker/Podman/Toolbx accessibility.</li>
+          </ul>
+        </div>
+      </main>
+    </div>
+  </div>
+
+  <Footer />
+</Layout>

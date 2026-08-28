@@ -1,0 +1,568 @@
+---
+import Layout from '../layouts/Layout.astro';
+import Navbar from '../components/Navbar.astro';
+import Footer from '../components/Footer.astro';
+---
+
+<Layout title="Documentation & Developer Guide — gufo">
+  <Navbar currentPath="/docs" />
+
+  <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+    <div class="grid grid-cols-1 lg:grid-cols-4 gap-8 items-start">
+      <!-- Left Sidebar (Docusaurus Docs Sidebar) -->
+      <aside class="lg:col-span-1 border-r border-[#3e4042]/50 pr-4 space-y-6 text-sm sticky top-20">
+        <div>
+          <div class="font-bold text-white uppercase text-xs tracking-wider mb-2 text-slate-400">
+            Getting Started
+          </div>
+          <ul class="space-y-1">
+            <li>
+              <a href="#quickstart" class="block px-2.5 py-1.5 rounded text-slate-300 hover:text-[#25c2a0] hover:bg-[#242526] transition-colors">
+                Quickstart with Nix
+              </a>
+            </li>
+            <li>
+              <a href="#supported-platform" class="block px-2.5 py-1.5 rounded text-slate-300 hover:text-[#25c2a0] hover:bg-[#242526] transition-colors">
+                Supported Platform
+              </a>
+            </li>
+            <li>
+              <a href="#host-config" class="block px-2.5 py-1.5 rounded text-slate-300 hover:text-[#25c2a0] hover:bg-[#242526] transition-colors">
+                Host Configuration &amp; Runbook
+              </a>
+            </li>
+          </ul>
+        </div>
+
+        <div>
+          <div class="font-bold text-white uppercase text-xs tracking-wider mb-2 text-slate-400">
+            Development &amp; Profiling
+          </div>
+          <ul class="space-y-1">
+            <li>
+              <a href="#presets" class="block px-2.5 py-1.5 rounded text-slate-300 hover:text-[#25c2a0] hover:bg-[#242526] transition-colors">
+                CMake Presets Matrix
+              </a>
+            </li>
+            <li>
+              <a href="#workflow" class="block px-2.5 py-1.5 rounded text-slate-300 hover:text-[#25c2a0] hover:bg-[#242526] transition-colors">
+                Development Workflow
+              </a>
+            </li>
+            <li>
+              <a href="#profiling" class="block px-2.5 py-1.5 rounded text-slate-300 hover:text-[#25c2a0] hover:bg-[#242526] transition-colors">
+                Kernel Profiling &amp; Disassembly
+              </a>
+            </li>
+          </ul>
+        </div>
+
+        <div>
+          <div class="font-bold text-white uppercase text-xs tracking-wider mb-2 text-slate-400">
+            Serving &amp; APIs
+          </div>
+          <ul class="space-y-1">
+            <li>
+              <a href="#cli" class="block px-2.5 py-1.5 rounded text-slate-300 hover:text-[#25c2a0] hover:bg-[#242526] transition-colors">
+                CLI Commands Reference
+              </a>
+            </li>
+            <li>
+              <a href="#api-reference" class="block px-2.5 py-1.5 rounded text-slate-300 hover:text-[#25c2a0] hover:bg-[#242526] transition-colors">
+                OpenAI-Compatible API
+              </a>
+            </li>
+            <li>
+              <a href="#clients" class="block px-2.5 py-1.5 rounded text-slate-300 hover:text-[#25c2a0] hover:bg-[#242526] transition-colors">
+                Client &amp; UI Integrations
+              </a>
+            </li>
+          </ul>
+        </div>
+
+        <div>
+          <div class="font-bold text-white uppercase text-xs tracking-wider mb-2 text-slate-400">
+            Backends &amp; Containers
+          </div>
+          <ul class="space-y-1">
+            <li>
+              <a href="#hrx" class="block px-2.5 py-1.5 rounded text-slate-300 hover:text-[#25c2a0] hover:bg-[#242526] transition-colors">
+                HRX Native Execution (.#hrx)
+              </a>
+            </li>
+            <li>
+              <a href="#toolboxes" class="block px-2.5 py-1.5 rounded text-slate-300 hover:text-[#25c2a0] hover:bg-[#242526] transition-colors">
+                Toolboxes (Docker / Podman)
+              </a>
+            </li>
+            <li>
+              <a href="#systemd" class="block px-2.5 py-1.5 rounded text-slate-300 hover:text-[#25c2a0] hover:bg-[#242526] transition-colors">
+                Systemd Background Serving
+              </a>
+            </li>
+          </ul>
+        </div>
+      </aside>
+
+      <!-- Main Docs Content -->
+      <main class="lg:col-span-3 space-y-12">
+        <!-- Breadcrumbs -->
+        <div class="flex items-center gap-2 text-xs text-slate-400">
+          <a href="/" class="hover:text-white">Home</a>
+          <span>/</span>
+          <span class="text-slate-200">Documentation</span>
+          <span>/</span>
+          <span class="text-[#25c2a0] font-semibold">User &amp; Developer Manual</span>
+        </div>
+
+        <!-- Section 1: Quickstart -->
+        <section id="quickstart" class="space-y-4 border-b border-[#3e4042]/50 pb-8">
+          <h1 class="text-3xl font-extrabold text-white tracking-tight">Getting Started with Nix</h1>
+          <p class="text-sm text-slate-300 leading-relaxed">
+            Build and test with <b>Nix Flakes only</b>. Direct host builds and Makefiles are explicitly unsupported to guarantee bit-for-bit reproducible evaluation on AMD Strix Halo silicon.
+          </p>
+
+          <div class="docusaurus-code">
+            <div class="docusaurus-code-header">
+              <span>Canonical Nix Commands</span>
+              <span>sh</span>
+            </div>
+            <div class="p-4 text-xs font-mono text-slate-200 space-y-2">
+              <div><span class="text-slate-500"># 1. Build default package (gfx1151 + XRT)</span></div>
+              <div class="text-emerald-400">nix build</div>
+              <div class="text-slate-500 pt-2"># 2. Run hardware probe &amp; diagnostics</div>
+              <div class="text-emerald-400">./result/bin/gufo diagnose</div>
+              <div class="text-slate-500 pt-2"># 3. Canonical PR test gate (all checks, sanitizers, GPU tests)</div>
+              <div class="text-emerald-400">nix build .#checks.x86_64-linux.pr</div>
+              <div class="text-slate-500 pt-2"># 4. Enter isolated Nix development shell</div>
+              <div class="text-emerald-400">nix develop</div>
+            </div>
+          </div>
+
+          <div class="admonition admonition-important">
+            <div class="admonition-title">
+              <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+              </svg>
+              <span>Nix Git Tracking Invariant</span>
+            </div>
+            <p class="text-xs text-slate-300 leading-relaxed">
+              Always run <code class="text-[#25c2a0] font-mono">git add</code> before running <code class="text-[#25c2a0] font-mono">nix build</code>. Nix evaluates purely from tracked Git tree state.
+            </p>
+          </div>
+        </section>
+
+        <!-- Section 2: Supported Platform -->
+        <section id="supported-platform" class="space-y-4 border-b border-[#3e4042]/50 pb-8">
+          <h2 class="text-2xl font-bold text-white tracking-tight">Supported Platform Target</h2>
+          <p class="text-sm text-slate-300 leading-relaxed">
+            Linux x86-64 on AMD Strix Halo (<code class="text-[#25c2a0] font-mono font-bold">gfx1151</code> GPU and <code class="text-[#25c2a0] font-mono font-bold">XDNA2</code> NPU) is the only supported production target. Windows, macOS, and non-AMD architectures are explicitly out of scope.
+          </p>
+
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-4 text-xs font-mono">
+            <div class="p-3.5 rounded bg-[#242526] border border-[#3e4042] space-y-1.5">
+              <div class="text-white font-bold">Graphics Core (RDNA 3.5)</div>
+              <div>Target: <span class="text-[#25c2a0]">gfx1151</span></div>
+              <div>Compute Units: <span class="text-slate-300">40 CUs (2560 shaders)</span></div>
+              <div>Wavefront: <span class="text-slate-300">Wave32 Native</span></div>
+              <div>Memory Bus: <span class="text-slate-300">256-bit LPDDR5X-8533</span></div>
+            </div>
+
+            <div class="p-3.5 rounded bg-[#242526] border border-[#3e4042] space-y-1.5">
+              <div class="text-white font-bold">Neural Processing Core</div>
+              <div>Architecture: <span class="text-[#25c2a0]">AMD XDNA2</span></div>
+              <div>Compute Capacity: <span class="text-slate-300">50 TOPS (INT8 / BF16)</span></div>
+              <div>Driver: <span class="text-slate-300">amd-xdna (XRT)</span></div>
+              <div>Interconnect: <span class="text-slate-300">Monolithic APU Infinity Fabric</span></div>
+            </div>
+          </div>
+        </section>
+
+        <!-- Section 3: Host Configuration & Runbook -->
+        <section id="host-config" class="space-y-4 border-b border-[#3e4042]/50 pb-8">
+          <h2 class="text-2xl font-bold text-white tracking-tight">Host Configuration &amp; Runbook</h2>
+          <p class="text-sm text-slate-300 leading-relaxed">
+            Ensure your host kernel, driver permissions, and BIOS firmware are properly configured for full hardware access:
+          </p>
+
+          <div class="space-y-4 text-xs font-mono">
+            <div class="p-4 rounded-lg bg-[#242526] border border-[#3e4042] space-y-2">
+              <div class="text-white font-bold">1. Linux Kernel &amp; DRM Drivers</div>
+              <p class="text-slate-300 font-sans">
+                Requires Linux kernel <code class="text-[#25c2a0]">>= 6.13</code> with Strix Halo <code class="text-slate-200">amdgpu</code> and <code class="text-slate-200">amd-xdna</code> upstream support.
+              </p>
+              <div class="bg-[#1b1b1d] p-2.5 rounded text-slate-300 space-y-1">
+                <div>uname -r <span class="text-slate-500"># Verify kernel >= 6.13</span></div>
+                <div>ls -l /dev/kfd /dev/dri/renderD128 /dev/accel* <span class="text-slate-500"># Check device nodes</span></div>
+              </div>
+            </div>
+
+            <div class="p-4 rounded-lg bg-[#242526] border border-[#3e4042] space-y-2">
+              <div class="text-white font-bold">2. User Group Permissions</div>
+              <p class="text-slate-300 font-sans">
+                The current user must belong to both <code class="text-[#25c2a0]">video</code> and <code class="text-[#25c2a0]">render</code> groups to access HSA hardware ring buffers directly without root.
+              </p>
+              <div class="bg-[#1b1b1d] p-2.5 rounded text-emerald-400">
+                sudo usermod -aG video,render $USER
+              </div>
+            </div>
+
+            <div class="p-4 rounded-lg bg-[#242526] border border-[#3e4042] space-y-2">
+              <div class="text-white font-bold">3. Interpreting `gufo diagnose`</div>
+              <p class="text-slate-300 font-sans">
+                Running <code class="text-[#25c2a0]">./result/bin/gufo diagnose</code> validates the complete hardware stack:
+              </p>
+              <div class="bg-[#1b1b1d] p-2.5 rounded text-slate-300 space-y-1">
+                <div>[probe] GPU: <span class="text-emerald-400">gfx1151 detected</span> (40 CUs, Wave32 supported)</div>
+                <div>[probe] HSA Memory: <span class="text-emerald-400">128 GiB physical unified RAM</span> (Pinned descriptors active)</div>
+                <div>[probe] NPU: <span class="text-emerald-400">XDNA2 detected</span> (/dev/accel0 responsive)</div>
+                <div>[probe] Status: <span class="text-emerald-400 font-bold">READY FOR INFERENCE</span></div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- Section 4: CMake Presets Matrix -->
+        <section id="presets" class="space-y-4 border-b border-[#3e4042]/50 pb-8">
+          <h2 class="text-2xl font-bold text-white tracking-tight">CMake Presets Matrix</h2>
+          <p class="text-sm text-slate-300 leading-relaxed">
+            The build system provides isolated CMake presets for focused development, testing, and debugging:
+          </p>
+
+          <div class="overflow-x-auto border border-[#3e4042] rounded-lg">
+            <table class="w-full text-left text-xs font-mono">
+              <thead class="bg-[#1b1b1d] text-slate-300 uppercase text-[11px] border-b border-[#3e4042]">
+                <tr>
+                  <th class="px-4 py-3">Preset</th>
+                  <th class="px-4 py-3">Binary Location</th>
+                  <th class="px-4 py-3 font-sans">Optimization / Purpose</th>
+                </tr>
+              </thead>
+              <tbody class="divide-y divide-[#3e4042] bg-[#242526] text-slate-300">
+                <tr>
+                  <td class="px-4 py-3 font-bold text-[#25c2a0]">release</td>
+                  <td class="px-4 py-3 text-slate-400">build/release</td>
+                  <td class="px-4 py-3 font-sans">-O3 -DNDEBUG, native gfx1151 compilation for maximum performance.</td>
+                </tr>
+                <tr>
+                  <td class="px-4 py-3 font-bold text-sky-400">gpu-test</td>
+                  <td class="px-4 py-3 text-slate-400">build/gpu-test</td>
+                  <td class="px-4 py-3 font-sans">Intentionally unoptimized debug preset for focused correctness checks.</td>
+                </tr>
+                <tr>
+                  <td class="px-4 py-3 font-bold text-purple-400">cpu-sanitizer</td>
+                  <td class="px-4 py-3 text-slate-400">build/cpu-sanitizer</td>
+                  <td class="px-4 py-3 font-sans">AddressSanitizer and UndefinedBehaviorSanitizer instrumentation.</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </section>
+
+        <!-- Section 5: Development Workflow -->
+        <section id="workflow" class="space-y-4 border-b border-[#3e4042]/50 pb-8">
+          <h2 class="text-2xl font-bold text-white tracking-tight">Development Workflow</h2>
+          <p class="text-sm text-slate-300 leading-relaxed">
+            Development follows strict Conventional Commits and evidence-gated benchmarking:
+          </p>
+
+          <div class="space-y-3 text-xs">
+            <div class="p-3 bg-[#242526] rounded border border-[#3e4042]">
+              <span class="text-white font-bold">VCS Tooling:</span> Prefer Jujutsu (<code class="text-[#25c2a0] font-mono">jj</code>) over Git. Verify availability with <code class="text-[#25c2a0] font-mono">jj version</code>.
+            </div>
+            <div class="p-3 bg-[#242526] rounded border border-[#3e4042]">
+              <span class="text-white font-bold">Commit Format:</span> Single-line Conventional Commits (e.g., <code class="text-[#25c2a0] font-mono">feat(scope): summary (#issue)</code>).
+            </div>
+            <div class="p-3 bg-[#242526] rounded border border-[#3e4042]">
+              <span class="text-white font-bold">Benchmarking:</span> Run models and measure speed with release binaries produced under <code class="text-[#25c2a0] font-mono">result/bin</code>.
+            </div>
+          </div>
+        </section>
+
+        <!-- Section 6: Kernel Profiling & Disassembly Guide -->
+        <section id="profiling" class="space-y-4 border-b border-[#3e4042]/50 pb-8">
+          <h2 class="text-2xl font-bold text-white tracking-tight">Kernel Profiling &amp; Disassembly Guide (`tools/`)</h2>
+          <p class="text-sm text-slate-300 leading-relaxed">
+            Performance tooling lives in <code class="text-[#25c2a0]">tools/</code> and provides deep visibility into RDNA 3.5 silicon utilization:
+          </p>
+
+          <div class="space-y-4 text-xs font-mono">
+            <div class="p-4 rounded-lg bg-[#242526] border border-[#3e4042] space-y-2">
+              <div class="text-[#25c2a0] font-bold text-sm">1. Empirical Roofline Ceilings (gfx1151_peak.hip)</div>
+              <p class="text-slate-300 font-sans">
+                Never use spec-sheet numbers. <code class="text-[#25c2a0]">tools/bench/gfx1151_peak.hip</code> measures the empirical memory bandwidth and compute ceilings every kernel is scored against:
+              </p>
+              <div class="bg-[#1b1b1d] p-2.5 rounded text-emerald-400">
+                ./tools/bench/build.sh && ./tools/bench/bin/gfx1151_peak
+              </div>
+            </div>
+
+            <div class="p-4 rounded-lg bg-[#242526] border border-[#3e4042] space-y-2">
+              <div class="text-[#25c2a0] font-bold text-sm">2. Pipeline Stage Profiling (prof.py)</div>
+              <p class="text-slate-300 font-sans">
+                Wraps <code class="text-white">rocprofv3</code> with pipeline-stage rollups, GPU-busy vs wall-span ratios, and A/B diff comparisons:
+              </p>
+              <div class="bg-[#1b1b1d] p-2.5 rounded text-emerald-400 space-y-1">
+                <div>python3 tools/prof/prof.py --bin ./result/bin/gufo --model model.gguf -p 512 -n 128</div>
+                <div class="text-slate-500"># A/B diff between baseline and optimized kernel:</div>
+                <div>python3 tools/prof/prof.py --diff baseline_trace.json opt_trace.json</div>
+              </div>
+            </div>
+
+            <div class="p-4 rounded-lg bg-[#242526] border border-[#3e4042] space-y-2">
+              <div class="text-[#25c2a0] font-bold text-sm">3. ISA Disassembly &amp; VOPD Analysis (isa_mix.py)</div>
+              <p class="text-slate-300 font-sans">
+                Summarizes kernel assembly listings, checking VOPD dual-issue instruction packing density, VGPR/SGPR register allocation, and LDS bank occupancy:
+              </p>
+              <div class="bg-[#1b1b1d] p-2.5 rounded text-emerald-400">
+                python3 tools/prof/isa_mix.py --asm kernel_dump.s
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- Section 7: CLI Commands -->
+        <section id="cli" class="space-y-4 border-b border-[#3e4042]/50 pb-8">
+          <h2 class="text-2xl font-bold text-white tracking-tight">CLI Commands Reference</h2>
+          <p class="text-sm text-slate-300 leading-relaxed">
+            The <code class="text-[#25c2a0]">gufo</code> CLI is organized into targeted subcommands:
+          </p>
+
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div id="cli-diagnose" class="p-4 rounded-lg bg-[#242526] border border-[#3e4042] space-y-2">
+              <h3 class="font-bold text-white font-mono text-sm">gufo diagnose</h3>
+              <p class="text-xs text-slate-300 font-sans">Probes hardware topology, validates ROCm drivers, and verifies unified memory.</p>
+              <div class="bg-[#1b1b1d] p-2 rounded text-xs font-mono text-[#25c2a0]">
+                ./result/bin/gufo diagnose
+              </div>
+            </div>
+
+            <div id="cli-prompt" class="p-4 rounded-lg bg-[#242526] border border-[#3e4042] space-y-2">
+              <h3 class="font-bold text-white font-mono text-sm">gufo prompt</h3>
+              <p class="text-xs text-slate-300 font-sans">Interactive single prompt completion and chat generation.</p>
+              <div class="bg-[#1b1b1d] p-2 rounded text-xs font-mono text-[#25c2a0]">
+                ./result/bin/gufo prompt -m model.gguf -p "Hello"
+              </div>
+            </div>
+
+            <div id="cli-serve" class="p-4 rounded-lg bg-[#242526] border border-[#3e4042] space-y-2">
+              <h3 class="font-bold text-white font-mono text-sm">gufo serve</h3>
+              <p class="text-xs text-slate-300 font-sans">OpenAI-compatible HTTP completion and SSE streaming inference server.</p>
+              <div class="bg-[#1b1b1d] p-2 rounded text-xs font-mono text-[#25c2a0]">
+                ./result/bin/gufo serve --port 8080 --host 0.0.0.0
+              </div>
+            </div>
+
+            <div id="cli-bench" class="p-4 rounded-lg bg-[#242526] border border-[#3e4042] space-y-2">
+              <h3 class="font-bold text-white font-mono text-sm">gufo bench</h3>
+              <p class="text-xs text-slate-300 font-sans">Comprehensive throughput, latency, and prefill validation harness.</p>
+              <div class="bg-[#1b1b1d] p-2 rounded text-xs font-mono text-[#25c2a0]">
+                ./result/bin/gufo bench -m model.gguf -p 128 -n 16
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- Section 8: OpenAI-Compatible API Reference -->
+        <section id="api-reference" class="space-y-4 border-b border-[#3e4042]/50 pb-8">
+          <h2 class="text-2xl font-bold text-white tracking-tight">OpenAI-Compatible API Reference</h2>
+          <p class="text-sm text-slate-300 leading-relaxed">
+            <code class="text-[#25c2a0] font-mono">gufo serve</code> exposes a high-performance HTTP server supporting standard OpenAI v1 endpoints, Server-Sent Events (SSE) streaming, speech synthesis, and multimodal diffusion:
+          </p>
+
+          <div class="space-y-4">
+            <!-- Endpoint 1: Chat Completions -->
+            <div class="p-4 rounded-lg bg-[#242526] border border-[#3e4042] space-y-3">
+              <div class="flex items-center gap-2">
+                <span class="px-2 py-0.5 rounded text-xs font-mono font-bold bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">POST</span>
+                <code class="text-sm font-mono text-white font-bold">/v1/chat/completions</code>
+              </div>
+              <p class="text-xs text-slate-300">
+                Standard conversational completion with SSE streaming, temperature, top_k, top_p, and stop tokens.
+              </p>
+              <div class="docusaurus-code">
+                <div class="docusaurus-code-header"><span>cURL Request</span><span>sh</span></div>
+                <div class="p-3 text-xs font-mono text-slate-200 space-y-1">
+                  <div>curl http://localhost:8080/v1/chat/completions \</div>
+                  <div class="pl-4">-H "Content-Type: application/json" \</div>
+                  <div class="pl-4">-d '&#123;</div>
+                  <div class="pl-8">"model": "qwen3.8-27b",</div>
+                  <div class="pl-8">"messages": [&#123;"role": "user", "content": "Explain HSA unified memory."&#125;],</div>
+                  <div class="pl-8">"stream": true</div>
+                  <div class="pl-4">&#125;'</div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Endpoint 2: Audio Speech (Qwen3-TTS) -->
+            <div class="p-4 rounded-lg bg-[#242526] border border-[#3e4042] space-y-3">
+              <div class="flex items-center gap-2">
+                <span class="px-2 py-0.5 rounded text-xs font-mono font-bold bg-sky-500/10 text-sky-400 border border-sky-500/20">POST</span>
+                <code class="text-sm font-mono text-white font-bold">/v1/audio/speech</code>
+              </div>
+              <p class="text-xs text-slate-300">
+                Low-latency streaming speech synthesis powered by <code class="text-[#25c2a0]">src/models/qwen3_tts</code> (2.55x real-time).
+              </p>
+              <div class="docusaurus-code">
+                <div class="docusaurus-code-header"><span>Speech Synthesis Request</span><span>sh</span></div>
+                <div class="p-3 text-xs font-mono text-slate-200 space-y-1">
+                  <div>curl http://localhost:8080/v1/audio/speech \</div>
+                  <div class="pl-4">-H "Content-Type: application/json" \</div>
+                  <div class="pl-4">-d '&#123;"input": "Streaming speech on AMD Strix Halo.", "voice": "customvoice"&#125;' \</div>
+                  <div class="pl-4">--output output.wav</div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- Section 9: Client & UI Integrations -->
+        <section id="clients" class="space-y-4 border-b border-[#3e4042]/50 pb-8">
+          <h2 class="text-2xl font-bold text-white tracking-tight">Client &amp; UI Integrations</h2>
+          <p class="text-sm text-slate-300 leading-relaxed">
+            Connect popular client libraries, IDEs, and user interfaces directly to <code class="text-[#25c2a0]">gufo serve</code>:
+          </p>
+
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <!-- Python OpenAI SDK -->
+            <div class="p-4 rounded-lg bg-[#242526] border border-[#3e4042] space-y-2">
+              <h3 class="font-bold text-white text-xs uppercase font-mono">Python (openai-python)</h3>
+              <div class="docusaurus-code">
+                <div class="docusaurus-code-header"><span>example.py</span><span>python</span></div>
+                <div class="p-3 text-xs font-mono text-slate-200 space-y-1">
+                  <div>from openai import OpenAI</div>
+                  <div>client = OpenAI(base_url="http://localhost:8080/v1", api_key="gufo")</div>
+                  <div class="pt-1">resp = client.chat.completions.create(</div>
+                  <div class="pl-4">model="qwen3.8-27b",</div>
+                  <div class="pl-4">messages=[&#123;"role": "user", "content": "Hello!"&#125;]</div>
+                  <div>)</div>
+                  <div>print(resp.choices[0].message.content)</div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Open WebUI / LibreChat -->
+            <div class="p-4 rounded-lg bg-[#242526] border border-[#3e4042] space-y-2">
+              <h3 class="font-bold text-white text-xs uppercase font-mono">Open WebUI &amp; LibreChat</h3>
+              <p class="text-xs text-slate-300">
+                In Open WebUI settings under <b>Connections → OpenAI API</b>:
+              </p>
+              <div class="p-3 bg-[#1b1b1d] rounded text-xs font-mono space-y-1">
+                <div>API Base URL: <span class="text-emerald-400">http://localhost:8080/v1</span></div>
+                <div>API Key: <span class="text-slate-400">gufo (or any string)</span></div>
+                <div class="text-[#25c2a0] pt-1">✓ Autodetects Qwen3.8-27B and DeepSeek V4 Flash</div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- Section 10: HRX Native Execution -->
+        <section id="hrx" class="space-y-4 border-b border-[#3e4042]/50 pb-8">
+          <h2 class="text-2xl font-bold text-white tracking-tight">HRX Native Execution (.#hrx)</h2>
+          <p class="text-sm text-slate-300 leading-relaxed">
+            The <code class="text-[#25c2a0] font-mono">.#hrx</code> Nix package contains both the normal HIP route through HRX's compatibility layer and the direct native HRX/Loom executor selected with <code class="text-[#25c2a0] font-mono">--qwen-backend hrx-native</code>.
+          </p>
+
+          <div class="docusaurus-code">
+            <div class="docusaurus-code-header">
+              <span>Building and Benchmarking with HRX</span>
+              <span>sh</span>
+            </div>
+            <div class="p-4 text-xs font-mono text-slate-200 space-y-2">
+              <div><span class="text-slate-500"># 1. Build the HRX release package</span></div>
+              <div class="text-emerald-400">nix build .#hrx</div>
+              <div class="text-slate-500 pt-2"># 2. Run benchmark with native HRX route</div>
+              <div class="text-emerald-400">./result/bin/gufo bench --model models/Qwen3.8-27B-Q8_0.gguf --qwen-backend hrx-native --n-gen 8 --repetitions 3</div>
+              <div class="text-slate-500 pt-2"># 3. Validate correctness against independent HIP reference</div>
+              <div class="text-emerald-400">./result/bin/gufo bench --model models/Qwen3.8-27B-Q8_0.gguf --qwen-backend hrx-native --validate-hrx 1</div>
+              <div class="text-slate-500 pt-2"># 4. Synchronized stage trace (embedding, attention, SSM, FFN, final-head)</div>
+              <div class="text-emerald-400">GUFO_HRX_TRACE_STAGES=1 ./result/bin/gufo bench --model models/Qwen3.8-27B-Q8_0.gguf --qwen-backend hrx-native</div>
+            </div>
+          </div>
+        </section>
+
+        <!-- Section 11: Toolboxes & Container UX -->
+        <section id="toolboxes" class="space-y-4 border-b border-[#3e4042]/50 pb-8">
+          <h2 class="text-2xl font-bold text-white tracking-tight">Container Toolboxes (Docker / Podman / Toolbx)</h2>
+          <p class="text-sm text-slate-300 leading-relaxed">
+            The companion <a href="https://github.com/gufo-org/toolboxes" target="_blank" rel="noopener noreferrer" class="text-[#25c2a0] font-bold hover:underline">gufo-org/toolboxes</a> repository provides reproducible OCI container images built via Nix, bringing zero-setup development and inference to Fedora (Toolbx), Ubuntu/Arch (Distrobox), and Docker/Podman environments.
+          </p>
+
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div class="p-4 rounded-lg bg-[#242526] border border-[#3e4042] space-y-2">
+              <h3 class="font-bold text-white text-xs font-mono uppercase">gufo-runtime</h3>
+              <p class="text-xs text-slate-400">
+                Inference &amp; serving image with minimal footprint, ROCm 6.3 <code class="text-slate-300">gfx1151</code> and XRT drivers.
+              </p>
+              <div class="bg-[#1b1b1d] p-2 rounded text-[11px] font-mono text-emerald-400">
+                ghcr.io/gufo-org/toolboxes/gufo-runtime:latest
+              </div>
+            </div>
+
+            <div class="p-4 rounded-lg bg-[#242526] border border-[#3e4042] space-y-2">
+              <h3 class="font-bold text-white text-xs font-mono uppercase">gufo-dev</h3>
+              <p class="text-xs text-slate-400">
+                Complete interactive kernel development SDK with `hipcc`, `rocprofv3`, LLVM, CMake, Ninja, and ablation harnesses.
+              </p>
+              <div class="bg-[#1b1b1d] p-2 rounded text-[11px] font-mono text-cyan-400">
+                ghcr.io/gufo-org/toolboxes/gufo-dev:latest
+              </div>
+            </div>
+          </div>
+
+          <div class="admonition admonition-tip">
+            <div class="admonition-title">
+              <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
+              <span>Automated Hardware Passthrough</span>
+            </div>
+            <p class="text-xs text-slate-300 leading-relaxed">
+              Use the provided <code class="text-[#25c2a0] font-mono">./refresh-toolboxes.sh</code> script in the toolboxes repository. It automatically configures Strix Halo device nodes (<code class="text-slate-200">/dev/kfd</code>, <code class="text-slate-200">/dev/dri</code>, <code class="text-slate-200">/dev/accel*</code>) and group permissions.
+            </p>
+          </div>
+
+          <div class="docusaurus-code">
+            <div class="docusaurus-code-header">
+              <span>Quickstart with refresh-toolboxes.sh</span>
+              <span>sh</span>
+            </div>
+            <div class="p-4 text-xs font-mono text-slate-200 space-y-2">
+              <div><span class="text-slate-500"># 1. Clone toolboxes repo</span></div>
+              <div class="text-emerald-400">git clone https://github.com/gufo-org/toolboxes.git && cd toolboxes</div>
+              <div class="text-slate-500 pt-2"># 2. Setup runtime container with device passthroughs</div>
+              <div class="text-emerald-400">./refresh-toolboxes.sh gufo-runtime</div>
+              <div class="text-slate-500 pt-2"># 3. Enter container on Fedora (toolbox) or Ubuntu/Arch (distrobox)</div>
+              <div class="text-emerald-400">toolbox enter gufo-runtime      # Fedora</div>
+              <div class="text-emerald-400">distrobox enter gufo-runtime    # Ubuntu / Arch</div>
+            </div>
+          </div>
+        </section>
+
+        <!-- Section 12: Systemd Service Integration -->
+        <section id="systemd" class="space-y-4">
+          <h2 class="text-2xl font-bold text-white tracking-tight">Systemd Background Serving</h2>
+          <p class="text-sm text-slate-300 leading-relaxed">
+            Run <code class="text-[#25c2a0] font-mono">gufo serve</code> as a background systemd user service for automatic startup and persistent local inference endpoints:
+          </p>
+
+          <div class="docusaurus-code">
+            <div class="docusaurus-code-header">
+              <span>Systemd User Service Setup</span>
+              <span>sh</span>
+            </div>
+            <div class="p-4 text-xs font-mono text-slate-200 space-y-2">
+              <div><span class="text-slate-500"># Enable and start user service</span></div>
+              <div class="text-emerald-400">mkdir -p ~/.config/systemd/user</div>
+              <div class="text-emerald-400">cp systemd/gufo-serve.service ~/.config/systemd/user/</div>
+              <div class="text-emerald-400">systemctl --user daemon-reload</div>
+              <div class="text-emerald-400">systemctl --user enable --now gufo-serve</div>
+            </div>
+          </div>
+        </section>
+      </main>
+    </div>
+  </div>
+
+  <Footer />
+</Layout>
