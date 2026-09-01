@@ -170,6 +170,22 @@ const outcomeFacet = {
   ] as [string, number][],
 };
 
+/**
+ * What each column means, including the caveats that make a number
+ * misleading if read at face value. Shown on hover rather than in a block at
+ * the foot of the page, where nobody reads it while looking at a cell.
+ */
+const TIPS = {
+  task: 'The task the agent was given. Click a row to see what it asks for and what passing it demonstrates.',
+  result: 'A task passes only when its verifier reward is exactly 1. Partial verifier metrics are not passes.',
+  time: 'Wall time for the whole attempt: agent startup, model time and tool execution. Model time is usually the minority of it, so this is not a measure of server speed.',
+  turns: 'Assistant turns the agent completed. A turn cut off by the timeout may not be counted.',
+  tools: 'Tool calls the agent made, with failed calls in red. Every task that has passed so far made zero failed calls.',
+  input: 'Prompt tokens reported by the agent, summed over turns. With no prompt cache reuse each turn re-sends the whole conversation, so this grows faster than the work does.',
+  output: 'Completion tokens reported by the agent. Known to undercount reasoning — the server reports more generated tokens than this — so treat it as a lower bound.',
+  ttfr: 'Launch to the first byte from the agent, including agent startup. An upper bound on time to first model response, not a server latency measurement.',
+} as const;
+
 const toneClass: Record<string, string> = {
   purple: 'bg-purple-500/15 text-purple-300 border-purple-500/30',
   amber: 'bg-amber-500/15 text-amber-300 border-amber-500/30',
@@ -341,14 +357,14 @@ const toneClass: Record<string, string> = {
             <table class="w-full text-sm">
               <thead class="bg-[#242526] text-[#8a8d91] text-xs uppercase tracking-wide">
                 <tr>
-                  <th class="text-left font-medium px-4 py-3">Task</th>
-                  <th class="text-left font-medium px-4 py-3">Result</th>
-                  <th class="text-right font-medium px-4 py-3">Time</th>
-                  <th class="text-right font-medium px-4 py-3">Turns</th>
-                  <th class="text-right font-medium px-4 py-3">Tools</th>
-                  <th class="text-right font-medium px-4 py-3">In</th>
-                  <th class="text-right font-medium px-4 py-3">Out</th>
-                  <th class="text-right font-medium px-4 py-3">TTFR</th>
+                  <th class="text-left font-medium px-4 py-3 cursor-help underline decoration-dotted decoration-[#5a5d61] underline-offset-4" data-tip={TIPS.task}>Task</th>
+                  <th class="text-left font-medium px-4 py-3 cursor-help underline decoration-dotted decoration-[#5a5d61] underline-offset-4" data-tip={TIPS.result}>Result</th>
+                  <th class="text-right font-medium px-4 py-3 cursor-help underline decoration-dotted decoration-[#5a5d61] underline-offset-4" data-tip={TIPS.time}>Time</th>
+                  <th class="text-right font-medium px-4 py-3 cursor-help underline decoration-dotted decoration-[#5a5d61] underline-offset-4" data-tip={TIPS.turns}>Turns</th>
+                  <th class="text-right font-medium px-4 py-3 cursor-help underline decoration-dotted decoration-[#5a5d61] underline-offset-4" data-tip={TIPS.tools}>Tools</th>
+                  <th class="text-right font-medium px-4 py-3 cursor-help underline decoration-dotted decoration-[#5a5d61] underline-offset-4" data-tip={TIPS.input}>In</th>
+                  <th class="text-right font-medium px-4 py-3 cursor-help underline decoration-dotted decoration-[#5a5d61] underline-offset-4" data-tip={TIPS.output}>Out</th>
+                  <th class="text-right font-medium px-4 py-3 cursor-help underline decoration-dotted decoration-[#5a5d61] underline-offset-4" data-tip={TIPS.ttfr}>TTFR</th>
                 </tr>
               </thead>
               <tbody class="divide-y divide-[#3e4042]">
@@ -371,34 +387,55 @@ const toneClass: Record<string, string> = {
                       </td>
                       <td class="px-4 py-3">
                         {t.passed ? (
-                          <span class="inline-flex items-center gap-1.5 px-2 py-0.5 rounded border border-[#25c2a0]/30 bg-[#25c2a0]/10 text-[#25c2a0] text-xs font-medium">
+                          <span
+                            class="inline-flex items-center gap-1.5 px-2 py-0.5 rounded border border-[#25c2a0]/30 bg-[#25c2a0]/10 text-[#25c2a0] text-xs font-medium cursor-help"
+                            data-tip="The verifier scored this workspace 1. Every capability listed below the row was demonstrated."
+                          >
                             pass
                           </span>
                         ) : (
                           <span
-                            class={`inline-flex items-center gap-1.5 px-2 py-0.5 rounded border text-xs font-medium ${toneClass[mode!.tone]}`}
-                            title={mode!.hint}
+                            class={`inline-flex items-center gap-1.5 px-2 py-0.5 rounded border text-xs font-medium cursor-help ${toneClass[mode!.tone]}`}
+                            data-tip={mode!.hint}
                           >
                             {mode!.label}
                           </span>
                         )}
                       </td>
-                      <td class="px-4 py-3 text-right tabular-nums text-[#b0b3b8]">{fmtMin(t.duration_ms)}m</td>
+                      <td
+                        class="px-4 py-3 text-right tabular-nums text-[#b0b3b8] cursor-help"
+                        data-tip={`${(t.duration_ms / 1000).toFixed(0)}s wall time. ${
+                          t.throughput?.turns_timed
+                            ? `Model time was ${(((t.throughput.prefill_ms ?? 0) + (t.throughput.decode_ms ?? 0)) / 1000).toFixed(0)}s of it; the rest is agent startup and tool execution.`
+                            : 'Model time was not measured for this run.'
+                        }`}
+                      >{fmtMin(t.duration_ms)}m</td>
                       <td class="px-4 py-3 text-right tabular-nums text-[#b0b3b8]">{t.agent_steps}</td>
                       <td class="px-4 py-3 text-right tabular-nums text-[#b0b3b8]">
                         {t.tool_calls}
                         {t.tool_failures > 0 && (
-                          <span class="text-red-400 ml-1">({t.tool_failures}✗)</span>
+                          <span
+                            class="text-red-400 ml-1 cursor-help"
+                            data-tip={`${t.tool_failures} tool call(s) returned an error. Failed calls have accompanied every failure so far and none of the passes.`}
+                          >({t.tool_failures}✗)</span>
                         )}
                       </td>
                       <td class="px-4 py-3 text-right tabular-nums text-[#b0b3b8]">{fmtNum(t.tokens.input)}</td>
                       <td class="px-4 py-3 text-right tabular-nums text-[#b0b3b8]">
                         {fmtNum(t.tokens.output)}
                         {t.context_failures > 0 && (
-                          <span class="text-amber-400 ml-1" title="hit the output cap">⚠</span>
+                          <span
+                            class="text-amber-400 ml-1 cursor-help"
+                            data-tip="Generation stopped on length: the model spent its whole output budget without finishing. With thinking enabled, reasoning and answer share that budget. This is a configuration limit, not the model being wrong."
+                          >⚠</span>
                         )}
                       </td>
-                      <td class="px-4 py-3 text-right tabular-nums text-[#8a8d91]">
+                      <td
+                        class="px-4 py-3 text-right tabular-nums text-[#8a8d91] cursor-help"
+                        data-tip={t.first_response_ms === null
+                          ? 'The agent produced no output at all, so nothing could be timed.'
+                          : 'Launch to first byte from the agent, including its own startup.'}
+                      >
                         {t.first_response_ms === null ? '—' : `${t.first_response_ms}ms`}
                       </td>
                     </tr>
@@ -487,22 +524,13 @@ const toneClass: Record<string, string> = {
       </div>
     </div>
 
-    <section class="mt-12 rounded-lg border border-[#3e4042] bg-[#242526] p-6">
-      <h2 class="text-lg font-bold text-white mb-3">Reading these numbers</h2>
-      <ul class="text-sm text-[#b0b3b8] space-y-2 leading-relaxed list-disc pl-5">
-        <li>A task passes only when its verifier reward is exactly 1. Partial credit is not a pass.</li>
-        <li>
-          Failure modes are separated on purpose. <span class="text-amber-300">Timeout</span> and
-          <span class="text-amber-300"> output budget</span> mean the run was cut short;
-          <span class="text-purple-300"> verifier crashed</span> and
-          <span class="text-purple-300"> no activity recorded</span> are harness faults;
-          only <span class="text-red-300">wrong answer</span> is the model being wrong.
-        </li>
-        <li>pass@N is named for the attempt budget actually used and is not comparable across different budgets.</li>
-        <li>Results are comparable only when the benchmark hash, tier and agent version all match.</li>
-      </ul>
-    </section>
   </main>
+
+  <div
+    id="tip"
+    role="tooltip"
+    class="hidden fixed z-50 max-w-xs rounded-md border border-[#3e4042] bg-[#1c1e21] px-3 py-2 text-xs leading-relaxed text-[#b0b3b8] shadow-xl pointer-events-none"
+  ></div>
 
   <script type="application/json" id="runs-data" set:html={JSON.stringify(
     runs.map((r) => ({
@@ -532,6 +560,44 @@ const toneClass: Record<string, string> = {
 
 <script>
   /**
+   * Hover explanations.
+   *
+   * The guidance sits on the thing it describes rather than in a block at the
+   * foot of the page, because the moment someone needs to know that a duration
+   * is wall time is the moment they are looking at the duration.
+   */
+  const tip = document.getElementById('tip')!;
+
+  function showTip(el: HTMLElement) {
+    const text = el.dataset.tip;
+    if (!text) return;
+    tip.textContent = text;
+    tip.classList.remove('hidden');
+
+    const r = el.getBoundingClientRect();
+    const t = tip.getBoundingClientRect();
+    // Prefer above; flip below when there is no room, and keep it on screen.
+    const top = r.top - t.height - 8 < 8 ? r.bottom + 8 : r.top - t.height - 8;
+    const left = Math.min(
+      Math.max(8, r.left + r.width / 2 - t.width / 2),
+      window.innerWidth - t.width - 8
+    );
+    tip.style.top = `${top}px`;
+    tip.style.left = `${left}px`;
+  }
+
+  const hideTip = () => tip.classList.add('hidden');
+
+  document.addEventListener('mouseover', (e) => {
+    const el = (e.target as HTMLElement).closest<HTMLElement>('[data-tip]');
+    if (el) showTip(el);
+  });
+  document.addEventListener('mouseout', (e) => {
+    if ((e.target as HTMLElement).closest('[data-tip]')) hideTip();
+  });
+  document.addEventListener('scroll', hideTip, true);
+
+  /**
    * Comparison, built from whichever runs are ticked.
    *
    * Explicit rather than automatic: which runs are worth putting side by side
@@ -540,6 +606,12 @@ const toneClass: Record<string, string> = {
    * numbers answer the same question whether or not they do.
    */
   const MAX_COMPARE = 4;
+
+  const OUTCOME_TIP: Record<string, string> = {
+    wrong: 'Ran to completion and the verifier rejected the result. The model was wrong.',
+    'cut-short': 'Cut off before finishing, by the attempt timeout or the output budget. Not evidence the model could not do it.',
+    harness: 'A harness fault rather than a model failure: the verifier produced no verdict, or the run recorded no activity.',
+  };
 
   type CmpTask = { task: string; passed: boolean; duration_ms: number; outcome: string; label: string };
   type CmpRun = {
@@ -607,14 +679,20 @@ const toneClass: Record<string, string> = {
       return `
         <tr class="${differs ? 'bg-amber-500/[0.04]' : ''}">
           <td class="px-4 py-2.5 font-mono text-[13px] text-[#e4e6eb]">${esc(name)}${
-            differs ? '<span class="ml-2 text-[11px] text-amber-400">differs</span>' : ''
+            differs
+              ? '<span class="ml-2 text-[11px] text-amber-400 cursor-help" data-tip="The selected runs disagree on this task. These rows are the only ones carrying information; the rest agree.">differs</span>'
+              : ''
           }</td>
           ${cells.map((c) => c
-            ? `<td class="px-4 py-2.5"><span class="flex items-baseline gap-2">
+            ? `<td class="px-4 py-2.5 cursor-help" data-tip="${esc(
+                 c.passed
+                   ? 'Verifier scored this workspace 1.'
+                   : OUTCOME_TIP[c.outcome] ?? 'Did not pass.'
+               )} Wall time ${(c.duration_ms / 60000).toFixed(1)} minutes, which includes tool execution."><span class="flex items-baseline gap-2">
                  <span class="${c.passed ? 'text-[#25c2a0]' : 'text-red-400'}">${esc(c.label)}</span>
                  <span class="text-[11px] text-[#8a8d91] tabular-nums">${(c.duration_ms / 60000).toFixed(1)}m</span>
                </span></td>`
-            : '<td class="px-4 py-2.5 text-[#5a5d61] text-xs">not run</td>').join('')}
+            : '<td class="px-4 py-2.5 text-[#5a5d61] text-xs cursor-help" data-tip="This task was not part of that run.">not run</td>').join('')}
         </tr>`;
     }).join('');
 
@@ -638,7 +716,7 @@ const toneClass: Record<string, string> = {
       <div class="border border-[#3e4042] rounded-lg overflow-x-auto">
         <table class="w-full text-sm">
           <thead class="bg-[#242526] text-[#8a8d91] text-xs uppercase tracking-wide">
-            <tr><th class="text-left font-medium px-4 py-3">Task</th>${head}</tr>
+            <tr><th class="text-left font-medium px-4 py-3 cursor-help underline decoration-dotted decoration-[#5a5d61] underline-offset-4" data-tip={TIPS.task}>Task</th>${head}</tr>
           </thead>
           <tbody class="divide-y divide-[#3e4042]">${body}</tbody>
           <tfoot class="bg-[#242526] border-t-2 border-[#3e4042]">
