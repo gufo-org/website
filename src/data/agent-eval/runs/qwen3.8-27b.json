@@ -1,8 +1,19 @@
 {
-  "schema_version": "gufo-agent-eval/2",
+  "schema_version": "gufo-agent-eval/3",
   "generated_at": "2026-09-01T16:22:16.541398+00:00",
   "suite": "gufo-agent-eval",
   "tier": "ad-hoc:twelve-task-sample",
+  "server": {
+    "platform": "strix-halo",
+    "platform_name": "AMD Strix Halo",
+    "engine": "gufo",
+    "engine_version": null,
+    "backend": "rocm",
+    "backend_version": "7.14",
+    "quant": "UD-Q4_K_XL",
+    "inference_profile": null,
+    "context_length": 32768
+  },
   "identity": {
     "suite": "gufo-agent-eval",
     "tier": "ad-hoc:twelve-task-sample",
@@ -28,7 +39,8 @@
     },
     "attempts_per_task": 1,
     "agent_timeout_sec": 1800.0,
-    "limits_enforced": true
+    "limits_enforced": true,
+    "model_name": "Qwen3.8-27B"
   },
   "machine": {
     "os": "Linux",

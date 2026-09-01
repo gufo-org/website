@@ -1,0 +1,739 @@
+{
+    "schema_version": "gufo-agent-eval-catalogue/1",
+    "generated_at": "2026-09-01T16:32:56.625661+00:00",
+    "suite": "gufo-agent-eval",
+    "tiers": {
+        "full": {
+            "tasks": [
+                "break-filter-js-from-html",
+                "build-cython-ext",
+                "build-pov-ray",
+                "cobol-modernization",
+                "configure-git-webserver",
+                "extract-elf",
+                "fix-git",
+                "fix-ocaml-gc",
+                "git-leak-recovery",
+                "headless-terminal",
+                "llm-inference-batching-scheduler",
+                "nginx-request-logging",
+                "openssl-selfsigned-cert",
+                "overfull-hbox",
+                "pypi-server",
+                "regex-log",
+                "sparql-university",
+                "sqlite-with-gcov"
+            ],
+            "tier_hash": "c4846560bf6e1bc3"
+        },
+        "known-good": {
+            "tasks": [
+                "break-filter-js-from-html",
+                "build-cython-ext",
+                "build-pov-ray",
+                "cobol-modernization",
+                "configure-git-webserver",
+                "extract-elf",
+                "fix-ocaml-gc",
+                "fix-git",
+                "git-leak-recovery",
+                "headless-terminal",
+                "llm-inference-batching-scheduler",
+                "nginx-request-logging",
+                "openssl-selfsigned-cert",
+                "overfull-hbox",
+                "pypi-server",
+                "regex-log",
+                "sparql-university",
+                "sqlite-with-gcov"
+            ],
+            "tier_hash": "5c0736c1726339e7"
+        },
+        "smoke": {
+            "tasks": [
+                "regex-log",
+                "openssl-selfsigned-cert",
+                "fix-git",
+                "git-leak-recovery"
+            ],
+            "tier_hash": "8aff2f5793142ebb"
+        }
+    },
+    "tasks": [
+        {
+            "task": "break-filter-js-from-html",
+            "description": "Evaluates the agent's ability to bypass an HTML sanitization filter by crafting malicious HTML that triggers JavaScript execution after filtering.",
+            "summary": "Given an HTML sanitizer, construct input that survives it and still executes JavaScript. The agent must read the filter, reason about what it misses, and prove the bypass in a headless browser.",
+            "difficulty": "medium",
+            "category": "security",
+            "workdir": "/app",
+            "network": "none",
+            "agent_timeout_sec": 1200.0,
+            "requires": [
+                {
+                    "label": "Reading code for intent",
+                    "items": [
+                        "Follow a sanitizer's parsing rules",
+                        "Identify what the filter fails to normalise"
+                    ]
+                },
+                {
+                    "label": "Security reasoning",
+                    "items": [
+                        "Construct a payload that exploits the gap",
+                        "Distinguish a real bypass from an inert string"
+                    ]
+                },
+                {
+                    "label": "Verification",
+                    "items": [
+                        "Drive a headless browser to confirm execution"
+                    ]
+                }
+            ],
+            "provenance": {
+                "upstream": "terminal-bench/break-filter-js-from-html",
+                "upstream_suite": "Terminal-Bench 2.1 via terminal-bench-mini",
+                "upstream_revision": "5c8eadf1f393183288fa08b8f73ca9a469cc5e00",
+                "license": "Apache-2.0"
+            }
+        },
+        {
+            "task": "build-cython-ext",
+            "description": "Evaluates the ability to compile and install a Python package with Cython extensions from source while fixing NumPy 2.x compatibility issues.",
+            "summary": "Repair and compile Cython extensions against NumPy 2.x, where the C API changed from what the sources assume.",
+            "difficulty": "medium",
+            "category": "debugging",
+            "workdir": "/app",
+            "network": "none",
+            "agent_timeout_sec": 900.0,
+            "requires": [
+                {
+                    "label": "Toolchain",
+                    "items": [
+                        "Drive a C compiler and build system from the shell",
+                        "Read compiler and linker diagnostics"
+                    ]
+                },
+                {
+                    "label": "Debugging",
+                    "items": [
+                        "Map a build error to the API change that caused it",
+                        "Apply the migration the new NumPy requires"
+                    ]
+                },
+                {
+                    "label": "Verification",
+                    "items": [
+                        "Import the built extension and confirm it works"
+                    ]
+                }
+            ],
+            "provenance": {
+                "upstream": "terminal-bench/build-cython-ext",
+                "upstream_suite": "Terminal-Bench 2.1 via terminal-bench-mini",
+                "upstream_revision": "5c8eadf1f393183288fa08b8f73ca9a469cc5e00",
+                "license": "Apache-2.0"
+            }
+        },
+        {
+            "task": "build-pov-ray",
+            "description": "Evaluates the ability to locate, download, patch, and compile legacy POV-Ray 2.2 raytracer from 1990s source archives on a modern system.",
+            "summary": "Port and compile a legacy POV-Ray source tree, then render a reference scene and match it.",
+            "difficulty": "medium",
+            "category": "software-engineering",
+            "workdir": "/app",
+            "network": "none",
+            "agent_timeout_sec": 12000.0,
+            "requires": [
+                {
+                    "label": "Toolchain",
+                    "items": [
+                        "Configure and build a large legacy autotools project",
+                        "Resolve missing or renamed dependencies"
+                    ]
+                },
+                {
+                    "label": "Debugging",
+                    "items": [
+                        "Work through successive build failures without losing progress"
+                    ]
+                },
+                {
+                    "label": "Verification",
+                    "items": [
+                        "Render a scene and compare it against a reference image"
+                    ]
+                }
+            ],
+            "provenance": {
+                "upstream": "terminal-bench/build-pov-ray",
+                "upstream_suite": "Terminal-Bench 2.1 via terminal-bench-mini",
+                "upstream_revision": "5c8eadf1f393183288fa08b8f73ca9a469cc5e00",
+                "license": "Apache-2.0"
+            }
+        },
+        {
+            "task": "cobol-modernization",
+            "description": "Evaluates the ability to reverse-engineer and reimplement a COBOL program's business logic in Python with exact output reproduction.",
+            "summary": "Reimplement the business logic of a COBOL program in Python, preserving its exact behaviour including record formats and edge cases.",
+            "difficulty": "easy",
+            "category": "software-engineering",
+            "workdir": "/app",
+            "network": "none",
+            "agent_timeout_sec": 900.0,
+            "requires": [
+                {
+                    "label": "Reading unfamiliar code",
+                    "items": [
+                        "Follow COBOL control flow and data divisions",
+                        "Recover intent from fixed-format records"
+                    ]
+                },
+                {
+                    "label": "Reimplementation",
+                    "items": [
+                        "Reproduce arithmetic and rounding behaviour exactly",
+                        "Preserve output formatting byte for byte"
+                    ]
+                },
+                {
+                    "label": "Verification",
+                    "items": [
+                        "Run the original against the port and compare"
+                    ]
+                }
+            ],
+            "provenance": {
+                "upstream": "terminal-bench/cobol-modernization",
+                "upstream_suite": "Terminal-Bench 2.1 via terminal-bench-mini",
+                "upstream_revision": "5c8eadf1f393183288fa08b8f73ca9a469cc5e00",
+                "license": "Apache-2.0"
+            }
+        },
+        {
+            "task": "configure-git-webserver",
+            "description": "Evaluates the ability to configure a Git server with automatic deployment to an nginx web server using post-receive hooks.",
+            "summary": "Deploy a Git repository over HTTP through Nginx so that pushes work, wiring the CGI backend and permissions correctly.",
+            "difficulty": "hard",
+            "category": "system-administration",
+            "workdir": "/app",
+            "network": "none",
+            "agent_timeout_sec": 900.0,
+            "requires": [
+                {
+                    "label": "Service configuration",
+                    "items": [
+                        "Write a working Nginx server block",
+                        "Wire git-http-backend through fastcgi"
+                    ]
+                },
+                {
+                    "label": "System administration",
+                    "items": [
+                        "Set ownership and permissions a daemon can use",
+                        "Start services without an init system"
+                    ]
+                },
+                {
+                    "label": "Verification",
+                    "items": [
+                        "Clone, commit and push against the running server"
+                    ]
+                }
+            ],
+            "provenance": {
+                "upstream": "terminal-bench/configure-git-webserver",
+                "upstream_suite": "Terminal-Bench 2.1 via terminal-bench-mini",
+                "upstream_revision": "5c8eadf1f393183288fa08b8f73ca9a469cc5e00",
+                "license": "Apache-2.0"
+            }
+        },
+        {
+            "task": "extract-elf",
+            "description": "Evaluates ability to parse ELF binary format and extract memory values from executable sections using Node.js.",
+            "summary": "Parse an ELF binary and extract specific memory values from it, without relying on a ready-made parser.",
+            "difficulty": "medium",
+            "category": "file-operations",
+            "workdir": "/app",
+            "network": "none",
+            "agent_timeout_sec": 900.0,
+            "requires": [
+                {
+                    "label": "Binary formats",
+                    "items": [
+                        "Navigate ELF headers, sections and symbols",
+                        "Resolve a symbol to a file offset"
+                    ]
+                },
+                {
+                    "label": "Implementation",
+                    "items": [
+                        "Write code that reads binary structures correctly"
+                    ]
+                },
+                {
+                    "label": "Verification",
+                    "items": [
+                        "Export the values in the exact form asked for"
+                    ]
+                }
+            ],
+            "provenance": {
+                "upstream": "terminal-bench/extract-elf",
+                "upstream_suite": "Terminal-Bench 2.1 via terminal-bench-mini",
+                "upstream_revision": "5c8eadf1f393183288fa08b8f73ca9a469cc5e00",
+                "license": "Apache-2.0"
+            }
+        },
+        {
+            "task": "fix-git",
+            "description": "Evaluates the ability to recover lost Git commits from a detached HEAD state and merge them back into the master branch.",
+            "summary": "Recover commits stranded on a detached HEAD and merge them back into the main branch.",
+            "difficulty": "easy",
+            "category": "software-engineering",
+            "workdir": "/app/personal-site",
+            "network": "none",
+            "agent_timeout_sec": 900.0,
+            "requires": [
+                {
+                    "label": "Version control",
+                    "items": [
+                        "Read reflog and object history to find lost work",
+                        "Move between detached HEAD and a branch safely"
+                    ]
+                },
+                {
+                    "label": "Recovery",
+                    "items": [
+                        "Reattach commits without losing or duplicating them"
+                    ]
+                },
+                {
+                    "label": "Verification",
+                    "items": [
+                        "Confirm the branch contains the recovered content"
+                    ]
+                }
+            ],
+            "provenance": {
+                "upstream": "terminal-bench/fix-git",
+                "upstream_suite": "Terminal-Bench 2.1 via terminal-bench-mini",
+                "upstream_revision": "5c8eadf1f393183288fa08b8f73ca9a469cc5e00",
+                "license": "Apache-2.0"
+            }
+        },
+        {
+            "task": "fix-ocaml-gc",
+            "description": "Evaluates ability to debug and fix a runtime crash in the OCaml garbage collector's C implementation, requiring low-level debugging skills and understanding of compiler internals.",
+            "summary": "Debug a crash in the OCaml garbage collector's sweeping code, written in C, in a source tree checked out at a deliberately broken revision.",
+            "difficulty": "hard",
+            "category": "software-engineering",
+            "workdir": "/app",
+            "network": "none",
+            "agent_timeout_sec": 3600.0,
+            "requires": [
+                {
+                    "label": "Debugging",
+                    "items": [
+                        "Reproduce a crash and read a stack trace",
+                        "Use a debugger on a large unfamiliar C codebase"
+                    ]
+                },
+                {
+                    "label": "Systems knowledge",
+                    "items": [
+                        "Reason about garbage collector invariants",
+                        "Spot memory handling that violates them"
+                    ]
+                },
+                {
+                    "label": "Verification",
+                    "items": [
+                        "Rebuild the runtime and confirm the crash is gone"
+                    ]
+                }
+            ],
+            "provenance": {
+                "upstream": "terminal-bench/fix-ocaml-gc",
+                "upstream_suite": "Terminal-Bench 2.1 via terminal-bench-mini",
+                "upstream_revision": "5c8eadf1f393183288fa08b8f73ca9a469cc5e00",
+                "license": "Apache-2.0"
+            }
+        },
+        {
+            "task": "git-leak-recovery",
+            "description": "Evaluates the ability to recover secrets from unreachable git objects and completely remove them from repository history while preserving legitimate commits.",
+            "summary": "Recover a secret leaked into Git history, then purge it from the repository so it cannot be recovered again.",
+            "difficulty": "medium",
+            "category": "software-engineering",
+            "workdir": "/app",
+            "network": "none",
+            "agent_timeout_sec": 900.0,
+            "requires": [
+                {
+                    "label": "Version control",
+                    "items": [
+                        "Search history for content, not just filenames",
+                        "Rewrite history across all refs"
+                    ]
+                },
+                {
+                    "label": "Security reasoning",
+                    "items": [
+                        "Understand that deleting a file does not remove it from history",
+                        "Verify the secret is unreachable afterwards"
+                    ]
+                },
+                {
+                    "label": "Verification",
+                    "items": [
+                        "Confirm both recovery and complete removal"
+                    ]
+                }
+            ],
+            "provenance": {
+                "upstream": "terminal-bench/git-leak-recovery",
+                "upstream_suite": "Terminal-Bench 2.1 via terminal-bench-mini",
+                "upstream_revision": "5c8eadf1f393183288fa08b8f73ca9a469cc5e00",
+                "license": "Apache-2.0"
+            }
+        },
+        {
+            "task": "headless-terminal",
+            "description": "Implement a Python class that provides a headless terminal interface supporting interactive bash shells, modifier keys, startup file sourcing, and state persistence between commands.",
+            "summary": "Implement a persistent interactive terminal abstraction that survives across commands and preserves session state.",
+            "difficulty": "medium",
+            "category": "software-engineering",
+            "workdir": "/app",
+            "network": "none",
+            "agent_timeout_sec": 900.0,
+            "requires": [
+                {
+                    "label": "Process control",
+                    "items": [
+                        "Manage a long-lived pty or multiplexer session",
+                        "Send input and read output without deadlocking"
+                    ]
+                },
+                {
+                    "label": "Implementation",
+                    "items": [
+                        "Expose a stable interface over an inherently stateful thing",
+                        "Handle partial reads and timing"
+                    ]
+                },
+                {
+                    "label": "Verification",
+                    "items": [
+                        "Prove state persists across separate invocations"
+                    ]
+                }
+            ],
+            "provenance": {
+                "upstream": "terminal-bench/headless-terminal",
+                "upstream_suite": "Terminal-Bench 2.1 via terminal-bench-mini",
+                "upstream_revision": "5c8eadf1f393183288fa08b8f73ca9a469cc5e00",
+                "license": "Apache-2.0"
+            }
+        },
+        {
+            "task": "llm-inference-batching-scheduler",
+            "description": "Implement a shape-aware batching scheduler for static-graph LLM inference that optimally packs requests into batches while meeting strict performance thresholds on cost, latency, and padding.",
+            "summary": "Implement and then optimise a shape-aware batching scheduler for inference requests, meeting throughput targets.",
+            "difficulty": "hard",
+            "category": "machine-learning",
+            "workdir": "/app",
+            "network": "none",
+            "agent_timeout_sec": 1800.0,
+            "requires": [
+                {
+                    "label": "Algorithm design",
+                    "items": [
+                        "Batch requests by compatible shape",
+                        "Balance latency against throughput"
+                    ]
+                },
+                {
+                    "label": "Optimisation",
+                    "items": [
+                        "Measure, then improve against a target",
+                        "Avoid regressions while tuning"
+                    ]
+                },
+                {
+                    "label": "Verification",
+                    "items": [
+                        "Meet the scheduler's stated performance bounds"
+                    ]
+                }
+            ],
+            "provenance": {
+                "upstream": "terminal-bench/llm-inference-batching-scheduler",
+                "upstream_suite": "Terminal-Bench 2.1 via terminal-bench-mini",
+                "upstream_revision": "5c8eadf1f393183288fa08b8f73ca9a469cc5e00",
+                "license": "Apache-2.0"
+            }
+        },
+        {
+            "task": "nginx-request-logging",
+            "description": "Evaluates the ability to install and configure Nginx with advanced request logging, rate limiting, and custom error pages.",
+            "summary": "Configure Nginx logging, rate limiting and custom error pages to a precise specification.",
+            "difficulty": "medium",
+            "category": "system-administration",
+            "workdir": "/app",
+            "network": "none",
+            "agent_timeout_sec": 900.0,
+            "requires": [
+                {
+                    "label": "Service configuration",
+                    "items": [
+                        "Write custom log formats",
+                        "Configure rate limiting zones and error pages"
+                    ]
+                },
+                {
+                    "label": "System administration",
+                    "items": [
+                        "Reload a daemon and confirm config validity"
+                    ]
+                },
+                {
+                    "label": "Verification",
+                    "items": [
+                        "Drive the server with requests and inspect the logs produced"
+                    ]
+                }
+            ],
+            "provenance": {
+                "upstream": "terminal-bench/nginx-request-logging",
+                "upstream_suite": "Terminal-Bench 2.1 via terminal-bench-mini",
+                "upstream_revision": "5c8eadf1f393183288fa08b8f73ca9a469cc5e00",
+                "license": "Apache-2.0"
+            }
+        },
+        {
+            "task": "openssl-selfsigned-cert",
+            "description": "Evaluates an agent's ability to generate self-signed TLS certificates using OpenSSL, manage cryptographic keys with proper permissions, and create verification scripts.",
+            "summary": "Generate a self-signed TLS certificate meeting specific constraints, and validate it.",
+            "difficulty": "medium",
+            "category": "security",
+            "workdir": "/app",
+            "network": "none",
+            "agent_timeout_sec": 900.0,
+            "requires": [
+                {
+                    "label": "Cryptographic tooling",
+                    "items": [
+                        "Drive openssl for key and certificate generation",
+                        "Set subject, extensions and validity correctly"
+                    ]
+                },
+                {
+                    "label": "Domain knowledge",
+                    "items": [
+                        "Know which fields a certificate must carry"
+                    ]
+                },
+                {
+                    "label": "Verification",
+                    "items": [
+                        "Validate the certificate against the stated requirements"
+                    ]
+                }
+            ],
+            "provenance": {
+                "upstream": "terminal-bench/openssl-selfsigned-cert",
+                "upstream_suite": "Terminal-Bench 2.1 via terminal-bench-mini",
+                "upstream_revision": "5c8eadf1f393183288fa08b8f73ca9a469cc5e00",
+                "license": "Apache-2.0"
+            }
+        },
+        {
+            "task": "overfull-hbox",
+            "description": "Evaluates the ability to fix LaTeX overfull hbox warnings by replacing words with valid synonyms while satisfying compilation and constraint requirements.",
+            "summary": "Repair LaTeX layout warnings under constraints on which edits are allowed.",
+            "difficulty": "easy",
+            "category": "debugging",
+            "workdir": "/app",
+            "network": "none",
+            "agent_timeout_sec": 750.0,
+            "requires": [
+                {
+                    "label": "Toolchain",
+                    "items": [
+                        "Compile LaTeX and read its diagnostics"
+                    ]
+                },
+                {
+                    "label": "Constrained editing",
+                    "items": [
+                        "Fix layout without making forbidden changes",
+                        "Understand why a box overflows"
+                    ]
+                },
+                {
+                    "label": "Verification",
+                    "items": [
+                        "Recompile and confirm the warnings are gone"
+                    ]
+                }
+            ],
+            "provenance": {
+                "upstream": "terminal-bench/overfull-hbox",
+                "upstream_suite": "Terminal-Bench 2.1 via terminal-bench-mini",
+                "upstream_revision": "5c8eadf1f393183288fa08b8f73ca9a469cc5e00",
+                "license": "Apache-2.0"
+            }
+        },
+        {
+            "task": "pypi-server",
+            "description": "Evaluates the ability to create a Python package, build it, set up a local PyPI server, and make the package installable from the server.",
+            "summary": "Build a Python package and serve it from a local package index, then install from that index.",
+            "difficulty": "medium",
+            "category": "software-engineering",
+            "workdir": "/app",
+            "network": "none",
+            "agent_timeout_sec": 900.0,
+            "requires": [
+                {
+                    "label": "Packaging",
+                    "items": [
+                        "Write project metadata and build a wheel",
+                        "Understand what an index must expose"
+                    ]
+                },
+                {
+                    "label": "Service configuration",
+                    "items": [
+                        "Serve a package index locally"
+                    ]
+                },
+                {
+                    "label": "Verification",
+                    "items": [
+                        "Install the package from the index it just served"
+                    ]
+                }
+            ],
+            "provenance": {
+                "upstream": "terminal-bench/pypi-server",
+                "upstream_suite": "Terminal-Bench 2.1 via terminal-bench-mini",
+                "upstream_revision": "5c8eadf1f393183288fa08b8f73ca9a469cc5e00",
+                "license": "Apache-2.0"
+            }
+        },
+        {
+            "task": "regex-log",
+            "description": "Tests the ability to construct a complex regular expression that matches dates in log lines containing valid IPv4 addresses while handling edge cases and boundary conditions.",
+            "summary": "Write a precise regular expression matching log lines and IPv4 addresses, with no false positives or negatives.",
+            "difficulty": "medium",
+            "category": "data-processing",
+            "workdir": "/app",
+            "network": "none",
+            "agent_timeout_sec": 900.0,
+            "requires": [
+                {
+                    "label": "Precision",
+                    "items": [
+                        "Express exact constraints in a regex",
+                        "Reject near-misses such as invalid octets"
+                    ]
+                },
+                {
+                    "label": "Domain knowledge",
+                    "items": [
+                        "Know what a valid IPv4 address actually is"
+                    ]
+                },
+                {
+                    "label": "Verification",
+                    "items": [
+                        "Test against both matching and non-matching inputs"
+                    ]
+                }
+            ],
+            "provenance": {
+                "upstream": "terminal-bench/regex-log",
+                "upstream_suite": "Terminal-Bench 2.1 via terminal-bench-mini",
+                "upstream_revision": "5c8eadf1f393183288fa08b8f73ca9a469cc5e00",
+                "license": "Apache-2.0"
+            }
+        },
+        {
+            "task": "sparql-university",
+            "description": "Evaluates the ability to write complex SPARQL queries with multiple constraints, aggregations, and date filtering against an RDF knowledge graph.",
+            "summary": "Write a SPARQL query over a university knowledge graph combining several constraints, aggregation and date filtering.",
+            "difficulty": "hard",
+            "category": "data-querying",
+            "workdir": "/app",
+            "network": "none",
+            "agent_timeout_sec": 900.0,
+            "requires": [
+                {
+                    "label": "Query construction",
+                    "items": [
+                        "Navigate an RDF ontology across entity types",
+                        "Combine filters, GROUP BY, GROUP_CONCAT and HAVING"
+                    ]
+                },
+                {
+                    "label": "Logical reasoning",
+                    "items": [
+                        "Express 'at least one department with more than N students' correctly",
+                        "Apply a reference date to enrolment and graduation"
+                    ]
+                },
+                {
+                    "label": "Verification",
+                    "items": [
+                        "Run the query and match the expected result set"
+                    ]
+                }
+            ],
+            "provenance": {
+                "upstream": "terminal-bench/sparql-university",
+                "upstream_suite": "Terminal-Bench 2.1 via terminal-bench-mini",
+                "upstream_revision": "5c8eadf1f393183288fa08b8f73ca9a469cc5e00",
+                "license": "Apache-2.0"
+            }
+        },
+        {
+            "task": "sqlite-with-gcov",
+            "description": "Evaluates the ability to compile SQLite from source with gcov instrumentation and make it available in the system PATH.",
+            "summary": "Build SQLite from vendored source with gcov instrumentation and make it available on PATH.",
+            "difficulty": "medium",
+            "category": "system-administration",
+            "workdir": "/app",
+            "network": "none",
+            "agent_timeout_sec": 900.0,
+            "requires": [
+                {
+                    "label": "Toolchain",
+                    "items": [
+                        "Configure a build with coverage instrumentation",
+                        "Understand what gcov needs at compile and link time"
+                    ]
+                },
+                {
+                    "label": "System administration",
+                    "items": [
+                        "Install a built binary where the shell will find it"
+                    ]
+                },
+                {
+                    "label": "Verification",
+                    "items": [
+                        "Confirm the binary runs and produces coverage data"
+                    ]
+                }
+            ],
+            "provenance": {
+                "upstream": "terminal-bench/sqlite-with-gcov",
+                "upstream_suite": "Terminal-Bench 2.1 via terminal-bench-mini",
+                "upstream_revision": "5c8eadf1f393183288fa08b8f73ca9a469cc5e00",
+                "license": "Apache-2.0"
+            }
+        }
+    ]
+}

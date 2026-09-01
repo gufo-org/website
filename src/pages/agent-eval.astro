@@ -3,10 +3,15 @@ import Layout from '../layouts/Layout.astro';
 import Navbar from '../components/Navbar.astro';
 import Footer from '../components/Footer.astro';
 
-// Every file here is a `gufo-agent-eval` result document, exactly as written
-// by `eval-agent run --output`. The page renders the schema and nothing else,
-// so a field that is missing here is a field the format needs to grow.
-const modules = import.meta.glob<Record<string, any>>('../data/agent-eval/*.json', { eager: true });
+// The catalogue describes the suite rather than any run: what each task is and
+// what passing it demonstrates. Joined to results by task name, so results stay
+// lean and capabilities are not duplicated once per run.
+import catalogueRaw from '../data/agent-eval/catalogue.json';
+
+// Every file here is a `gufo-agent-eval` result document, exactly as written by
+// `eval-agent run --output`. The page renders the schema and nothing else, so a
+// field missing here is a field the format needs to grow.
+const modules = import.meta.glob<Record<string, any>>('../data/agent-eval/runs/*.json', { eager: true });
 
 type TaskResult = {
   task: string;
@@ -31,19 +36,53 @@ type TaskResult = {
   verifier_output: string;
 };
 
+type CatalogueTask = {
+  task: string;
+  summary: string;
+  description: string;
+  difficulty: string;
+  category: string;
+  requires: { label: string; items: string[] }[];
+};
+
+type ServerIdentity = {
+  platform: string;
+  platform_name: string | null;
+  engine: string;
+  engine_version: string | null;
+  backend: string;
+  backend_version: string | null;
+  quant: string | null;
+  inference_profile: string | null;
+  context_length: number | null;
+};
+
 type RunResult = {
   schema_version: string;
   generated_at: string;
   suite: string;
   tier: string;
+  server: ServerIdentity;
   identity: Record<string, any>;
   machine: Record<string, any>;
   tasks: TaskResult[];
   aggregate: Record<string, any>;
 };
 
-const runs: RunResult[] = Object.values(modules).map((m) => (m.default ?? m) as RunResult);
+const catalogue = (catalogueRaw as any);
+const byTask = new Map<string, CatalogueTask>(
+  (catalogue.tasks as CatalogueTask[]).map((t) => [t.task, t])
+);
+
+const runs: RunResult[] = Object.values(modules)
+  .map((m) => (m.default ?? m) as RunResult)
+  .filter((r) => r.schema_version?.startsWith('gufo-agent-eval/'));
 runs.sort((a, b) => b.generated_at.localeCompare(a.generated_at));
+
+/** How a run is labelled when comparing across engines and backends. */
+function serverLabel(s: ServerIdentity): string {
+  return [s.engine, s.backend, s.quant].filter(Boolean).join(' · ');
+}
 
 const fmtMin = (ms: number) => (ms / 60000).toFixed(1);
 const fmtHours = (ms: number) => (ms / 3600000).toFixed(2);
@@ -118,7 +157,12 @@ const toneClass: Record<string, string> = {
             <div>
               <div class="text-lg font-bold text-white">{run.identity.model}</div>
               <div class="text-xs text-[#8a8d91] mt-0.5">
-                {run.identity.agent} {run.identity.agent_version} · tier {run.tier} ·
+                {run.identity.model_name ?? run.identity.model} on
+                {' '}<span class="text-[#25c2a0]">{serverLabel(run.server)}</span>
+                {' '}· {run.server.platform_name ?? run.server.platform}
+              </div>
+              <div class="text-xs text-[#8a8d91] mt-0.5">
+                agent {run.identity.agent} {run.identity.agent_version} · tier {run.tier} ·
                 {' '}{new Date(run.generated_at).toISOString().slice(0, 10)}
               </div>
             </div>
@@ -181,9 +225,17 @@ const toneClass: Record<string, string> = {
               <tbody class="divide-y divide-[#3e4042]">
                 {byDuration.map((t) => {
                   const mode = failureMode(t);
+                  const meta = byTask.get(t.task);
                   return (
-                    <tr class="hover:bg-[#242526]/60 transition-colors">
-                      <td class="px-4 py-3 font-mono text-[13px] text-[#e4e6eb]">{t.task}</td>
+                    <>
+                    <tr
+                      class="hover:bg-[#242526]/60 transition-colors cursor-pointer"
+                      data-task-row={t.task}
+                    >
+                      <td class="px-4 py-3 font-mono text-[13px] text-[#e4e6eb]">
+                        <span class="inline-block w-3 text-[#8a8d91] select-none" data-caret>▸</span>
+                        {t.task}
+                      </td>
                       <td class="px-4 py-3">
                         {t.passed ? (
                           <span class="inline-flex items-center gap-1.5 px-2 py-0.5 rounded border border-[#25c2a0]/30 bg-[#25c2a0]/10 text-[#25c2a0] text-xs font-medium">
@@ -217,6 +269,60 @@ const toneClass: Record<string, string> = {
                         {t.first_response_ms === null ? '—' : `${t.first_response_ms}ms`}
                       </td>
                     </tr>
+
+                    <tr class="hidden" data-task-detail={t.task}>
+                      <td colspan="8" class="px-4 pb-5 pt-1 bg-[#1c1e21]">
+                        {meta ? (
+                          <div class="max-w-4xl">
+                            <div class="flex flex-wrap items-center gap-2 mb-3">
+                              <span class="text-[11px] px-2 py-0.5 rounded border border-[#3e4042] text-[#8a8d91]">
+                                {meta.category}
+                              </span>
+                              <span class="text-[11px] px-2 py-0.5 rounded border border-[#3e4042] text-[#8a8d91]">
+                                {meta.difficulty}
+                              </span>
+                            </div>
+
+                            <p class="text-sm text-[#b0b3b8] leading-relaxed mb-4">{meta.summary}</p>
+
+                            <div class="text-xs uppercase tracking-wide text-[#8a8d91] mb-2">
+                              Passing this demonstrates
+                            </div>
+                            <div class="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+                              {meta.requires.map((group) => (
+                                <div class="rounded border border-[#3e4042] bg-[#242526] p-3">
+                                  <div class="text-[13px] font-medium text-[#e4e6eb] mb-1.5">
+                                    {group.label}
+                                  </div>
+                                  <ul class="space-y-1">
+                                    {group.items.map((item) => (
+                                      <li class="text-xs text-[#b0b3b8] leading-snug flex gap-1.5">
+                                        <span class={t.passed ? 'text-[#25c2a0]' : 'text-[#5a5d61]'}>
+                                          {t.passed ? '✓' : '·'}
+                                        </span>
+                                        <span>{item}</span>
+                                      </li>
+                                    ))}
+                                  </ul>
+                                </div>
+                              ))}
+                            </div>
+
+                            {!t.passed && mode && (
+                              <p class="mt-3 text-xs text-[#8a8d91]">
+                                Not demonstrated in this run — {mode.hint.toLowerCase()}
+                              </p>
+                            )}
+                          </div>
+                        ) : (
+                          <p class="text-xs text-[#8a8d91]">
+                            No catalogue entry for this task. Regenerate with
+                            <code class="mx-1 text-[#25c2a0]">eval-agent catalogue --output</code>.
+                          </p>
+                        )}
+                      </td>
+                    </tr>
+                    </>
                   );
                 })}
               </tbody>
@@ -264,3 +370,17 @@ const toneClass: Record<string, string> = {
 
   <Footer />
 </Layout>
+
+<script>
+  // Rows expand to show what the task is and what passing it demonstrates.
+  document.querySelectorAll<HTMLElement>('[data-task-row]').forEach((row) => {
+    row.addEventListener('click', () => {
+      const name = row.dataset.taskRow;
+      const detail = document.querySelector<HTMLElement>(`[data-task-detail="${name}"]`);
+      if (!detail) return;
+      const open = !detail.classList.toggle('hidden');
+      const caret = row.querySelector<HTMLElement>('[data-caret]');
+      if (caret) caret.textContent = open ? '▾' : '▸';
+    });
+  });
+</script>
