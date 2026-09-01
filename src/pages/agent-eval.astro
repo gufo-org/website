@@ -84,6 +84,26 @@ function serverLabel(s: ServerIdentity): string {
   return [s.engine, s.backend, s.quant].filter(Boolean).join(' · ');
 }
 
+/**
+ * Runs are comparable only when they measured the same thing.
+ *
+ * A different tier, a different set of task derivations, or a different agent
+ * revision all mean the numbers are not answering the same question, so they
+ * are grouped apart rather than tabulated side by side as if they were.
+ */
+function comparisonKey(r: RunResult): string {
+  return `${r.identity.benchmark_hash}|${r.identity.agent_version}|${r.identity.attempts_per_task}`;
+}
+
+const groups = [...new Map(
+  runs.map((r) => [comparisonKey(r), runs.filter((o) => comparisonKey(o) === comparisonKey(r))])
+).values()].filter((g) => g.length > 1);
+
+/** Every task appearing in any run of a group, ordered by name. */
+function groupTasks(group: RunResult[]): string[] {
+  return [...new Set(group.flatMap((r) => r.tasks.map((t) => t.task)))].sort();
+}
+
 const fmtMin = (ms: number) => (ms / 60000).toFixed(1);
 const fmtHours = (ms: number) => (ms / 3600000).toFixed(2);
 const fmtNum = (n: number) => n.toLocaleString('en-US');
@@ -141,6 +161,95 @@ const toneClass: Record<string, string> = {
         No result documents yet. Drop the JSON from
         <code class="mx-1 text-[#25c2a0]">eval-agent run --output</code>
         into <code class="text-[#25c2a0]">src/data/agent-eval/</code>.
+      </div>
+    )}
+
+    {groups.map((group) => {
+      const tasks = groupTasks(group);
+      return (
+        <section class="mb-14">
+          <h2 class="text-xl font-bold text-white mb-1">Comparison</h2>
+          <p class="text-sm text-[#8a8d91] mb-4 max-w-3xl">
+            {group.length} runs of the same tasks, agent and attempt budget, differing
+            only in what served the model. Grouped by benchmark identity, so runs that
+            measured different things are never tabulated together.
+          </p>
+
+          <div class="border border-[#3e4042] rounded-lg overflow-x-auto">
+            <table class="w-full text-sm">
+              <thead class="bg-[#242526] text-[#8a8d91] text-xs uppercase tracking-wide">
+                <tr>
+                  <th class="text-left font-medium px-4 py-3">Task</th>
+                  {group.map((r) => (
+                    <th class="text-left font-medium px-4 py-3">
+                      <div class="text-[#e4e6eb] normal-case text-[13px]">{r.server.engine}</div>
+                      <div class="font-normal normal-case text-[11px] text-[#8a8d91]">
+                        {[r.server.backend, r.server.quant].filter(Boolean).join(' · ')}
+                      </div>
+                    </th>
+                  ))}
+                </tr>
+              </thead>
+              <tbody class="divide-y divide-[#3e4042]">
+                {tasks.map((name) => {
+                  const cells = group.map((r) => r.tasks.find((t) => t.task === name));
+                  const outcomes = new Set(cells.map((c) => (c ? c.passed : null)));
+                  const differs = outcomes.size > 1;
+                  return (
+                    <tr class={differs ? 'bg-amber-500/[0.04]' : ''}>
+                      <td class="px-4 py-2.5 font-mono text-[13px] text-[#e4e6eb]">
+                        {name}
+                        {differs && <span class="ml-2 text-[11px] text-amber-400">differs</span>}
+                      </td>
+                      {cells.map((c) => (
+                        <td class="px-4 py-2.5">
+                          {c === undefined ? (
+                            <span class="text-[#5a5d61] text-xs">not run</span>
+                          ) : (
+                            <span class="flex items-baseline gap-2">
+                              <span class={c.passed ? 'text-[#25c2a0]' : 'text-red-400'}>
+                                {c.passed ? 'pass' : failureMode(c)!.label}
+                              </span>
+                              <span class="text-[11px] text-[#8a8d91] tabular-nums">
+                                {fmtMin(c.duration_ms)}m
+                              </span>
+                            </span>
+                          )}
+                        </td>
+                      ))}
+                    </tr>
+                  );
+                })}
+              </tbody>
+              <tfoot class="bg-[#242526] border-t-2 border-[#3e4042]">
+                <tr>
+                  <td class="px-4 py-3 text-xs uppercase tracking-wide text-[#8a8d91]">Passed</td>
+                  {group.map((r) => (
+                    <td class="px-4 py-3">
+                      <span class="text-[#25c2a0] font-bold">
+                        {r.aggregate.passed_tasks}/{r.aggregate.total_tasks}
+                      </span>
+                      <span class="ml-2 text-[11px] text-[#8a8d91]">
+                        {fmtHours(r.aggregate.total_duration_ms)}h
+                      </span>
+                    </td>
+                  ))}
+                </tr>
+              </tfoot>
+            </table>
+          </div>
+        </section>
+      );
+    })}
+
+    {runs.length === 1 && (
+      <div class="mb-14 rounded-lg border border-[#3e4042] bg-[#242526] px-5 py-4 text-sm text-[#8a8d91]">
+        Only one run is loaded, so there is nothing to compare against yet. Add another
+        result document under <code class="text-[#25c2a0]">src/data/agent-eval/runs/</code>
+        — a run of the same tier with a different
+        <code class="mx-1 text-[#25c2a0]">--engine</code> or
+        <code class="mr-1 text-[#25c2a0]">--backend</code>
+        — and a comparison table appears here automatically.
       </div>
     )}
 
