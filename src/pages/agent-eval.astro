@@ -59,6 +59,7 @@ type ServerIdentity = {
 
 type RunResult = {
   schema_version: string;
+  example?: boolean;
   generated_at: string;
   suite: string;
   tier: string;
@@ -175,14 +176,30 @@ const toneClass: Record<string, string> = {
             measured different things are never tabulated together.
           </p>
 
+          {group.some((r) => r.example) && (
+            <div class="mb-4 rounded border border-amber-500/40 bg-amber-500/10 px-4 py-3 text-sm text-amber-200">
+              <strong class="font-semibold">This comparison contains illustrative data.</strong>
+              {' '}Columns marked <span class="font-mono text-xs">example</span> are invented to
+              show how the view renders. They are not measurements and must not be cited or
+              aggregated with real results.
+            </div>
+          )}
+
           <div class="border border-[#3e4042] rounded-lg overflow-x-auto">
             <table class="w-full text-sm">
               <thead class="bg-[#242526] text-[#8a8d91] text-xs uppercase tracking-wide">
                 <tr>
                   <th class="text-left font-medium px-4 py-3">Task</th>
                   {group.map((r) => (
-                    <th class="text-left font-medium px-4 py-3">
-                      <div class="text-[#e4e6eb] normal-case text-[13px]">{r.server.engine}</div>
+                    <th class={`text-left font-medium px-4 py-3 ${r.example ? 'bg-amber-500/[0.06]' : ''}`}>
+                      <div class="text-[#e4e6eb] normal-case text-[13px]">
+                        {r.server.engine}
+                        {r.example && (
+                          <span class="ml-1.5 font-mono text-[10px] px-1.5 py-0.5 rounded bg-amber-500/20 text-amber-300 align-middle">
+                            example
+                          </span>
+                        )}
+                      </div>
                       <div class="font-normal normal-case text-[11px] text-[#8a8d91]">
                         {[r.server.backend, r.server.quant].filter(Boolean).join(' · ')}
                       </div>
@@ -276,6 +293,11 @@ const toneClass: Record<string, string> = {
               </div>
             </div>
             <div class="ml-auto flex flex-wrap gap-2 text-[11px]">
+              {run.example && (
+                <span class="px-2 py-1 rounded border border-amber-500/40 bg-amber-500/15 text-amber-300 font-medium">
+                  illustrative — not a measurement
+                </span>
+              )}
               <span class="px-2 py-1 rounded border border-[#3e4042] text-[#8a8d91] font-mono">
                 {run.identity.endpoint_label}
               </span>

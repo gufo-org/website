@@ -1,5 +1,6 @@
 {
-  "schema_version": "gufo-agent-eval/3",
+  "schema_version": "gufo-agent-eval/4",
+  "example": false,
   "generated_at": "2026-09-01T16:22:16.541398+00:00",
   "suite": "gufo-agent-eval",
   "tier": "ad-hoc:twelve-task-sample",
