@@ -105,6 +105,48 @@ function groupTasks(group: RunResult[]): string[] {
   return [...new Set(group.flatMap((r) => r.tasks.map((t) => t.task)))].sort();
 }
 
+/** Stable id for a run, used to address its rows and columns from the facets. */
+function runId(r: RunResult): string {
+  return [r.server.engine, r.server.backend, r.server.quant, r.identity.model]
+    .filter(Boolean)
+    .join('-')
+    .replace(/[^a-zA-Z0-9]+/g, '-')
+    .toLowerCase();
+}
+
+/**
+ * Facets are derived from the loaded data rather than hardcoded, so a new
+ * engine or quantisation appears in the sidebar the moment a run using it is
+ * added, and a facet with a single value is dropped as useless.
+ */
+function facet(label: string, key: string, values: (string | null | undefined)[]) {
+  const counts = new Map<string, number>();
+  for (const v of values) {
+    if (!v) continue;
+    counts.set(v, (counts.get(v) ?? 0) + 1);
+  }
+  return {
+    label,
+    key,
+    options: [...counts.entries()].sort((a, b) => a[0].localeCompare(b[0])),
+  };
+}
+
+const runFacets = [
+  facet('Engine', 'engine', runs.map((r) => r.server.engine)),
+  facet('Backend', 'backend', runs.map((r) => r.server.backend)),
+  facet('Platform', 'platform', runs.map((r) => r.server.platform)),
+  facet('Quantisation', 'quant', runs.map((r) => r.server.quant)),
+  facet('Model', 'model', runs.map((r) => r.identity.model)),
+  facet('Agent', 'agent', runs.map((r) => `${r.identity.agent} ${r.identity.agent_version}`)),
+].filter((f) => f.options.length > 1);
+
+const allTaskNames = [...new Set(runs.flatMap((r) => r.tasks.map((t) => t.task)))];
+const taskFacets = [
+  facet('Category', 'category', allTaskNames.map((n) => byTask.get(n)?.category)),
+  facet('Difficulty', 'difficulty', allTaskNames.map((n) => byTask.get(n)?.difficulty)),
+].filter((f) => f.options.length > 1);
+
 const fmtMin = (ms: number) => (ms / 60000).toFixed(1);
 const fmtHours = (ms: number) => (ms / 3600000).toFixed(2);
 const fmtNum = (n: number) => n.toLocaleString('en-US');
@@ -129,6 +171,24 @@ function failureMode(t: TaskResult): { label: string; tone: string; hint: string
   return { label: 'wrong answer', tone: 'red', hint: 'Ran to completion; the verifier rejected the result.' };
 }
 
+/** Coarse outcome used by the facets: pass, model failure, or harness fault. */
+function outcomeKey(t: TaskResult): string {
+  if (t.passed) return 'pass';
+  const mode = failureMode(t)!;
+  return mode.tone === 'purple' ? 'harness' : mode.tone === 'amber' ? 'cut-short' : 'wrong';
+}
+
+const outcomeFacet = {
+  label: 'Outcome',
+  key: 'outcome',
+  options: [
+    ['pass', 0],
+    ['wrong', 0],
+    ['cut-short', 0],
+    ['harness', 0],
+  ] as [string, number][],
+};
+
 const toneClass: Record<string, string> = {
   purple: 'bg-purple-500/15 text-purple-300 border-purple-500/30',
   amber: 'bg-amber-500/15 text-amber-300 border-amber-500/30',
@@ -139,8 +199,8 @@ const toneClass: Record<string, string> = {
 <Layout title="Agent Eval — gufo">
   <Navbar currentPath="/agent-eval" />
 
-  <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
-    <header class="mb-10">
+  <main class="max-w-[1600px] mx-auto px-4 sm:px-6 lg:px-8 py-10">
+    <header class="mb-8">
       <h1 class="text-3xl font-bold text-white tracking-tight">Agent Evaluation</h1>
       <p class="mt-3 text-[#b0b3b8] max-w-3xl leading-relaxed">
         Whether a served model, driven by a fixed coding agent through a terminal,
@@ -156,6 +216,42 @@ const toneClass: Record<string, string> = {
         official Terminal-Bench score.
       </p>
     </header>
+
+    <div class="lg:grid lg:grid-cols-[220px_minmax(0,1fr)] lg:gap-8">
+      <!-- Facets -->
+      <aside class="mb-8 lg:mb-0 lg:sticky lg:top-20 lg:self-start lg:max-h-[calc(100vh-6rem)] lg:overflow-y-auto">
+        <div class="flex items-center justify-between mb-3">
+          <h2 class="text-xs uppercase tracking-wide text-[#8a8d91] font-medium">Filter</h2>
+          <button id="facet-clear" class="text-[11px] text-[#8a8d91] hover:text-[#25c2a0] transition-colors hidden">clear</button>
+        </div>
+
+        <div class="space-y-5 text-sm">
+          {[...runFacets, outcomeFacet, ...taskFacets].map((f) => (
+            <div>
+              <div class="text-[11px] uppercase tracking-wide text-[#8a8d91] mb-1.5">{f.label}</div>
+              <div class="space-y-0.5">
+                {f.options.map(([value, count]) => (
+                  <label class="flex items-center gap-2 px-2 py-1 -mx-2 rounded hover:bg-[#242526] cursor-pointer group">
+                    <input type="checkbox" class="facet accent-[#25c2a0] w-3.5 h-3.5" data-facet={f.key} value={value} />
+                    <span class="text-[13px] text-[#b0b3b8] group-hover:text-[#e4e6eb] truncate">{value}</span>
+                    {count > 0 && <span class="ml-auto text-[11px] text-[#5a5d61] tabular-nums">{count}</span>}
+                  </label>
+                ))}
+              </div>
+            </div>
+          ))}
+        </div>
+
+        <p class="mt-6 text-[11px] text-[#5a5d61] leading-relaxed">
+          Filters within a facet are OR; across facets they are AND. Hiding a run
+          removes its column from the comparison.
+        </p>
+      </aside>
+
+      <div>
+        <p id="facet-empty" class="hidden rounded-lg border border-[#3e4042] bg-[#242526] p-6 text-sm text-[#8a8d91]">
+          Nothing matches these filters.
+        </p>
 
     {runs.length === 0 && (
       <div class="rounded-lg border border-[#3e4042] bg-[#242526] p-8 text-center text-[#8a8d91]">
@@ -191,7 +287,10 @@ const toneClass: Record<string, string> = {
                 <tr>
                   <th class="text-left font-medium px-4 py-3">Task</th>
                   {group.map((r) => (
-                    <th class={`text-left font-medium px-4 py-3 ${r.example ? 'bg-amber-500/[0.06]' : ''}`}>
+                    <th
+                      class={`text-left font-medium px-4 py-3 ${r.example ? 'bg-amber-500/[0.06]' : ''}`}
+                      data-col={runId(r)}
+                    >
                       <div class="text-[#e4e6eb] normal-case text-[13px]">
                         {r.server.engine}
                         {r.example && (
@@ -213,13 +312,19 @@ const toneClass: Record<string, string> = {
                   const outcomes = new Set(cells.map((c) => (c ? c.passed : null)));
                   const differs = outcomes.size > 1;
                   return (
-                    <tr class={differs ? 'bg-amber-500/[0.04]' : ''}>
+                    <tr
+                      class={differs ? 'bg-amber-500/[0.04]' : ''}
+                      data-task={name}
+                      data-category={byTask.get(name)?.category ?? ''}
+                      data-difficulty={byTask.get(name)?.difficulty ?? ''}
+                      data-outcome={cells.filter(Boolean).map((c) => outcomeKey(c!)).join(' ')}
+                    >
                       <td class="px-4 py-2.5 font-mono text-[13px] text-[#e4e6eb]">
                         {name}
                         {differs && <span class="ml-2 text-[11px] text-amber-400">differs</span>}
                       </td>
-                      {cells.map((c) => (
-                        <td class="px-4 py-2.5">
+                      {cells.map((c, i) => (
+                        <td class="px-4 py-2.5" data-col={runId(group[i])}>
                           {c === undefined ? (
                             <span class="text-[#5a5d61] text-xs">not run</span>
                           ) : (
@@ -242,7 +347,7 @@ const toneClass: Record<string, string> = {
                 <tr>
                   <td class="px-4 py-3 text-xs uppercase tracking-wide text-[#8a8d91]">Passed</td>
                   {group.map((r) => (
-                    <td class="px-4 py-3">
+                    <td class="px-4 py-3" data-col={runId(r)}>
                       <span class="text-[#25c2a0] font-bold">
                         {r.aggregate.passed_tasks}/{r.aggregate.total_tasks}
                       </span>
@@ -277,7 +382,16 @@ const toneClass: Record<string, string> = {
       const attempts = run.identity.attempts_per_task;
 
       return (
-        <section class="mb-14">
+        <section
+          class="mb-14"
+          data-run={runId(run)}
+          data-engine={run.server.engine}
+          data-backend={run.server.backend}
+          data-platform={run.server.platform}
+          data-quant={run.server.quant ?? ''}
+          data-model={run.identity.model}
+          data-agent={`${run.identity.agent} ${run.identity.agent_version}`}
+        >
           {/* Run identity */}
           <div class="rounded-t-lg border border-[#3e4042] bg-[#242526] px-5 py-4 flex flex-wrap items-center gap-x-6 gap-y-2">
             <div>
@@ -362,6 +476,10 @@ const toneClass: Record<string, string> = {
                     <tr
                       class="hover:bg-[#242526]/60 transition-colors cursor-pointer"
                       data-task-row={t.task}
+                      data-task={t.task}
+                      data-category={meta?.category ?? ''}
+                      data-difficulty={meta?.difficulty ?? ''}
+                      data-outcome={outcomeKey(t)}
                     >
                       <td class="px-4 py-3 font-mono text-[13px] text-[#e4e6eb]">
                         <span class="inline-block w-3 text-[#8a8d91] select-none" data-caret>▸</span>
@@ -401,7 +519,7 @@ const toneClass: Record<string, string> = {
                       </td>
                     </tr>
 
-                    <tr class="hidden" data-task-detail={t.task}>
+                    <tr class="hidden" data-task-detail={t.task} data-task={t.task}>
                       <td colspan="8" class="px-4 pb-5 pt-1 bg-[#1c1e21]">
                         {meta ? (
                           <div class="max-w-4xl">
@@ -482,6 +600,9 @@ const toneClass: Record<string, string> = {
       );
     })}
 
+      </div>
+    </div>
+
     <section class="mt-12 rounded-lg border border-[#3e4042] bg-[#242526] p-6">
       <h2 class="text-lg font-bold text-white mb-3">Reading these numbers</h2>
       <ul class="text-sm text-[#b0b3b8] space-y-2 leading-relaxed list-disc pl-5">
@@ -503,6 +624,78 @@ const toneClass: Record<string, string> = {
 </Layout>
 
 <script>
+  /**
+   * Faceted filtering.
+   *
+   * Within a facet the selections are OR (two backends means either); across
+   * facets they are AND (that backend *and* that difficulty). Run-level facets
+   * hide whole runs and their comparison columns; task-level facets hide rows.
+   */
+  const RUN_KEYS = ['engine', 'backend', 'platform', 'quant', 'model', 'agent'];
+  const TASK_KEYS = ['category', 'difficulty', 'outcome'];
+
+  const boxes = () => [...document.querySelectorAll<HTMLInputElement>('input.facet')];
+
+  function selected() {
+    const out: Record<string, Set<string>> = {};
+    for (const b of boxes()) {
+      if (!b.checked) continue;
+      const key = b.dataset.facet!;
+      (out[key] ??= new Set()).add(b.value);
+    }
+    return out;
+  }
+
+  function matches(el: HTMLElement, keys: string[], sel: Record<string, Set<string>>) {
+    for (const key of keys) {
+      const wanted = sel[key];
+      if (!wanted) continue;
+      // `outcome` can hold several values on a comparison row, one per run.
+      const have = (el.dataset[key] ?? '').split(' ').filter(Boolean);
+      if (!have.some((v) => wanted.has(v))) return false;
+    }
+    return true;
+  }
+
+  function apply() {
+    const sel = selected();
+    const any = Object.keys(sel).length > 0;
+    document.getElementById('facet-clear')?.classList.toggle('hidden', !any);
+
+    // Runs, and their columns in the comparison table.
+    const hiddenRuns = new Set<string>();
+    document.querySelectorAll<HTMLElement>('section[data-run]').forEach((section) => {
+      const show = matches(section, RUN_KEYS, sel);
+      section.classList.toggle('hidden', !show);
+      if (!show) hiddenRuns.add(section.dataset.run!);
+    });
+    document.querySelectorAll<HTMLElement>('[data-col]').forEach((cell) => {
+      cell.classList.toggle('hidden', hiddenRuns.has(cell.dataset.col!));
+    });
+
+    // Task rows, in both the comparison table and the per-run tables.
+    const hiddenTasks = new Set<string>();
+    document.querySelectorAll<HTMLElement>('tr[data-task]').forEach((row) => {
+      if (row.hasAttribute('data-task-detail')) return;
+      const show = matches(row, TASK_KEYS, sel);
+      row.classList.toggle('hidden', !show);
+      if (!show) hiddenTasks.add(row.dataset.task!);
+    });
+    // A collapsed detail row must not reappear just because its parent is shown.
+    document.querySelectorAll<HTMLElement>('tr[data-task-detail]').forEach((row) => {
+      if (hiddenTasks.has(row.dataset.task!)) row.classList.add('hidden');
+    });
+
+    const visibleRuns = document.querySelectorAll('section[data-run]:not(.hidden)').length;
+    document.getElementById('facet-empty')?.classList.toggle('hidden', visibleRuns > 0);
+  }
+
+  boxes().forEach((b) => b.addEventListener('change', apply));
+  document.getElementById('facet-clear')?.addEventListener('click', () => {
+    boxes().forEach((b) => (b.checked = false));
+    apply();
+  });
+
   // Rows expand to show what the task is and what passing it demonstrates.
   document.querySelectorAll<HTMLElement>('[data-task-row]').forEach((row) => {
     row.addEventListener('click', () => {
