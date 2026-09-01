@@ -85,25 +85,6 @@ function serverLabel(s: ServerIdentity): string {
   return [s.engine, s.backend, s.quant].filter(Boolean).join(' · ');
 }
 
-/**
- * Runs are comparable only when they measured the same thing.
- *
- * A different tier, a different set of task derivations, or a different agent
- * revision all mean the numbers are not answering the same question, so they
- * are grouped apart rather than tabulated side by side as if they were.
- */
-function comparisonKey(r: RunResult): string {
-  return `${r.identity.benchmark_hash}|${r.identity.agent_version}|${r.identity.attempts_per_task}`;
-}
-
-const groups = [...new Map(
-  runs.map((r) => [comparisonKey(r), runs.filter((o) => comparisonKey(o) === comparisonKey(r))])
-).values()].filter((g) => g.length > 1);
-
-/** Every task appearing in any run of a group, ordered by name. */
-function groupTasks(group: RunResult[]): string[] {
-  return [...new Set(group.flatMap((r) => r.tasks.map((t) => t.task)))].sort();
-}
 
 /** Stable id for a run, used to address its rows and columns from the facets. */
 function runId(r: RunResult): string {
@@ -261,119 +242,14 @@ const toneClass: Record<string, string> = {
       </div>
     )}
 
-    {groups.map((group) => {
-      const tasks = groupTasks(group);
-      return (
-        <section class="mb-14">
-          <h2 class="text-xl font-bold text-white mb-1">Comparison</h2>
-          <p class="text-sm text-[#8a8d91] mb-4 max-w-3xl">
-            {group.length} runs of the same tasks, agent and attempt budget, differing
-            only in what served the model. Grouped by benchmark identity, so runs that
-            measured different things are never tabulated together.
-          </p>
+    <!-- Comparison, built from whichever runs are ticked below. -->
+    <div id="comparison" class="mb-10 hidden"></div>
 
-          {group.some((r) => r.example) && (
-            <div class="mb-4 rounded border border-amber-500/40 bg-amber-500/10 px-4 py-3 text-sm text-amber-200">
-              <strong class="font-semibold">This comparison contains illustrative data.</strong>
-              {' '}Columns marked <span class="font-mono text-xs">example</span> are invented to
-              show how the view renders. They are not measurements and must not be cited or
-              aggregated with real results.
-            </div>
-          )}
+    <p id="comparison-hint" class="mb-8 text-sm text-[#8a8d91]">
+      Tick <span class="text-[#e4e6eb]">compare</span> on two or more runs to put them
+      side by side. Up to four.
+    </p>
 
-          <div class="border border-[#3e4042] rounded-lg overflow-x-auto">
-            <table class="w-full text-sm">
-              <thead class="bg-[#242526] text-[#8a8d91] text-xs uppercase tracking-wide">
-                <tr>
-                  <th class="text-left font-medium px-4 py-3">Task</th>
-                  {group.map((r) => (
-                    <th
-                      class={`text-left font-medium px-4 py-3 ${r.example ? 'bg-amber-500/[0.06]' : ''}`}
-                      data-col={runId(r)}
-                    >
-                      <div class="text-[#e4e6eb] normal-case text-[13px]">
-                        {r.server.engine}
-                        {r.example && (
-                          <span class="ml-1.5 font-mono text-[10px] px-1.5 py-0.5 rounded bg-amber-500/20 text-amber-300 align-middle">
-                            example
-                          </span>
-                        )}
-                      </div>
-                      <div class="font-normal normal-case text-[11px] text-[#8a8d91]">
-                        {[r.server.backend, r.server.quant].filter(Boolean).join(' · ')}
-                      </div>
-                    </th>
-                  ))}
-                </tr>
-              </thead>
-              <tbody class="divide-y divide-[#3e4042]">
-                {tasks.map((name) => {
-                  const cells = group.map((r) => r.tasks.find((t) => t.task === name));
-                  const outcomes = new Set(cells.map((c) => (c ? c.passed : null)));
-                  const differs = outcomes.size > 1;
-                  return (
-                    <tr
-                      class={differs ? 'bg-amber-500/[0.04]' : ''}
-                      data-task={name}
-                      data-category={byTask.get(name)?.category ?? ''}
-                      data-difficulty={byTask.get(name)?.difficulty ?? ''}
-                      data-outcome={cells.filter(Boolean).map((c) => outcomeKey(c!)).join(' ')}
-                    >
-                      <td class="px-4 py-2.5 font-mono text-[13px] text-[#e4e6eb]">
-                        {name}
-                        {differs && <span class="ml-2 text-[11px] text-amber-400">differs</span>}
-                      </td>
-                      {cells.map((c, i) => (
-                        <td class="px-4 py-2.5" data-col={runId(group[i])}>
-                          {c === undefined ? (
-                            <span class="text-[#5a5d61] text-xs">not run</span>
-                          ) : (
-                            <span class="flex items-baseline gap-2">
-                              <span class={c.passed ? 'text-[#25c2a0]' : 'text-red-400'}>
-                                {c.passed ? 'pass' : failureMode(c)!.label}
-                              </span>
-                              <span class="text-[11px] text-[#8a8d91] tabular-nums">
-                                {fmtMin(c.duration_ms)}m
-                              </span>
-                            </span>
-                          )}
-                        </td>
-                      ))}
-                    </tr>
-                  );
-                })}
-              </tbody>
-              <tfoot class="bg-[#242526] border-t-2 border-[#3e4042]">
-                <tr>
-                  <td class="px-4 py-3 text-xs uppercase tracking-wide text-[#8a8d91]">Passed</td>
-                  {group.map((r) => (
-                    <td class="px-4 py-3" data-col={runId(r)}>
-                      <span class="text-[#25c2a0] font-bold">
-                        {r.aggregate.passed_tasks}/{r.aggregate.total_tasks}
-                      </span>
-                      <span class="ml-2 text-[11px] text-[#8a8d91]">
-                        {fmtHours(r.aggregate.total_duration_ms)}h
-                      </span>
-                    </td>
-                  ))}
-                </tr>
-              </tfoot>
-            </table>
-          </div>
-        </section>
-      );
-    })}
-
-    {runs.length === 1 && (
-      <div class="mb-14 rounded-lg border border-[#3e4042] bg-[#242526] px-5 py-4 text-sm text-[#8a8d91]">
-        Only one run is loaded, so there is nothing to compare against yet. Add another
-        result document under <code class="text-[#25c2a0]">src/data/agent-eval/runs/</code>
-        — a run of the same tier with a different
-        <code class="mx-1 text-[#25c2a0]">--engine</code> or
-        <code class="mr-1 text-[#25c2a0]">--backend</code>
-        — and a comparison table appears here automatically.
-      </div>
-    )}
 
     {runs.map((run) => {
       const agg = run.aggregate;
@@ -406,7 +282,15 @@ const toneClass: Record<string, string> = {
                 {' '}{new Date(run.generated_at).toISOString().slice(0, 10)}
               </div>
             </div>
-            <div class="ml-auto flex flex-wrap gap-2 text-[11px]">
+            <label
+              class="ml-auto flex items-center gap-2 px-2.5 py-1.5 rounded border border-[#3e4042] hover:border-[#25c2a0]/50 cursor-pointer transition-colors select-none"
+              title="Put this run side by side with others"
+            >
+              <input type="checkbox" class="compare accent-[#25c2a0] w-3.5 h-3.5" data-run={runId(run)} />
+              <span class="text-xs text-[#b0b3b8]">compare</span>
+            </label>
+
+            <div class="flex flex-wrap gap-2 text-[11px]">
               {run.example && (
                 <span class="px-2 py-1 rounded border border-amber-500/40 bg-amber-500/15 text-amber-300 font-medium">
                   illustrative — not a measurement
@@ -620,10 +504,159 @@ const toneClass: Record<string, string> = {
     </section>
   </main>
 
+  <script type="application/json" id="runs-data" set:html={JSON.stringify(
+    runs.map((r) => ({
+      id: runId(r),
+      engine: r.server.engine,
+      backend: r.server.backend,
+      quant: r.server.quant,
+      model: r.identity.model_name ?? r.identity.model,
+      example: r.example === true,
+      benchmark: r.identity.benchmark_hash,
+      agent: `${r.identity.agent} ${r.identity.agent_version}`,
+      passed: r.aggregate.passed_tasks,
+      total: r.aggregate.total_tasks,
+      duration_ms: r.aggregate.total_duration_ms,
+      tasks: r.tasks.map((t) => ({
+        task: t.task,
+        passed: t.passed,
+        duration_ms: t.duration_ms,
+        outcome: outcomeKey(t),
+        label: t.passed ? 'pass' : failureMode(t)!.label,
+      })),
+    }))
+  )} />
+
   <Footer />
 </Layout>
 
 <script>
+  /**
+   * Comparison, built from whichever runs are ticked.
+   *
+   * Explicit rather than automatic: which runs are worth putting side by side
+   * is a judgement the reader makes, not one the page can infer from metadata.
+   * Comparability is still checked and reported, because a table implies the
+   * numbers answer the same question whether or not they do.
+   */
+  const MAX_COMPARE = 4;
+
+  type CmpTask = { task: string; passed: boolean; duration_ms: number; outcome: string; label: string };
+  type CmpRun = {
+    id: string; engine: string; backend: string; quant: string | null; model: string;
+    example: boolean; benchmark: string; agent: string;
+    passed: number; total: number; duration_ms: number; tasks: CmpTask[];
+  };
+
+  const RUNS: CmpRun[] = JSON.parse(
+    document.getElementById('runs-data')?.textContent ?? '[]'
+  );
+
+  const boxesFor = () => [...document.querySelectorAll<HTMLInputElement>('input.compare')];
+  const esc = (v: string) => v.replace(/[&<>"]/g, (c) =>
+    ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]!));
+
+  function renderComparison() {
+    const chosen = boxesFor().filter((b) => b.checked).map((b) => b.dataset.run!);
+    const panel = document.getElementById('comparison')!;
+    const hint = document.getElementById('comparison-hint')!;
+
+    // Once four are ticked, the rest are unavailable rather than silently ignored.
+    const atLimit = chosen.length >= MAX_COMPARE;
+    boxesFor().forEach((b) => {
+      b.disabled = atLimit && !b.checked;
+      b.closest('label')?.classList.toggle('opacity-40', b.disabled);
+    });
+
+    if (chosen.length < 2) {
+      panel.classList.add('hidden');
+      panel.innerHTML = '';
+      hint.classList.remove('hidden');
+      hint.textContent = chosen.length === 1
+        ? 'Tick compare on at least one more run to put them side by side. Up to four.'
+        : 'Tick compare on two or more runs to put them side by side. Up to four.';
+      return;
+    }
+
+    hint.classList.add('hidden');
+    const picked = chosen.map((id) => RUNS.find((r) => r.id === id)!).filter(Boolean);
+
+    const problems: string[] = [];
+    if (new Set(picked.map((r) => r.benchmark)).size > 1)
+      problems.push('different benchmark identity: the tasks, tier or agent configuration differ between these runs');
+    if (new Set(picked.map((r) => r.agent)).size > 1)
+      problems.push('different agent revisions');
+    if (picked.some((r) => r.example))
+      problems.push('one or more columns are illustrative, not measurements');
+
+    const names = [...new Set(picked.flatMap((r) => r.tasks.map((t) => t.task)))].sort();
+
+    const head = picked.map((r) => `
+      <th class="text-left font-medium px-4 py-3 ${r.example ? 'bg-amber-500/[0.06]' : ''}">
+        <div class="text-[#e4e6eb] normal-case text-[13px]">${esc(r.engine)}${
+          r.example ? ' <span class="ml-1 font-mono text-[10px] px-1.5 py-0.5 rounded bg-amber-500/20 text-amber-300">example</span>' : ''
+        }</div>
+        <div class="font-normal normal-case text-[11px] text-[#8a8d91]">${
+          esc([r.backend, r.quant].filter(Boolean).join(' · '))
+        }</div>
+      </th>`).join('');
+
+    const body = names.map((name) => {
+      const cells = picked.map((r) => r.tasks.find((t) => t.task === name));
+      const differs = new Set(cells.map((c) => (c ? c.passed : null))).size > 1;
+      return `
+        <tr class="${differs ? 'bg-amber-500/[0.04]' : ''}">
+          <td class="px-4 py-2.5 font-mono text-[13px] text-[#e4e6eb]">${esc(name)}${
+            differs ? '<span class="ml-2 text-[11px] text-amber-400">differs</span>' : ''
+          }</td>
+          ${cells.map((c) => c
+            ? `<td class="px-4 py-2.5"><span class="flex items-baseline gap-2">
+                 <span class="${c.passed ? 'text-[#25c2a0]' : 'text-red-400'}">${esc(c.label)}</span>
+                 <span class="text-[11px] text-[#8a8d91] tabular-nums">${(c.duration_ms / 60000).toFixed(1)}m</span>
+               </span></td>`
+            : '<td class="px-4 py-2.5 text-[#5a5d61] text-xs">not run</td>').join('')}
+        </tr>`;
+    }).join('');
+
+    const foot = picked.map((r) => `
+      <td class="px-4 py-3">
+        <span class="text-[#25c2a0] font-bold">${r.passed}/${r.total}</span>
+        <span class="ml-2 text-[11px] text-[#8a8d91]">${(r.duration_ms / 3600000).toFixed(2)}h</span>
+      </td>`).join('');
+
+    panel.innerHTML = `
+      <div class="flex items-center gap-3 mb-3">
+        <h2 class="text-xl font-bold text-white">Comparison</h2>
+        <span class="text-xs text-[#8a8d91]">${picked.length} runs</span>
+        <button id="comparison-clear" class="ml-auto text-[11px] text-[#8a8d91] hover:text-[#25c2a0]">clear</button>
+      </div>
+      ${problems.length ? `
+        <div class="mb-4 rounded border border-amber-500/40 bg-amber-500/10 px-4 py-3 text-sm text-amber-200">
+          <strong class="font-semibold">These runs are not directly comparable.</strong>
+          <ul class="mt-1 list-disc pl-5 text-[13px]">${problems.map((p) => `<li>${esc(p)}</li>`).join('')}</ul>
+        </div>` : ''}
+      <div class="border border-[#3e4042] rounded-lg overflow-x-auto">
+        <table class="w-full text-sm">
+          <thead class="bg-[#242526] text-[#8a8d91] text-xs uppercase tracking-wide">
+            <tr><th class="text-left font-medium px-4 py-3">Task</th>${head}</tr>
+          </thead>
+          <tbody class="divide-y divide-[#3e4042]">${body}</tbody>
+          <tfoot class="bg-[#242526] border-t-2 border-[#3e4042]">
+            <tr><td class="px-4 py-3 text-xs uppercase tracking-wide text-[#8a8d91]">Passed</td>${foot}</tr>
+          </tfoot>
+        </table>
+      </div>`;
+    panel.classList.remove('hidden');
+
+    document.getElementById('comparison-clear')?.addEventListener('click', () => {
+      boxesFor().forEach((b) => (b.checked = false));
+      renderComparison();
+    });
+  }
+
+  boxesFor().forEach((b) => b.addEventListener('change', renderComparison));
+  renderComparison();
+
   /**
    * Faceted filtering.
    *
@@ -662,15 +695,10 @@ const toneClass: Record<string, string> = {
     const any = Object.keys(sel).length > 0;
     document.getElementById('facet-clear')?.classList.toggle('hidden', !any);
 
-    // Runs, and their columns in the comparison table.
-    const hiddenRuns = new Set<string>();
+    // Runs. The comparison is driven by explicit ticks, not by the facets, so
+    // a filtered-out run keeps its place in a comparison already built.
     document.querySelectorAll<HTMLElement>('section[data-run]').forEach((section) => {
-      const show = matches(section, RUN_KEYS, sel);
-      section.classList.toggle('hidden', !show);
-      if (!show) hiddenRuns.add(section.dataset.run!);
-    });
-    document.querySelectorAll<HTMLElement>('[data-col]').forEach((cell) => {
-      cell.classList.toggle('hidden', hiddenRuns.has(cell.dataset.col!));
+      section.classList.toggle('hidden', !matches(section, RUN_KEYS, sel));
     });
 
     // Task rows, in both the comparison table and the per-run tables.
