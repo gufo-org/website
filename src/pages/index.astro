@@ -129,7 +129,7 @@ import ModelMatrix from '../components/ModelMatrix.astro';
       </div>
     </section>
 
-    <!-- Toolboxes & Container UX Section -->
+    <!-- OCI Images & Container UX Section -->
     <section class="py-16 border-t border-[#3e4042] bg-[#1b1b1d]">
       <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-8">
         <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
@@ -137,16 +137,16 @@ import ModelMatrix from '../components/ModelMatrix.astro';
             <div class="inline-flex items-center gap-1.5 text-xs font-mono px-2 py-0.5 rounded bg-sky-500/10 text-sky-400 border border-sky-500/20 mb-2">
               <span>📦 Companion Ecosystem</span>
             </div>
-            <h2 class="text-2xl font-bold text-white">Container Toolboxes &amp; Seamless UX</h2>
+            <h2 class="text-2xl font-bold text-white">Focused Docker &amp; Podman Images</h2>
             <p class="text-sm text-slate-400 max-w-2xl mt-1">
-              Use gufo and its coding-agent evaluator on Fedora, Ubuntu, Arch, or SteamOS using Docker, Podman, Fedora Toolbx, and Distrobox with pre-configured hardware passthroughs.
+              Reproducible Nix-built images for Gufo and its coding-agent evaluator. They run as a dedicated non-root user and contain no sudo or PAM stack.
             </p>
           </div>
           <a
             href="/docs#toolboxes"
             class="px-4 py-2 rounded text-xs font-bold bg-[#242526] hover:bg-[#2e3033] text-slate-200 border border-[#3e4042] transition-colors whitespace-nowrap"
           >
-            Toolbox Setup Guide →
+            Container Run Guide →
           </a>
         </div>
 
@@ -162,9 +162,8 @@ import ModelMatrix from '../components/ModelMatrix.astro';
             <div class="docusaurus-code mt-2">
               <div class="docusaurus-code-header"><span>Quick Start</span><span>sh</span></div>
               <div class="p-3 text-xs font-mono text-slate-200 space-y-1">
-                <div class="text-slate-500"># Create &amp; enter runtime toolbox:</div>
-                <div class="text-[#25c2a0]">./refresh-toolboxes.sh gufo-runtime</div>
-                <div class="text-[#25c2a0]">toolbox enter gufo-runtime</div>
+                <div class="text-slate-500"># Pull the runtime image:</div>
+                <div class="text-[#25c2a0] break-all">podman pull ghcr.io/gufo-org/toolboxes/gufo-runtime:latest</div>
               </div>
             </div>
           </div>
@@ -180,9 +179,8 @@ import ModelMatrix from '../components/ModelMatrix.astro';
             <div class="docusaurus-code mt-2">
               <div class="docusaurus-code-header"><span>Quick Start</span><span>sh</span></div>
               <div class="p-3 text-xs font-mono text-slate-200 space-y-1">
-                <div class="text-slate-500"># Create &amp; enter dev toolbox:</div>
-                <div class="text-[#25c2a0]">./refresh-toolboxes.sh gufo-dev</div>
-                <div class="text-[#25c2a0]">distrobox enter gufo-dev</div>
+                <div class="text-slate-500"># Pull the development image:</div>
+                <div class="text-[#25c2a0] break-all">podman pull ghcr.io/gufo-org/toolboxes/gufo-dev:latest</div>
               </div>
             </div>
           </div>
@@ -198,8 +196,7 @@ import ModelMatrix from '../components/ModelMatrix.astro';
             <div class="docusaurus-code mt-2">
               <div class="docusaurus-code-header"><span>Quick Start</span><span>sh</span></div>
               <div class="p-3 text-xs font-mono text-slate-200 space-y-1">
-                <div class="text-[#25c2a0]">./refresh-toolboxes.sh eval-agent</div>
-                <div class="text-[#25c2a0] break-all">eval-agent run sparql-university --base-url http://server:8080/v1</div>
+                <div class="text-[#25c2a0] break-all">podman run --rm --userns=keep-id:uid=1000,gid=1000 --network host --security-opt seccomp=unconfined ghcr.io/gufo-org/toolboxes/eval-agent:latest eval-agent run sparql-university</div>
               </div>
             </div>
           </div>
@@ -210,13 +207,12 @@ import ModelMatrix from '../components/ModelMatrix.astro';
               <span class="text-[10px] px-2 py-0.5 rounded bg-amber-500/10 text-amber-400 border border-amber-500/20 font-mono">All in One</span>
             </div>
             <p class="text-xs text-slate-300 leading-relaxed">
-              Gufo and eval-agent in one toolbox. The included launcher starts the local model server, waits for it, runs the task, and cleans up automatically.
+              Gufo and eval-agent in one image. The included launcher starts the local model server, waits for it, runs the task, and cleans up automatically.
             </p>
             <div class="docusaurus-code mt-2">
               <div class="docusaurus-code-header"><span>Quick Start</span><span>sh</span></div>
               <div class="p-3 text-xs font-mono text-slate-200 space-y-1">
-                <div class="text-[#25c2a0]">./refresh-toolboxes.sh gufo-eval-agent</div>
-                <div class="text-[#25c2a0] break-all">eval-agent-with-gufo --model /models/model.gguf -- run sparql-university</div>
+                <div class="text-[#25c2a0] break-all">podman pull ghcr.io/gufo-org/toolboxes/gufo-eval-agent:latest</div>
               </div>
             </div>
           </div>

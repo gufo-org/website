@@ -52,7 +52,7 @@ const pillars = [
     id: 'nix-and-ux',
     number: '05',
     title: 'Hermetic Reproducibility & Accessible UX',
-    subtitle: 'Nix-first development integrity paired with effortless container toolboxes',
+    subtitle: 'Nix-first development integrity paired with focused OCI images',
     content: [
       'Software rot and driver drift are rampant in GPU development. In gufo, direct host builds are unsupported; all builds, test presets, and PR validation gates are evaluated hermetically via Nix Flakes.',
       'However, Nix purity for developers does not mean friction for users. Through the companion gufo-org/toolboxes project, four pre-built OCI images cover serving (gufo-runtime), development (gufo-dev), evaluation against an endpoint you choose (eval-agent), and a self-contained Gufo-plus-evaluator workflow (gufo-eval-agent).',
@@ -149,7 +149,7 @@ const pillars = [
             <li><b>Single Platform:</b> AMD Strix Halo (<code class="text-[#25c2a0] font-mono">gfx1151</code> + <code class="text-[#25c2a0] font-mono">XDNA2</code>) on Linux x86-64.</li>
             <li><b>Model Curation:</b> Only the best open weights; each model owns its isolated compute graph.</li>
             <li><b>Empirical Rooflines:</b> Verify against measured silicon ceilings, celebrate evidence-based rejection.</li>
-            <li><b>Nix Purity + Container UX:</b> 100% reproducible derivations with Docker/Podman/Toolbx accessibility.</li>
+            <li><b>Nix Purity + Container UX:</b> reproducible, non-root Docker and Podman images without an in-container privilege stack.</li>
           </ul>
         </div>
       </main>

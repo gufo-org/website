@@ -92,7 +92,7 @@ import Footer from '../components/Footer.astro';
             </li>
             <li>
               <a href="#toolboxes" class="block px-2.5 py-1.5 rounded text-slate-300 hover:text-[#25c2a0] hover:bg-[#242526] transition-colors">
-                Toolboxes (Docker / Podman)
+                OCI Images (Docker / Podman)
               </a>
             </li>
             <li>
@@ -481,11 +481,11 @@ import Footer from '../components/Footer.astro';
           </div>
         </section>
 
-        <!-- Section 11: Toolboxes & Container UX -->
+        <!-- Section 11: OCI Images -->
         <section id="toolboxes" class="space-y-4 border-b border-[#3e4042]/50 pb-8">
-          <h2 class="text-2xl font-bold text-white tracking-tight">Container Toolboxes (Docker / Podman / Toolbx)</h2>
+          <h2 class="text-2xl font-bold text-white tracking-tight">OCI Images (Docker / Podman)</h2>
           <p class="text-sm text-slate-300 leading-relaxed">
-            The companion <a href="https://github.com/gufo-org/toolboxes" target="_blank" rel="noopener noreferrer" class="text-[#25c2a0] font-bold hover:underline">gufo-org/toolboxes</a> repository provides reproducible OCI container images built via Nix, bringing zero-setup development, inference, and coding-agent evaluation to Fedora (Toolbx), Ubuntu/Arch (Distrobox), and Docker/Podman environments.
+            The companion <a href="https://github.com/gufo-org/toolboxes" target="_blank" rel="noopener noreferrer" class="text-[#25c2a0] font-bold hover:underline">gufo-org/toolboxes</a> repository publishes reproducible Nix-built images for Docker and Podman. Toolbx and Distrobox are intentionally unsupported, which keeps the images free of sudo, PAM, and user-injection scaffolding.
           </p>
 
           <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -535,26 +535,22 @@ import Footer from '../components/Footer.astro';
               <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
               </svg>
-              <span>Automated Hardware Passthrough</span>
+              <span>Dedicated non-root user</span>
             </div>
             <p class="text-xs text-slate-300 leading-relaxed">
-              Use the provided <code class="text-[#25c2a0] font-mono">./refresh-toolboxes.sh</code> script in the toolboxes repository. It automatically configures Strix Halo device nodes (<code class="text-slate-200">/dev/kfd</code>, <code class="text-slate-200">/dev/dri</code>, <code class="text-slate-200">/dev/accel*</code>) and group permissions.
+              Containers run as <code class="text-[#25c2a0] font-mono">gufo</code> (UID/GID 1000:1000), not root. Rootless Podman maps the caller to that account with <code class="text-slate-200">--userns=keep-id:uid=1000,gid=1000</code>; <code class="text-slate-200">--group-add keep-groups</code> preserves GPU group access with the crun runtime. Docker users instead pass the numeric GPU GIDs and make writable mounts accessible to UID 1000. Evaluation runs add <code class="text-slate-200">seccomp=unconfined</code> so Bubblewrap can create its nested sandbox.
             </p>
           </div>
 
           <div class="docusaurus-code">
             <div class="docusaurus-code-header">
-              <span>Quickstart with refresh-toolboxes.sh</span>
+              <span>Run Gufo with GPU access</span>
               <span>sh</span>
             </div>
             <div class="p-4 text-xs font-mono text-slate-200 space-y-2">
-              <div><span class="text-slate-500"># 1. Clone toolboxes repo</span></div>
-              <div class="text-emerald-400">git clone https://github.com/gufo-org/toolboxes.git && cd toolboxes</div>
-              <div class="text-slate-500 pt-2"># 2. Setup runtime container with device passthroughs</div>
-              <div class="text-emerald-400">./refresh-toolboxes.sh gufo-runtime</div>
-              <div class="text-slate-500 pt-2"># 3. Enter container on Fedora (toolbox) or Ubuntu/Arch (distrobox)</div>
-              <div class="text-emerald-400">toolbox enter gufo-runtime      # Fedora</div>
-              <div class="text-emerald-400">distrobox enter gufo-runtime    # Ubuntu / Arch</div>
+              <div class="text-emerald-400 break-all">podman run --rm -it --userns=keep-id:uid=1000,gid=1000 \\</div>
+              <div class="text-emerald-400 break-all">&nbsp;&nbsp;--device /dev/kfd --device /dev/dri --group-add keep-groups \\</div>
+              <div class="text-emerald-400 break-all">&nbsp;&nbsp;--ulimit memlock=-1 ghcr.io/gufo-org/toolboxes/gufo-runtime:latest gufo diagnose</div>
             </div>
           </div>
 
@@ -565,9 +561,11 @@ import Footer from '../components/Footer.astro';
                 <span>sh</span>
               </div>
               <div class="p-4 text-xs font-mono text-slate-200 space-y-2">
-                <div class="text-emerald-400">./refresh-toolboxes.sh eval-agent</div>
-                <div class="text-emerald-400">toolbox enter eval-agent</div>
-                <div class="text-emerald-400 break-all">eval-agent run sparql-university --base-url http://192.168.1.8:8080/v1</div>
+                <div class="text-emerald-400 break-all">podman run --rm -it --userns=keep-id:uid=1000,gid=1000 \\</div>
+                <div class="text-emerald-400 break-all">&nbsp;&nbsp;--network host \\</div>
+                <div class="text-emerald-400 break-all">&nbsp;&nbsp;--security-opt seccomp=unconfined \\</div>
+                <div class="text-emerald-400 break-all">&nbsp;&nbsp;ghcr.io/gufo-org/toolboxes/eval-agent:latest \\</div>
+                <div class="text-emerald-400 break-all">&nbsp;&nbsp;eval-agent run sparql-university --base-url http://127.0.0.1:8080/v1</div>
               </div>
             </div>
 
@@ -577,9 +575,12 @@ import Footer from '../components/Footer.astro';
                 <span>sh</span>
               </div>
               <div class="p-4 text-xs font-mono text-slate-200 space-y-2">
-                <div class="text-emerald-400">./refresh-toolboxes.sh gufo-eval-agent</div>
-                <div class="text-emerald-400">toolbox enter gufo-eval-agent</div>
-                <div class="text-emerald-400 break-all">eval-agent-with-gufo --model /models/model.gguf -- run sparql-university</div>
+                <div class="text-emerald-400 break-all">podman run --rm -it --userns=keep-id:uid=1000,gid=1000 \\</div>
+                <div class="text-emerald-400 break-all">&nbsp;&nbsp;--device /dev/kfd --device /dev/dri --group-add keep-groups \\</div>
+                <div class="text-emerald-400 break-all">&nbsp;&nbsp;--ulimit memlock=-1 --security-opt seccomp=unconfined \\</div>
+                <div class="text-emerald-400 break-all">&nbsp;&nbsp;-v /models:/models:ro \\</div>
+                <div class="text-emerald-400 break-all">&nbsp;&nbsp;ghcr.io/gufo-org/toolboxes/gufo-eval-agent:latest \\</div>
+                <div class="text-emerald-400 break-all">&nbsp;&nbsp;eval-agent-with-gufo --model /models/model.gguf -- run sparql-university</div>
               </div>
             </div>
           </div>
