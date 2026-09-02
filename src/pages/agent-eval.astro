@@ -30,6 +30,14 @@ type TaskResult = {
   agent_timed_out: boolean;
   agent_exit_code: number;
   endpoint_errors: number;
+  throughput?: {
+    basis: string;
+    prefill_ms: number;
+    decode_ms: number;
+    turns_timed: number;
+    prefill_tokens_per_second: number;
+    decode_tokens_per_second: number;
+  } | null;
   verifier_crashed: boolean;
   verifier_timed_out: boolean;
   workspace_hash: string | null;
@@ -212,6 +220,14 @@ const toneClass: Record<string, string> = {
         different sandbox, so these numbers are <strong class="text-[#b0b3b8]">not</strong> an
         official Terminal-Bench score.
       </p>
+      <div class="mt-5 flex flex-wrap gap-3 text-xs">
+        <a href="/docs#toolboxes" class="rounded border border-violet-500/30 bg-violet-500/10 px-3 py-2 text-violet-300 hover:border-violet-400/60 transition-colors">
+          <code>eval-agent</code> toolbox · connect your endpoint
+        </a>
+        <a href="/docs#toolboxes" class="rounded border border-amber-500/30 bg-amber-500/10 px-3 py-2 text-amber-300 hover:border-amber-400/60 transition-colors">
+          <code>gufo-eval-agent</code> toolbox · local server included
+        </a>
+      </div>
     </header>
 
     <div class="lg:grid lg:grid-cols-[220px_minmax(0,1fr)] lg:gap-8">

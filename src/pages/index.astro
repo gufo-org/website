@@ -139,7 +139,7 @@ import ModelMatrix from '../components/ModelMatrix.astro';
             </div>
             <h2 class="text-2xl font-bold text-white">Container Toolboxes &amp; Seamless UX</h2>
             <p class="text-sm text-slate-400 max-w-2xl mt-1">
-              Use gufo effortlessly on Fedora, Ubuntu, Arch, or SteamOS using Docker, Podman, Fedora Toolbx, and Distrobox with pre-configured hardware passthroughs.
+              Use gufo and its coding-agent evaluator on Fedora, Ubuntu, Arch, or SteamOS using Docker, Podman, Fedora Toolbx, and Distrobox with pre-configured hardware passthroughs.
             </p>
           </div>
           <a
@@ -183,6 +183,40 @@ import ModelMatrix from '../components/ModelMatrix.astro';
                 <div class="text-slate-500"># Create &amp; enter dev toolbox:</div>
                 <div class="text-[#25c2a0]">./refresh-toolboxes.sh gufo-dev</div>
                 <div class="text-[#25c2a0]">distrobox enter gufo-dev</div>
+              </div>
+            </div>
+          </div>
+
+          <div class="p-6 rounded-lg bg-[#242526] border border-[#3e4042] space-y-3">
+            <div class="flex items-center justify-between">
+              <h3 class="font-bold text-white font-mono text-sm">eval-agent</h3>
+              <span class="text-[10px] px-2 py-0.5 rounded bg-violet-500/10 text-violet-400 border border-violet-500/20 font-mono">External Endpoint</span>
+            </div>
+            <p class="text-xs text-slate-300 leading-relaxed">
+              A pinned coding-agent evaluation environment. Point it at any reachable OpenAI-compatible server and keep the benchmark harness reproducible.
+            </p>
+            <div class="docusaurus-code mt-2">
+              <div class="docusaurus-code-header"><span>Quick Start</span><span>sh</span></div>
+              <div class="p-3 text-xs font-mono text-slate-200 space-y-1">
+                <div class="text-[#25c2a0]">./refresh-toolboxes.sh eval-agent</div>
+                <div class="text-[#25c2a0] break-all">eval-agent run sparql-university --base-url http://server:8080/v1</div>
+              </div>
+            </div>
+          </div>
+
+          <div class="p-6 rounded-lg bg-[#242526] border border-[#3e4042] space-y-3">
+            <div class="flex items-center justify-between">
+              <h3 class="font-bold text-white font-mono text-sm">gufo-eval-agent</h3>
+              <span class="text-[10px] px-2 py-0.5 rounded bg-amber-500/10 text-amber-400 border border-amber-500/20 font-mono">All in One</span>
+            </div>
+            <p class="text-xs text-slate-300 leading-relaxed">
+              Gufo and eval-agent in one toolbox. The included launcher starts the local model server, waits for it, runs the task, and cleans up automatically.
+            </p>
+            <div class="docusaurus-code mt-2">
+              <div class="docusaurus-code-header"><span>Quick Start</span><span>sh</span></div>
+              <div class="p-3 text-xs font-mono text-slate-200 space-y-1">
+                <div class="text-[#25c2a0]">./refresh-toolboxes.sh gufo-eval-agent</div>
+                <div class="text-[#25c2a0] break-all">eval-agent-with-gufo --model /models/model.gguf -- run sparql-university</div>
               </div>
             </div>
           </div>

@@ -485,7 +485,7 @@ import Footer from '../components/Footer.astro';
         <section id="toolboxes" class="space-y-4 border-b border-[#3e4042]/50 pb-8">
           <h2 class="text-2xl font-bold text-white tracking-tight">Container Toolboxes (Docker / Podman / Toolbx)</h2>
           <p class="text-sm text-slate-300 leading-relaxed">
-            The companion <a href="https://github.com/gufo-org/toolboxes" target="_blank" rel="noopener noreferrer" class="text-[#25c2a0] font-bold hover:underline">gufo-org/toolboxes</a> repository provides reproducible OCI container images built via Nix, bringing zero-setup development and inference to Fedora (Toolbx), Ubuntu/Arch (Distrobox), and Docker/Podman environments.
+            The companion <a href="https://github.com/gufo-org/toolboxes" target="_blank" rel="noopener noreferrer" class="text-[#25c2a0] font-bold hover:underline">gufo-org/toolboxes</a> repository provides reproducible OCI container images built via Nix, bringing zero-setup development, inference, and coding-agent evaluation to Fedora (Toolbx), Ubuntu/Arch (Distrobox), and Docker/Podman environments.
           </p>
 
           <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -506,6 +506,26 @@ import Footer from '../components/Footer.astro';
               </p>
               <div class="bg-[#1b1b1d] p-2 rounded text-[11px] font-mono text-cyan-400">
                 ghcr.io/gufo-org/toolboxes/gufo-dev:latest
+              </div>
+            </div>
+
+            <div class="p-4 rounded-lg bg-[#242526] border border-[#3e4042] space-y-2">
+              <h3 class="font-bold text-white text-xs font-mono uppercase">eval-agent</h3>
+              <p class="text-xs text-slate-400">
+                Reproducible coding-agent evaluator for an OpenAI-compatible endpoint you select with <code class="text-slate-300">--base-url</code>.
+              </p>
+              <div class="bg-[#1b1b1d] p-2 rounded text-[11px] font-mono text-violet-400">
+                ghcr.io/gufo-org/toolboxes/eval-agent:latest
+              </div>
+            </div>
+
+            <div class="p-4 rounded-lg bg-[#242526] border border-[#3e4042] space-y-2">
+              <h3 class="font-bold text-white text-xs font-mono uppercase">gufo-eval-agent</h3>
+              <p class="text-xs text-slate-400">
+                Gufo and eval-agent together. Its launcher starts a local server, waits for readiness, runs the evaluation, and stops the server.
+              </p>
+              <div class="bg-[#1b1b1d] p-2 rounded text-[11px] font-mono text-amber-400">
+                ghcr.io/gufo-org/toolboxes/gufo-eval-agent:latest
               </div>
             </div>
           </div>
@@ -535,6 +555,32 @@ import Footer from '../components/Footer.astro';
               <div class="text-slate-500 pt-2"># 3. Enter container on Fedora (toolbox) or Ubuntu/Arch (distrobox)</div>
               <div class="text-emerald-400">toolbox enter gufo-runtime      # Fedora</div>
               <div class="text-emerald-400">distrobox enter gufo-runtime    # Ubuntu / Arch</div>
+            </div>
+          </div>
+
+          <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
+            <div class="docusaurus-code">
+              <div class="docusaurus-code-header">
+                <span>Evaluate your endpoint</span>
+                <span>sh</span>
+              </div>
+              <div class="p-4 text-xs font-mono text-slate-200 space-y-2">
+                <div class="text-emerald-400">./refresh-toolboxes.sh eval-agent</div>
+                <div class="text-emerald-400">toolbox enter eval-agent</div>
+                <div class="text-emerald-400 break-all">eval-agent run sparql-university --base-url http://192.168.1.8:8080/v1</div>
+              </div>
+            </div>
+
+            <div class="docusaurus-code">
+              <div class="docusaurus-code-header">
+                <span>Serve locally, then evaluate</span>
+                <span>sh</span>
+              </div>
+              <div class="p-4 text-xs font-mono text-slate-200 space-y-2">
+                <div class="text-emerald-400">./refresh-toolboxes.sh gufo-eval-agent</div>
+                <div class="text-emerald-400">toolbox enter gufo-eval-agent</div>
+                <div class="text-emerald-400 break-all">eval-agent-with-gufo --model /models/model.gguf -- run sparql-university</div>
+              </div>
             </div>
           </div>
         </section>
