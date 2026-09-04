@@ -21,6 +21,12 @@
   --ifm-code-background: #282a36;
 }
 
+/* Reserve the scrollbar gutter so filtering a page down to a shorter list
+   does not drop the scrollbar and widen the centred layout under it. */
+html {
+  scrollbar-gutter: stable;
+}
+
 body {
   background-color: var(--ifm-background-color);
   color: var(--ifm-text-color);
