@@ -3,50 +3,98 @@ import Layout from '../layouts/Layout.astro';
 import Navbar from '../components/Navbar.astro';
 import Footer from '../components/Footer.astro';
 import ModelMatrix from '../components/ModelMatrix.astro';
+
+const features = [
+  {
+    icon: '🎯',
+    accent: 'text-[#25c2a0] bg-[#25c2a0]/10',
+    title: 'One target, optimized vertically',
+    body:
+      'Linux x86-64 on Ryzen AI MAX+ 395 with Radeon 8060S (gfx1151) is the only production target. Wave32 HIP kernels are compiled for that GPU and nothing else, so there is no lowest-common-denominator abstraction to pay for.',
+  },
+  {
+    icon: '🧰',
+    accent: 'text-[#3578e5] bg-[#3578e5]/10',
+    title: 'Batteries included',
+    body:
+      'Seven models ship in one executable: dense and MoE text with images, speech recognition, speech synthesis and voice cloning, image generation and editing, and text to audiovisual output.',
+  },
+  {
+    icon: '⚡',
+    accent: 'text-[#00d68f] bg-[#00d68f]/10',
+    title: 'Speculative decoding that keeps output',
+    body:
+      'DFlash2 for Qwen3.8 27B, MTP for Flash-Next and DSpark for DeepSeek V4 Flash. Greedy speculation must reproduce autoregressive output; sampled speculation preserves the target distribution.',
+  },
+  {
+    icon: '🔁',
+    accent: 'text-cyan-400 bg-cyan-500/10',
+    title: 'Concurrency as a first-class workload',
+    body:
+      'A bounded session pool, request batching, cancellation propagated from socket closure, and RAM plus optional on-disk conversation caching. Concurrent throughput is measured, not assumed.',
+  },
+];
+
+const images = [
+  {
+    name: 'gufo-runtime',
+    tag: 'Inference and serving',
+    tagClass: 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20',
+    body: 'Production container for running inference, benchmarks and the HTTP server.',
+    command: 'podman pull ghcr.io/gufo-org/toolboxes/gufo-runtime:latest',
+  },
+  {
+    name: 'gufo-dev',
+    tag: 'Development and profiling',
+    tagClass: 'bg-cyan-500/10 text-cyan-400 border-cyan-500/20',
+    body: 'Interactive development environment with the HIP compiler, profilers and build tooling.',
+    command: 'podman pull ghcr.io/gufo-org/toolboxes/gufo-dev:latest',
+  },
+];
 ---
 
-<Layout title="gufo — Local LLM Inference Tailored for AMD Strix Halo">
+<Layout title="gufo — the Strix Halo inference engine">
   <Navbar currentPath="/" />
 
   <main class="flex-1">
-    <!-- Docusaurus Hero Section -->
+    <!-- Hero -->
     <header class="bg-[#1b1b1d] border-b border-[#3e4042] py-16 sm:py-24 text-center">
       <div class="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 space-y-6">
-        <!-- Logo -->
         <div class="flex justify-center">
           <img
             src="/images/gufo-logo.jpg"
-            alt="gufo Logo"
+            alt="gufo logo"
             class="w-28 h-28 sm:w-36 sm:h-36 rounded-2xl shadow-xl border-2 border-[#3e4042] object-cover"
           />
         </div>
 
-        <!-- Tagline with Docusaurus-style bold highlights -->
         <h1 class="text-3xl sm:text-5xl font-extrabold text-white tracking-tight leading-tight max-w-4xl mx-auto">
-          Local LLM inference <span class="text-[#25c2a0]">tailored</span> for <span class="text-[#25c2a0]">AMD Strix Halo</span>
+          The <span class="text-[#25c2a0]">Strix Halo</span> inference engine
         </h1>
 
-        <!-- Subtitle -->
-        <p class="text-base sm:text-lg text-slate-300 max-w-2xl mx-auto leading-relaxed">
-          gufo is a high-performance, native C++20 inference engine supporting both <b>ROCm/HIP</b> and direct <b>HRX (Hyperloom)</b> execution routes on AMD RDNA 3.5 (<code class="text-[#25c2a0] font-mono">gfx1151</code>), XDNA2 NPU, and 128 GiB unified memory systems.
+        <p class="text-base sm:text-lg text-slate-300 max-w-3xl mx-auto leading-relaxed">
+          Gufo is a vertical local inference engine built and optimized for AMD Strix Halo hardware: Ryzen AI MAX+ 395
+          systems with Radeon 8060S (<code class="text-[#25c2a0] font-mono">gfx1151</code>) and up to 128 GiB of unified
+          memory. Text, images, audio and video in one C++20 executable with an OpenAI-compatible server.
         </p>
 
-        <!-- CTA Buttons -->
+        <p class="text-sm text-slate-400">Contributions are welcome — the project is built with the Strix Halo community.</p>
+
         <div class="flex flex-wrap items-center justify-center gap-4 pt-2">
           <a
             href="/docs"
             class="px-6 py-2.5 rounded font-bold text-sm bg-[#25c2a0] hover:bg-[#21af90] text-slate-950 transition-colors shadow-sm"
           >
-            Get Started
+            Get started
           </a>
           <a
             href="/benchmarks"
             class="px-6 py-2.5 rounded font-bold text-sm bg-[#242526] hover:bg-[#2f3133] text-white border border-[#3e4042] transition-colors"
           >
-            View Benchmarks
+            View benchmarks
           </a>
           <a
-            href="https://github.com"
+            href="https://github.com/gufo-org/gufo"
             target="_blank"
             rel="noopener noreferrer"
             class="inline-flex items-center gap-2 px-4 py-2.5 rounded font-semibold text-xs bg-[#242526] hover:bg-[#2f3133] text-slate-200 border border-[#3e4042] transition-colors"
@@ -54,74 +102,84 @@ import ModelMatrix from '../components/ModelMatrix.astro';
             <svg class="w-4 h-4 fill-current" viewBox="0 0 24 24">
               <path d="M12 0C5.37 0 0 5.37 0 12c0 5.31 3.435 9.795 8.205 11.385.6.105.825-.255.825-.57 0-.285-.015-1.23-.015-2.235-3.015.555-3.795-.735-4.035-1.41-.135-.345-.72-1.41-1.23-1.695-.42-.225-1.02-.78-.015-.795.945-.015 1.62.87 1.845 1.23 1.08 1.815 2.805 1.305 3.495.99.105-.78.42-1.305.765-1.605-2.67-.3-5.46-1.335-5.46-5.925 0-1.305.465-2.385 1.23-3.225-.12-.3-.54-1.53.12-3.18 0 0 1.005-.315 3.3 1.23.96-.27 1.98-.405 3-.405s2.04.135 3 .405c2.295-1.56 3.3-1.23 3.3-1.23.66 1.65.24 2.88.12 3.18.765.84 1.23 1.905 1.23 3.225 0 4.605-2.805 5.625-5.475 5.925.435.375.81 1.095.81 2.22 0 1.605-.015 2.895-.015 3.3 0 .315.225.69.825.57A12.02 12.02 0 0024 12c0-6.63-5.37-12-12-12z" />
             </svg>
-            <span>Star</span>
-            <span class="px-1.5 py-0.2 rounded bg-[#1b1b1d] text-[11px] text-slate-400 font-mono">gfx1151</span>
+            <span>gufo-org/gufo</span>
+            <span class="px-1.5 py-0.5 rounded bg-[#1b1b1d] text-[11px] text-slate-400 font-mono">MIT</span>
           </a>
         </div>
       </div>
     </header>
 
-    <!-- Docusaurus 4-Column Features Section -->
+    <!-- Features -->
     <section class="py-16 bg-[#242526]/50 border-b border-[#3e4042]">
       <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-          <!-- Col 1 -->
-          <div class="p-6 rounded-lg bg-[#242526] border border-[#3e4042] space-y-3">
-            <div class="w-10 h-10 rounded bg-[#25c2a0]/10 text-[#25c2a0] flex items-center justify-center font-bold text-lg">
-              ⚡
+          {features.map((f) => (
+            <div class="p-6 rounded-lg bg-[#242526] border border-[#3e4042] space-y-3">
+              <div class={`w-10 h-10 rounded flex items-center justify-center font-bold text-lg ${f.accent}`}>
+                {f.icon}
+              </div>
+              <h3 class="text-lg font-bold text-white">{f.title}</h3>
+              <p class="text-xs text-slate-300 leading-relaxed">{f.body}</p>
             </div>
-            <h3 class="text-lg font-bold text-white">Wave32 &amp; Dual-Issue ROCm</h3>
-            <p class="text-xs text-slate-300 leading-relaxed">
-              Kernels are structured with Wave32 warps to maximize SIMD wave occupancy and reduce register pressure on RDNA 3.5, pairing vector math with VOPD dual-issue scheduling.
-            </p>
-          </div>
+          ))}
+        </div>
+      </div>
+    </section>
 
-          <!-- Col 2 -->
-          <div class="p-6 rounded-lg bg-[#242526] border border-[#3e4042] space-y-3">
-            <div class="w-10 h-10 rounded bg-[#3578e5]/10 text-[#3578e5] flex items-center justify-center font-bold text-lg">
-              🧠
-            </div>
-            <h3 class="text-lg font-bold text-white">Zero-Copy Unified Memory</h3>
-            <p class="text-xs text-slate-300 leading-relaxed">
-              Exploits the 256-bit LPDDR5X bus (278.4 GB/s peak). CPU, GPU, and NPU share the same physical address space via pinned HSA descriptors without PCIe DMA staging buffers.
-            </p>
-          </div>
+    <!-- Quickstart -->
+    <section class="py-16 border-b border-[#3e4042] bg-[#1b1b1d]">
+      <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 grid grid-cols-1 lg:grid-cols-2 gap-8 items-start [&>*]:min-w-0">
+        <div class="space-y-4">
+          <h2 class="text-2xl font-bold text-white">Serving in two commands</h2>
+          <p class="text-sm text-slate-300 leading-relaxed">
+            Download weights, then run the runtime image with GPU device access. The server speaks the
+            OpenAI-compatible API on port 8080; point Open WebUI, VS Code or any OpenAI SDK client at
+            <code class="text-[#25c2a0]">http://localhost:8080/v1</code>.
+          </p>
+          <p class="text-xs text-slate-400 leading-relaxed">
+            Rootless Podman needs <code class="text-slate-300">crun</code> for
+            <code class="text-slate-300">--group-add keep-groups</code>, and your host user needs read/write access to
+            <code class="text-slate-300">/dev/kfd</code> and <code class="text-slate-300">/dev/dri/renderD*</code>,
+            usually through the <code class="text-slate-300">render</code> and <code class="text-slate-300">video</code>
+            groups.
+          </p>
+          <a href="/docs#quickstart" class="inline-block text-sm font-semibold text-[#25c2a0] hover:underline">
+            Full quickstart, including builds from source →
+          </a>
+        </div>
 
-          <!-- Col 3 -->
-          <div class="p-6 rounded-lg bg-[#242526] border border-[#3e4042] space-y-3">
-            <div class="w-10 h-10 rounded bg-[#00d68f]/10 text-[#00d68f] flex items-center justify-center font-bold text-lg">
-              ❄️
-            </div>
-            <h3 class="text-lg font-bold text-white">Pure Nix Reproducibility</h3>
-            <p class="text-xs text-slate-300 leading-relaxed">
-              Hermetic build pipelines and automated hardware gate checks via Nix Flakes. Zero dependency rot, pinned ROCm 6.3, and strict unit/sanitizer verification.
-            </p>
-          </div>
-
-          <!-- Col 4 -->
-          <div class="p-6 rounded-lg bg-[#242526] border border-[#3e4042] space-y-3">
-            <div class="w-10 h-10 rounded bg-cyan-500/10 text-cyan-400 flex items-center justify-center font-bold text-lg">
-              🚀
-            </div>
-            <h3 class="text-lg font-bold text-white">Native HRX (Hyperloom)</h3>
-            <p class="text-xs text-slate-300 leading-relaxed">
-              Direct low-level GPU executor bypassing HIP driver interception with compiled Loom artifacts, offset-preserving GGUF bindings, and built-in bit-exact validation.
-            </p>
+        <div class="docusaurus-code">
+          <div class="docusaurus-code-header"><span>Quickstart</span><span>sh</span></div>
+          <div class="p-4 text-xs font-mono text-slate-200 space-y-1 overflow-x-auto">
+            <div class="text-slate-500"># Download a target and its DFlash2 draft</div>
+            <div class="text-[#25c2a0]">hf download unsloth/Qwen3.8-27B-GGUF Qwen3.8-27B-UD-Q8_K_XL.gguf \</div>
+            <div class="text-[#25c2a0]">&nbsp;&nbsp;--local-dir models/Qwen3.8-27B-GGUF</div>
+            <div class="text-slate-500 pt-2"># Serve it with speculative decoding</div>
+            <div class="text-[#25c2a0]">podman run --rm --userns=keep-id:uid=1000,gid=1000 \</div>
+            <div class="text-[#25c2a0]">&nbsp;&nbsp;--device /dev/kfd --device /dev/dri --group-add keep-groups \</div>
+            <div class="text-[#25c2a0]">&nbsp;&nbsp;--ulimit memlock=-1 -p 8080:8080 -v ./models:/models:ro \</div>
+            <div class="text-[#25c2a0]">&nbsp;&nbsp;ghcr.io/gufo-org/toolboxes/gufo-runtime:latest \</div>
+            <div class="text-[#25c2a0]">&nbsp;&nbsp;gufo serve --host 0.0.0.0 --port 8080 llm \</div>
+            <div class="text-[#25c2a0]">&nbsp;&nbsp;--model /models/Qwen3.8-27B-GGUF/Qwen3.8-27B-UD-Q8_K_XL.gguf \</div>
+            <div class="text-[#25c2a0]">&nbsp;&nbsp;--speculative dflash2 --dflash-model /models/…-DFlash2-Q4_K_M.gguf</div>
           </div>
         </div>
       </div>
     </section>
 
-    <!-- Models in src/models/ -->
+    <!-- Models -->
     <section class="py-16 bg-[#242526]/30 border-b border-[#3e4042]">
       <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-6">
         <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
           <div>
-            <h2 class="text-2xl font-bold text-white">Integrated Models</h2>
-            <p class="text-sm text-slate-400">Native model implementations residing in <code class="text-[#25c2a0]">src/models/</code></p>
+            <h2 class="text-2xl font-bold text-white">Supported models</h2>
+            <p class="text-sm text-slate-400">
+              Native implementations under <code class="text-[#25c2a0]">src/models/</code>, each owning its kernels,
+              tests and numerical contracts.
+            </p>
           </div>
           <a href="/benchmarks" class="text-sm font-semibold text-[#25c2a0] hover:underline">
-            Explore side-by-side benchmark tables →
+            Side-by-side benchmark tables →
           </a>
         </div>
 
@@ -129,93 +187,44 @@ import ModelMatrix from '../components/ModelMatrix.astro';
       </div>
     </section>
 
-    <!-- OCI Images & Container UX Section -->
+    <!-- Containers -->
     <section class="py-16 border-t border-[#3e4042] bg-[#1b1b1d]">
       <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-8">
         <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           <div>
             <div class="inline-flex items-center gap-1.5 text-xs font-mono px-2 py-0.5 rounded bg-sky-500/10 text-sky-400 border border-sky-500/20 mb-2">
-              <span>📦 Companion Ecosystem</span>
+              <span>📦 Companion ecosystem</span>
             </div>
-            <h2 class="text-2xl font-bold text-white">Focused Docker &amp; Podman Images</h2>
+            <h2 class="text-2xl font-bold text-white">Docker and Podman images</h2>
             <p class="text-sm text-slate-400 max-w-2xl mt-1">
-              Reproducible Nix-built images for Gufo and its coding-agent evaluator. They run as a dedicated non-root user and contain no sudo or PAM stack.
+              Reproducible Nix-built images for running and developing Gufo. They run as a dedicated non-root user
+              and contain no sudo or PAM stack.
             </p>
           </div>
           <a
             href="/docs#toolboxes"
             class="px-4 py-2 rounded text-xs font-bold bg-[#242526] hover:bg-[#2e3033] text-slate-200 border border-[#3e4042] transition-colors whitespace-nowrap"
           >
-            Container Run Guide →
+            Container run guide →
           </a>
         </div>
 
         <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-          <div class="p-6 rounded-lg bg-[#242526] border border-[#3e4042] space-y-3">
-            <div class="flex items-center justify-between">
-              <h3 class="font-bold text-white font-mono text-sm">gufo-runtime</h3>
-              <span class="text-[10px] px-2 py-0.5 rounded bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 font-mono">Inference &amp; Serving</span>
-            </div>
-            <p class="text-xs text-slate-300 leading-relaxed">
-              Lightweight production container with ROCm <code class="text-[#25c2a0]">gfx1151</code> and XRT drivers. Run inference, benchmarks, and background HTTP serving instantly.
-            </p>
-            <div class="docusaurus-code mt-2">
-              <div class="docusaurus-code-header"><span>Quick Start</span><span>sh</span></div>
-              <div class="p-3 text-xs font-mono text-slate-200 space-y-1">
-                <div class="text-slate-500"># Pull the runtime image:</div>
-                <div class="text-[#25c2a0] break-all">podman pull ghcr.io/gufo-org/toolboxes/gufo-runtime:latest</div>
+          {images.map((img) => (
+            <div class="p-6 rounded-lg bg-[#242526] border border-[#3e4042] space-y-3">
+              <div class="flex items-center justify-between gap-3">
+                <h3 class="font-bold text-white font-mono text-sm">{img.name}</h3>
+                <span class={`text-[10px] px-2 py-0.5 rounded border font-mono whitespace-nowrap ${img.tagClass}`}>
+                  {img.tag}
+                </span>
+              </div>
+              <p class="text-xs text-slate-300 leading-relaxed">{img.body}</p>
+              <div class="docusaurus-code mt-2">
+                <div class="docusaurus-code-header"><span>Pull</span><span>sh</span></div>
+                <div class="p-3 text-xs font-mono text-[#25c2a0] break-all">{img.command}</div>
               </div>
             </div>
-          </div>
-
-          <div class="p-6 rounded-lg bg-[#242526] border border-[#3e4042] space-y-3">
-            <div class="flex items-center justify-between">
-              <h3 class="font-bold text-white font-mono text-sm">gufo-dev</h3>
-              <span class="text-[10px] px-2 py-0.5 rounded bg-cyan-500/10 text-cyan-400 border border-cyan-500/20 font-mono">Development &amp; Profiling</span>
-            </div>
-            <p class="text-xs text-slate-300 leading-relaxed">
-              Full interactive development environment equipped with HIP compiler (`hipcc`), `rocprofv3`, LLVM, CMake, Ninja, and performance ablation tooling.
-            </p>
-            <div class="docusaurus-code mt-2">
-              <div class="docusaurus-code-header"><span>Quick Start</span><span>sh</span></div>
-              <div class="p-3 text-xs font-mono text-slate-200 space-y-1">
-                <div class="text-slate-500"># Pull the development image:</div>
-                <div class="text-[#25c2a0] break-all">podman pull ghcr.io/gufo-org/toolboxes/gufo-dev:latest</div>
-              </div>
-            </div>
-          </div>
-
-          <div class="p-6 rounded-lg bg-[#242526] border border-[#3e4042] space-y-3">
-            <div class="flex items-center justify-between">
-              <h3 class="font-bold text-white font-mono text-sm">eval-agent</h3>
-              <span class="text-[10px] px-2 py-0.5 rounded bg-violet-500/10 text-violet-400 border border-violet-500/20 font-mono">External Endpoint</span>
-            </div>
-            <p class="text-xs text-slate-300 leading-relaxed">
-              A pinned coding-agent evaluation environment. Point it at any reachable OpenAI-compatible server and keep the benchmark harness reproducible.
-            </p>
-            <div class="docusaurus-code mt-2">
-              <div class="docusaurus-code-header"><span>Quick Start</span><span>sh</span></div>
-              <div class="p-3 text-xs font-mono text-slate-200 space-y-1">
-                <div class="text-[#25c2a0] break-all">podman run --rm --userns=keep-id:uid=1000,gid=1000 --network host --security-opt seccomp=unconfined ghcr.io/gufo-org/toolboxes/eval-agent:latest eval-agent run sparql-university</div>
-              </div>
-            </div>
-          </div>
-
-          <div class="p-6 rounded-lg bg-[#242526] border border-[#3e4042] space-y-3">
-            <div class="flex items-center justify-between">
-              <h3 class="font-bold text-white font-mono text-sm">gufo-eval-agent</h3>
-              <span class="text-[10px] px-2 py-0.5 rounded bg-amber-500/10 text-amber-400 border border-amber-500/20 font-mono">All in One</span>
-            </div>
-            <p class="text-xs text-slate-300 leading-relaxed">
-              Gufo and eval-agent in one image. The included launcher starts the local model server, waits for it, runs the task, and cleans up automatically.
-            </p>
-            <div class="docusaurus-code mt-2">
-              <div class="docusaurus-code-header"><span>Quick Start</span><span>sh</span></div>
-              <div class="p-3 text-xs font-mono text-slate-200 space-y-1">
-                <div class="text-[#25c2a0] break-all">podman pull ghcr.io/gufo-org/toolboxes/gufo-eval-agent:latest</div>
-              </div>
-            </div>
-          </div>
+          ))}
         </div>
       </div>
     </section>

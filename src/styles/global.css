@@ -32,6 +32,26 @@ body {
   color: var(--ifm-text-color);
   font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
   -webkit-font-smoothing: antialiased;
+  /* `clip` rather than `hidden`: it stops a stray wide child from widening the
+     page on a phone without creating a scroll container, so `position: sticky`
+     keeps working for the navbar and the in-page bars. */
+  overflow-x: clip;
+}
+
+/* `body` is a column flex container, so its children are sized against their
+   content's minimum width and a horizontal scroller inside one of them can make
+   the whole page wider than the viewport. Let them shrink to the viewport
+   instead, so the scroller scrolls rather than the page. */
+body > * {
+  min-width: 0;
+  max-width: 100%;
+}
+
+/* Chart.js writes an explicit pixel width onto its canvas when it measures the
+   container. If it ever measures wide, that width sticks and pushes the page
+   past the viewport, so cap it. */
+canvas {
+  max-width: 100%;
 }
 
 /* Docusaurus Admonition / Callout Boxes */
