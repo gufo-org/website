@@ -21,13 +21,18 @@
           ];
 
           shellHook = ''
+            if [ ! -d node_modules ]; then
+              echo "Installing dependencies (pnpm install --frozen-lockfile)..."
+              pnpm install --frozen-lockfile
+            fi
+
             echo "=================================================="
             echo "  gufo website development environment (Astro)    "
             echo "=================================================="
             echo "Commands:"
             echo "  pnpm dev     - Start Astro local development server"
             echo "  pnpm build   - Build static production site"
-            echo "  pnpm preview - Preview production build locally"
+            echo "  pnpm preview - Build and preview production site"
             echo "=================================================="
           '';
         };
