@@ -665,6 +665,7 @@ const commands = [
         <!-- Concurrent serving -->
         <section id="serving" class="space-y-4 border-b border-[#3e4042]/50 pb-8">
           <h2 class="text-2xl font-bold text-white tracking-tight">Concurrent serving and caching</h2>
+          <a href="/cache" class="block p-4 rounded-lg border border-[#25c2a0]/40 bg-[#25c2a0]/5 text-sm text-[#25c2a0] hover:bg-[#25c2a0]/10 transition-colors">Explore the cache interactively → <span class="text-slate-400">Follow live sessions, checkpoint restores, shared KV and disk persistence.</span></a>
           <p class="text-sm text-slate-300 leading-relaxed">
             HTTP requests share one immutable model containing the mapped weights and tokenizer. Each request leases a
             preallocated executor with independent KV, recurrent, graph, activation and logit state, from a bounded pool

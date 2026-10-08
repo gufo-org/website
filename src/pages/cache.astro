@@ -1,0 +1,98 @@
+---
+import Layout from '../layouts/Layout.astro';
+import Navbar from '../components/Navbar.astro';
+import Footer from '../components/Footer.astro';
+import { CACHE_SOURCE, cacheScenarios } from '../data/cache-explorer';
+import '../styles/cache-explorer.css';
+---
+
+<Layout title="Cache explorer — gufo" description="An interactive guide to Gufo’s proposed hybrid cache: live sessions, exact checkpoints, shared KV provenance, memory budgets and durable disk restores.">
+  <Navbar currentPath="/cache" />
+  <main class="cache-page">
+    <div class="cache-breadcrumb"><a href="/docs#serving">Documentation</a><span>/</span><span>Cache explorer</span></div>
+    <header class="cache-hero">
+      <div>
+        <p class="cache-eyebrow"><span class="cache-status-dot"></span> Explore the proposed hybrid cache</p>
+        <h1>Compute a prefix once.<br /><span>Remember where you left off.</span></h1>
+        <p class="cache-intro">Follow conversations through Gufo’s cache. Move through user turns, tool results and session changes to see what is reused, what is copied, and how checkpoints serve different execution slots.</p>
+      </div>
+      <a class="cache-source" href={`${CACHE_SOURCE}/README.md`} target="_blank" rel="noopener noreferrer">Based on the cache redesign<br /><b>Research revision 5e401f9b ↗</b></a>
+    </header>
+
+    <div class="cache-concepts">
+      <article><span class="concept-symbol session-symbol">01</span><div><h2>Session</h2><p>Mutable execution state. Its live frontier includes prompt and generated tokens.</p></div></article>
+      <article><span class="concept-symbol checkpoint-symbol">02</span><div><h2>Checkpoint</h2><p>Frozen state at an exact token boundary. Recurrent state cannot simply be trimmed.</p></div></article>
+      <article><span class="concept-symbol chunk-symbol">03</span><div><h2>Shared chunk</h2><p>In the proposal, 2,048 KV rows retained once by checkpoints with common provenance.</p></div></article>
+    </div>
+
+    <section class="cache-lab" aria-labelledby="walkthrough-heading">
+      <div class="cache-section-heading"><div><p class="cache-eyebrow">01 / Walk through the state</p><h2 id="walkthrough-heading">Choose a cache story</h2></div><label class="cache-model-label">Model<select id="cache-model"><option value="qwen">27B · DFlash2</option><option value="flash">Flash-Next · MTP</option></select></label></div>
+      <div class="cache-scenarios" aria-label="Cache scenarios">
+        {cacheScenarios.map((s, i) => <button type="button" class={`scenario-button ${i === 0 ? 'active' : ''}`} data-scenario={s.id} aria-pressed={i === 0}><span>{s.name}</span><small>{s.caption}</small></button>)}
+      </div>
+      <div class="cache-time-machine">
+        <aside class="cache-conversation" aria-labelledby="conversation-heading">
+          <div class="conversation-header"><p class="cache-eyebrow">Conversation timeline</p><h3 id="conversation-heading">Click a point in time</h3><p>Rewind or advance the conversation. The cache beside it follows your selection.</p></div>
+          <div class="conversation-context"><span>System + history</span><p id="cache-conversation-context"></p></div>
+          <ol id="cache-conversation-points" class="conversation-points" aria-label="Messages and cache events"></ol>
+          <a class="conversation-jump" href="#cache-state">See cache at this point ↓</a>
+          <p class="conversation-footnote">Illustrative messages are abbreviated. Counts include the full prompt history, not just the visible text.</p>
+        </aside>
+        <div class="cache-state" id="cache-state">
+      <div class="cache-story-panel">
+        <div class="cache-story-copy" aria-live="polite" aria-atomic="true"><span id="cache-step-number" class="cache-step-number">Step 1</span><h3 id="cache-step-title">A cold prompt arrives</h3><p id="cache-step-explanation">Choose a story, then step through its requests.</p></div>
+        <div class="cache-playback"><button type="button" id="cache-prev" aria-label="Previous step">←</button><button type="button" id="cache-play">Play story</button><button type="button" id="cache-next" aria-label="Next step">→</button><div id="cache-step-dots" class="cache-step-dots" aria-label="Jump to a story step"></div></div>
+      </div>
+      <div class="cache-legend"><span><i class="legend-reused"></i>Reused prefix</span><span><i class="legend-new"></i>Needs prefill</span><span><i class="legend-fixed"></i>Fixed state</span><span><i class="legend-queued"></i>Queued for disk</span><span><i class="legend-durable"></i>Durable on disk</span></div>
+        <article class="cache-lane hybrid-lane" id="cache-hybrid">
+          <header><div><p class="cache-eyebrow">Proposed hybrid</p><h3>Shared rows, exact state</h3></div><span class="cache-lane-tag">Research proposal</span></header>
+          <div class="cache-request" data-request></div>
+          <div class="cache-route" data-route hidden></div>
+          <div class="cache-flow-label">↓ continue live, or restore a checkpoint</div>
+          <div class="cache-store-heading"><h4>Execution pool</h4><span id="cache-slot-count">Example · 2 slots</span></div>
+          <p class="cache-slot-explanation">This walkthrough uses <code>--sessions 2</code> to show slot reuse with just three conversations. Gufo supports a configurable pool of up to 8 slots. More slots keep more live histories available and use more memory. Retained checkpoints are separate: up to 128 records, subject to the cache budget.</p>
+          <div class="cache-sessions" data-sessions></div>
+          <div class="cache-store-heading"><h4>Retained cache</h4><span data-storage></span></div>
+          <div class="cache-memory-grid">
+            <section><h4>Checkpoint manifests + fixed state</h4><div class="cache-checkpoints" data-checkpoints></div></section>
+            <section class="cache-pool"><h4>Shared KV chunks · RAM / disk</h4><p>Click a chunk to trace its checkpoint references.</p><div data-chunks class="cache-chunks"></div></section>
+          </div>
+          <p class="cache-lane-note" data-note></p>
+        </article>
+      <aside class="cache-inspector" aria-live="polite" aria-atomic="true"><span class="cache-eyebrow">State inspector</span><h3 id="cache-inspector-title">Click a checkpoint or a chunk</h3><p id="cache-inspector-copy">Inspect the token boundary, storage tier and shared references.</p></aside>
+      <p id="cache-lesson" class="cache-lesson"></p>
+        </div>
+      </div>
+      <p class="cache-method-note">These illustrative histories explain the proposed design. Slot assignments and checkpoint sets are chosen to show each mechanism; small template suffixes are omitted. RAM totals include fixed state, private tails and unique KV rows, including reserved spill capacity for borrowed rows. Execution-slot memory is additional.</p>
+      <noscript><p class="cache-noscript">Enable JavaScript to step through the visualization. The concepts and source links on this page remain available without it.</p></noscript>
+    </section>
+
+    <section class="cache-capacity" aria-labelledby="capacity-heading">
+      <div class="cache-section-heading"><div><p class="cache-eyebrow">02 / Explore the tradeoff</p><h2 id="capacity-heading">What does keeping history cost?</h2></div><span class="cache-lane-tag">Size estimate · not a benchmark</span></div>
+      <p class="cache-capacity-intro">Keep several checkpoints along one conversation. The proposed cache retains its unique KV rows once, plus private fixed state at each exact boundary. Change the history depth, checkpoint count and budget to see which part grows.</p>
+      <div class="cache-capacity-layout">
+        <div class="cache-sliders">
+          <label for="cache-depth">Latest checkpoint depth<output id="cache-depth-value" for="cache-depth"></output></label><input id="cache-depth" type="range" min="8192" max="151552" step="2048" value="100352" />
+          <label for="cache-count">Retained checkpoints<output id="cache-count-value" for="cache-count"></output></label><input id="cache-count" type="range" min="1" max="32" step="1" value="8" />
+          <label for="cache-budget">RAM cache budget<output id="cache-budget-value" for="cache-budget"></output></label><input id="cache-budget" type="range" min="1" max="32" step="0.5" value="9" />
+          <p id="cache-size-formula" class="cache-method-note"></p>
+        </div>
+        <div class="cache-capacity-results" aria-live="polite">
+          <div class="capacity-row"><div><span>Hybrid · shared KV + fixed state</span><strong id="cache-shared-bytes"></strong></div><div class="capacity-bar"><div id="cache-shared-kv-bar" class="shared-kv-bar"></div><div id="cache-shared-fixed-bar" class="shared-fixed-bar"></div><i class="cache-budget-marker"></i></div><p id="cache-shared-fit"></p></div>
+          <div class="capacity-footer"><span><i class="legend-reused"></i>Unique KV <b id="cache-kv-bytes"></b></span><span><i class="legend-fixed"></i>Fixed state <b id="cache-fixed-bytes"></b></span><span>│ Budget</span></div>
+        </div>
+      </div>
+      <p class="cache-method-note">Estimate uses the measured fixed + per-token size model. Checkpoints are 2,048 tokens apart, share one computation history, and have no partial tails. Hybrid totals include reserved spill bytes; session allocations, transfer buffers and allocator overhead are additional. Different conversations and provenance reduce sharing. The record limit is 128.</p>
+    </section>
+
+    <section class="cache-reading" aria-labelledby="reading-heading">
+      <h2 id="reading-heading">Read the proposal and its evidence</h2>
+      <div><a href={`${CACHE_SOURCE}/README.md`} target="_blank" rel="noopener noreferrer"><span>Proposal overview</span><b>Goals, constraints and research status ↗</b></a><a href={`${CACHE_SOURCE}/hybrid-design.md`} target="_blank" rel="noopener noreferrer"><span>Hybrid design</span><b>Provenance, spill reservations and disk manifests ↗</b></a><a href={`${CACHE_SOURCE}/experiments.md`} target="_blank" rel="noopener noreferrer"><span>Evidence</span><b>Measurements and explicitly simulated results ↗</b></a></div>
+    </section>
+  </main>
+  <Footer />
+</Layout>
+
+<script>
+  import '../scripts/cache-explorer';
+</script>
