@@ -80,7 +80,7 @@ const images = [
           <div class={`pt-6 pb-2 pr-4 ${i % 2 ? 'pl-4 lg:pl-6 border-l border-line' : i ? 'lg:pl-6 lg:border-l lg:border-line' : ''}`}>
             <div class="font-mono text-2xl sm:text-3xl text-ink tracking-tight">{st.value}</div>
             <div class="mt-2 text-sm text-ink-2">{st.label}</div>
-            <div class="mt-0.5 text-sm text-amber-ink">{st.note}</div>
+            <div class="mt-0.5 text-sm text-ink-3">{st.note}</div>
           </div>
         ))}
       </a>
@@ -125,13 +125,13 @@ const images = [
           </a>
         </div>
 
-        <div class="lg:col-span-2 docusaurus-code self-start">
-          <div class="docusaurus-code-header"><span>Quickstart</span><span>sh</span></div>
-          <pre class="p-5 text-[13px] leading-relaxed text-ink overflow-x-auto"><span class="text-ink-4"># Download a target and its DFlash2 draft</span>
+        <div class="lg:col-span-2 code-block self-start">
+          <div class="code-block-header"><span>Quickstart</span><span>sh</span></div>
+          <pre class="p-5 text-[13px] leading-relaxed text-ink overflow-x-auto"><span class="text-ink-3"># Download a target and its DFlash2 draft</span>
 hf download unsloth/Qwen3.8-27B-GGUF Qwen3.8-27B-UD-Q8_K_XL.gguf \
   --local-dir models/Qwen3.8-27B-GGUF
 
-<span class="text-ink-4"># Serve it with speculative decoding</span>
+<span class="text-ink-3"># Serve it with speculative decoding</span>
 podman run --rm --userns=keep-id:uid=1000,gid=1000 \
   --device /dev/kfd --device /dev/dri --group-add keep-groups \
   --ulimit memlock=-1 -p 8080:8080 -v ./models:/models:ro \
@@ -186,7 +186,7 @@ podman run --rm --userns=keep-id:uid=1000,gid=1000 \
                 <h3 class="font-mono text-sm text-ink">{img.name}</h3>
                 <p class="text-sm text-ink-3">{img.body}</p>
               </div>
-              <pre class="docusaurus-code px-4 py-3 text-[13px] text-ink overflow-x-auto">{img.command}</pre>
+              <pre class="code-block px-4 py-3 text-[13px] text-ink overflow-x-auto">{img.command}</pre>
             </div>
           ))}
         </div>

@@ -10,12 +10,11 @@
   --color-line-strong: #c0c5b8;
   --color-ink: #141714;
   --color-ink-2: #3a3f3a;
-  --color-ink-3: #626862;
-  --color-ink-4: #899088;
+  --color-ink-3: #545a54;
+  --color-ink-4: #737a72;
   --color-forest: #2f5d3a;
   --color-forest-dark: #244a2d;
   --color-amber: #e8891c;
-  --color-amber-ink: #a95c07;
 
   --font-sans: "Instrument Sans", ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
   --font-serif: "Source Serif 4", ui-serif, Georgia, "Times New Roman", serif;
@@ -122,8 +121,8 @@
   color: var(--color-ink-3);
 }
 
-/* Code blocks */
-.docusaurus-code {
+/* Code blocks: a label header and a <pre> body. */
+.code-block {
   background-color: var(--color-paper);
   border: 1px solid var(--color-line);
   border-radius: 8px;
@@ -131,7 +130,55 @@
   font-family: var(--font-mono);
 }
 
-.docusaurus-code-header {
+.code-block pre,
+pre.code-block {
+  margin: 0;
+  padding: 16px 20px;
+  font-size: 13px;
+  line-height: 1.65;
+  color: var(--color-ink);
+  overflow-x: auto;
+}
+pre.code-block {
+  padding: 12px 16px;
+}
+.code-block code {
+  font-size: inherit;
+}
+.code-comment {
+  color: var(--color-ink-3);
+}
+
+/* Copy button, added by the script in Layout.astro. */
+.code-block {
+  position: relative;
+}
+.code-copy {
+  font-family: var(--font-sans);
+  font-size: 11px;
+  color: var(--color-ink-3);
+  padding: 2px 8px;
+  border-radius: 4px;
+  cursor: pointer;
+}
+.code-copy:hover {
+  color: var(--color-ink);
+  background: var(--color-paper-2);
+}
+.code-block-header .code-copy {
+  margin: -2px -8px -2px 0;
+}
+.code-wrap {
+  position: relative;
+}
+.code-wrap > .code-copy {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  background: var(--color-paper);
+}
+
+.code-block-header {
   border-bottom: 1px solid var(--color-line);
   padding: 7px 14px;
   font-family: var(--font-sans);

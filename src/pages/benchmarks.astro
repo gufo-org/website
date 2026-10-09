@@ -13,7 +13,7 @@ const chartPayload = benchmarks.map((m) => ({
 <Layout title="Benchmarks · Gufo">
   <Navbar currentPath="/benchmarks" />
 
-  <div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-6">
+  <div class="w-full max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-6">
     <!-- Breadcrumbs -->
     <div class="flex items-center gap-2 text-xs text-ink-3">
       <a href="/" class="hover:text-ink">Home</a>
@@ -35,11 +35,11 @@ const chartPayload = benchmarks.map((m) => ({
         <b class="text-ink">TODO</b> and comparisons a reference engine cannot run stay <b class="text-ink">N/A</b>,
         rather than being estimated.
       </p>
-      <details class="text-xs text-ink-3 bg-paper border border-line rounded-lg">
-        <summary class="cursor-pointer px-4 py-2.5 text-ink-2 font-semibold select-none">
+      <details class="text-sm text-ink-3 border-y border-line">
+        <summary class="cursor-pointer py-3 text-ink-2 font-semibold select-none">
           How these numbers are measured
         </summary>
-        <div class="px-4 pb-4 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 leading-relaxed">
+        <div class="pb-5 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 leading-relaxed">
           <div>
             <div class="text-ink-3 font-mono mb-1">Reading the columns</div>
             <code class="text-ink-2">pp</code> is prompt processing, <code class="text-ink-2">tg</code> is token
@@ -67,7 +67,7 @@ const chartPayload = benchmarks.map((m) => ({
     </div>
 
     <!-- Horizontal model bar -->
-    <div class="sticky top-14 z-40 py-2 bg-ivory/95 backdrop-blur border-b border-line">
+    <div class="sticky top-16 z-40 py-2 bg-ivory/95 backdrop-blur border-b border-line">
       <div class="flex gap-2 overflow-x-auto pb-1" id="model-bar" role="tablist">
         {benchmarks.map((m, idx) => (
           <button
@@ -75,14 +75,14 @@ const chartPayload = benchmarks.map((m) => ({
             role="tab"
             data-model-id={m.id}
             aria-selected={idx === 0 ? 'true' : 'false'}
-            class={`model-tab shrink-0 px-3 py-2 rounded text-xs border transition-colors ${
+            class={`model-tab shrink-0 px-3.5 py-2 rounded-full text-xs border transition-colors ${
               idx === 0
-                ? 'bg-paper text-ink border-ink font-semibold'
-                : 'bg-ivory text-ink-3 border-line hover:text-ink hover:border-line-strong'
+                ? 'bg-ink text-ivory border-ink'
+                : 'bg-transparent text-ink-2 border-line hover:border-line-strong'
             }`}
           >
             <span class="font-semibold">{m.short}</span>
-            <span class="ml-2 text-[11px] text-ink-4">{m.reference ? `vs ${m.reference.split(' ')[0]}` : 'no reference'}</span>
+            <span class="ml-2 text-[11px] opacity-60">{m.reference ? `vs ${m.reference.split(' ')[0]}` : 'no reference'}</span>
           </button>
         ))}
       </div>
@@ -92,7 +92,7 @@ const chartPayload = benchmarks.map((m) => ({
     {benchmarks.map((m, idx) => (
       <div id={`model-panel-${m.id}`} class={`model-panel space-y-6 ${idx === 0 ? 'block' : 'hidden'}`}>
         <!-- Model header -->
-        <div class="p-5 rounded-lg bg-paper border border-line space-y-3">
+        <div class="pt-4 space-y-3">
           <div class="flex flex-col sm:flex-row sm:items-start justify-between gap-3 border-b border-line pb-3">
             <div>
               <h2 class="text-3xl text-ink">{m.name}</h2>
@@ -115,19 +115,19 @@ const chartPayload = benchmarks.map((m) => ({
         </div>
 
         <!-- Highlights -->
-        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-x-8 border-t border-line">
           {m.highlights.map((h) => (
-            <div class="p-3.5 rounded-lg bg-paper border border-line space-y-1">
+            <div class="py-5 border-b border-line space-y-1">
               <div class="text-xs text-ink-3">{h.label}</div>
-              <div class="text-lg font-semibold text-ink font-mono">{h.value}</div>
-              <div class="text-[11px] text-ink-3 leading-relaxed">{h.note}</div>
+              <div class="text-2xl text-ink font-mono tracking-tight">{h.value}</div>
+              <div class="text-sm text-ink-3 leading-relaxed">{h.note}</div>
             </div>
           ))}
         </div>
 
         <!-- Benchmark sidebar + centre panel -->
         <div class="grid grid-cols-1 lg:grid-cols-4 gap-6 items-start">
-          <aside class="lg:col-span-1 min-w-0 border border-line rounded-lg bg-paper p-3 space-y-2 lg:sticky lg:top-32">
+          <aside class="lg:col-span-1 min-w-0 space-y-2 lg:sticky lg:top-36">
             <div class="text-xs text-ink-4 px-2 py-1 border-b border-line">
               Benchmark
             </div>
@@ -138,8 +138,8 @@ const chartPayload = benchmarks.map((m) => ({
                   data-view-id={v.id}
                   class={`view-btn shrink-0 lg:w-full text-left p-2.5 rounded text-xs transition-colors border lg:mb-1.5 ${
                     vIdx === 0
-                      ? 'bg-ivory text-ink border-ink font-semibold'
-                      : 'bg-paper text-ink-3 border-transparent hover:text-ink hover:bg-paper-2'
+                      ? 'bg-paper text-ink border-transparent font-semibold'
+                      : 'bg-transparent text-ink-3 border-transparent hover:text-ink hover:bg-paper'
                   }`}
                 >
                   <div class="font-semibold whitespace-nowrap">{v.label}</div>
@@ -161,7 +161,7 @@ const chartPayload = benchmarks.map((m) => ({
                 class={`view-panel space-y-6 ${vIdx === 0 ? 'block' : 'hidden'}`}
               >
                 {v.charts.map((c) => (
-                  <div class="min-w-0 p-4 sm:p-5 rounded-lg bg-paper border border-line space-y-3 overflow-hidden">
+                  <div class="min-w-0 pt-5 border-t border-line space-y-3 overflow-hidden">
                     <h3 class="text-sm font-semibold text-ink">{c.title}</h3>
                     <div class="relative w-full min-w-0 h-72 sm:h-80">
                       <canvas id={`chart-${c.id}`} class="max-w-full"></canvas>
@@ -169,17 +169,17 @@ const chartPayload = benchmarks.map((m) => ({
                   </div>
                 ))}
 
-                <div class="border border-line rounded-lg bg-paper overflow-hidden">
-                  <div class="px-4 py-3 bg-ivory border-b border-line space-y-1">
+                <div class="border-t border-line">
+                  <div class="py-4 space-y-1">
                     <h3 class="text-sm font-semibold text-ink">{v.table.title}</h3>
                     {v.table.note && <p class="text-[11px] text-ink-3 leading-relaxed">{v.table.note}</p>}
                   </div>
                   <div class="overflow-x-auto">
                     <table class="w-full text-left text-xs font-mono">
-                      <thead class="bg-paper text-ink-3 text-xs border-b border-line">
+                      <thead class="text-ink-3 text-xs border-y border-line">
                         <tr>
                           {v.table.columns.map((col, i) => (
-                            <th class={`px-4 py-3 whitespace-nowrap ${i === 0 ? 'font-sans' : ''} ${col.startsWith('Gufo') ? 'text-amber-ink' : ''}`}>
+                            <th class={`px-4 py-3 whitespace-nowrap ${i === 0 ? 'font-sans' : ''} ${col.startsWith('Gufo') ? 'text-ink font-semibold' : ''}`}>
                               {col}
                             </th>
                           ))}
@@ -196,7 +196,7 @@ const chartPayload = benchmarks.map((m) => ({
                                     : cell === 'TODO' || cell === 'N/A'
                                       ? 'text-ink-4'
                                       : v.table.columns[i]?.startsWith('Gufo')
-                                        ? 'text-amber-ink font-semibold'
+                                        ? 'text-ink font-semibold'
                                         : 'text-ink-2'
                                 }`}
                               >
@@ -231,14 +231,12 @@ const chartPayload = benchmarks.map((m) => ({
             </div>
 
             <!-- Reproduce -->
-            <div class="docusaurus-code">
-              <div class="docusaurus-code-header">
+            <div class="code-block">
+              <div class="code-block-header">
                 <span>Reproduce</span>
                 <span>sh</span>
               </div>
-              <div class="p-3 text-xs font-mono text-ink space-y-1 break-all">
-                {m.reproduce.map((line) => <div>{line}</div>)}
-              </div>
+              <pre><code>{m.reproduce.join('\n')}</code></pre>
             </div>
           </main>
         </div>
@@ -342,10 +340,10 @@ const chartPayload = benchmarks.map((m) => ({
     view?.charts.forEach(renderChart);
   }
 
-  const ACTIVE_MODEL = ['bg-paper', 'text-ink', 'border-ink', 'font-semibold'];
-  const IDLE_MODEL = ['bg-ivory', 'text-ink-3', 'border-line', 'hover:text-ink', 'hover:border-line-strong'];
-  const ACTIVE_VIEW = ['bg-ivory', 'text-ink', 'border-ink', 'font-semibold'];
-  const IDLE_VIEW = ['bg-paper', 'text-ink-3', 'border-transparent', 'hover:text-ink', 'hover:bg-paper-2'];
+  const ACTIVE_MODEL = ['bg-ink', 'text-ivory', 'border-ink'];
+  const IDLE_MODEL = ['bg-transparent', 'text-ink-2', 'border-line', 'hover:border-line-strong'];
+  const ACTIVE_VIEW = ['bg-paper', 'text-ink', 'border-transparent', 'font-semibold'];
+  const IDLE_VIEW = ['bg-transparent', 'text-ink-3', 'border-transparent', 'hover:text-ink', 'hover:bg-paper'];
 
   function activeViewOf(modelId: string): string | null {
     const btn = document.querySelector(`.view-list[data-model-id="${modelId}"] .view-btn.is-active`) as HTMLElement | null;

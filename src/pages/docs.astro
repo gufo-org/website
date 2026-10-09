@@ -120,10 +120,27 @@ const commands = [
 <Layout title="Documentation · Gufo">
   <Navbar currentPath="/docs" />
 
-  <div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+  <div class="w-full max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
     <div class="grid grid-cols-1 lg:grid-cols-4 gap-8 items-start">
       <!-- Sidebar -->
-      <aside class="lg:col-span-1 min-w-0 border-b lg:border-b-0 lg:border-r border-line pb-4 lg:pb-0 lg:pr-4 space-y-6 text-sm lg:sticky lg:top-20">
+      <!-- On small screens the section list folds into a dropdown above the content -->
+      <details class="lg:hidden border-y border-line text-sm">
+        <summary class="cursor-pointer py-3 text-ink-2 select-none">On this page</summary>
+        <div class="pb-4 space-y-4">
+          {nav.map((section) => (
+            <div>
+              <div class="text-xs mb-1 text-ink-4">{section.group}</div>
+              <ul>
+                {section.items.map((item) => (
+                  <li><a href={`#${item.id}`} class="block py-1.5 text-ink-2 hover:text-ink">{item.label}</a></li>
+                ))}
+              </ul>
+            </div>
+          ))}
+        </div>
+      </details>
+
+      <aside class="hidden lg:block lg:col-span-1 min-w-0 border-r border-line pr-4 space-y-6 text-sm sticky top-24">
         {nav.map((section) => (
           <div>
             <div class="text-xs mb-2 text-ink-4">{section.group}</div>
@@ -132,6 +149,7 @@ const commands = [
                 <li>
                   <a
                     href={`#${item.id}`}
+                    data-toc={item.id}
                     class="block px-2.5 py-1.5 rounded text-ink-2 hover:text-ink hover:bg-paper-2 transition-colors"
                   >
                     {item.label}
@@ -162,50 +180,46 @@ const commands = [
         </div>
 
         <!-- Quickstart -->
-        <section id="quickstart" class="space-y-4 border-b border-line pb-8">
+        <section id="quickstart" class="space-y-4 border-b border-line pb-8 scroll-mt-20">
           <h1 class="text-4xl sm:text-5xl text-ink">Quickstart</h1>
           <p class="text-[15px] text-ink-2 leading-relaxed">
             The fastest path is the published runtime image. Download weights, start the server, then call it with any
             OpenAI-compatible client.
           </p>
 
-          <div class="docusaurus-code">
-            <div class="docusaurus-code-header"><span>Download weights</span><span>sh</span></div>
-            <div class="p-4 text-xs font-mono text-ink space-y-1 overflow-x-auto">
-              <div class="text-ink">hf download unsloth/Qwen3.8-27B-GGUF Qwen3.8-27B-UD-Q8_K_XL.gguf \</div>
-              <div class="text-ink">&nbsp;&nbsp;--revision 4ca720788d1e01f1bff70c033e0d0028fd02e502 \</div>
-              <div class="text-ink">&nbsp;&nbsp;--repo-type model --local-dir models/Qwen3.8-27B-GGUF</div>
-              <div class="text-ink pt-2">hf download z-lab/Qwen3.8-27B-DFlash2-GGUF Qwen3.8-27B-DFlash2-Q4_K_M.gguf \</div>
-              <div class="text-ink">&nbsp;&nbsp;--revision 2d9571f8ce46e151f61c6499c99dee6079e1d610 \</div>
-              <div class="text-ink">&nbsp;&nbsp;--repo-type model --local-dir models/Qwen3.8-27B-DFlash2-GGUF</div>
-            </div>
+          <div class="code-block">
+            <div class="code-block-header"><span>Download weights</span><span>sh</span></div>
+            <pre><code>hf download unsloth/Qwen3.8-27B-GGUF Qwen3.8-27B-UD-Q8_K_XL.gguf \
+  --revision 4ca720788d1e01f1bff70c033e0d0028fd02e502 \
+  --repo-type model --local-dir models/Qwen3.8-27B-GGUF
+
+hf download z-lab/Qwen3.8-27B-DFlash2-GGUF Qwen3.8-27B-DFlash2-Q4_K_M.gguf \
+  --revision 2d9571f8ce46e151f61c6499c99dee6079e1d610 \
+  --repo-type model --local-dir models/Qwen3.8-27B-DFlash2-GGUF</code></pre>
           </div>
 
-          <div class="docusaurus-code">
-            <div class="docusaurus-code-header"><span>Serve with DFlash2 speculative decoding</span><span>sh</span></div>
-            <div class="p-4 text-xs font-mono text-ink space-y-1 overflow-x-auto">
-              <div class="text-ink">podman pull ghcr.io/gufo-org/toolboxes/gufo-runtime:latest</div>
-              <div class="text-ink pt-2">podman run --rm \</div>
-              <div class="text-ink">&nbsp;&nbsp;--userns=keep-id:uid=1000,gid=1000 \</div>
-              <div class="text-ink">&nbsp;&nbsp;--device /dev/kfd --device /dev/dri \</div>
-              <div class="text-ink">&nbsp;&nbsp;--group-add keep-groups --ulimit memlock=-1 \</div>
-              <div class="text-ink">&nbsp;&nbsp;-p 8080:8080 -v ./models:/models:ro \</div>
-              <div class="text-ink">&nbsp;&nbsp;ghcr.io/gufo-org/toolboxes/gufo-runtime:latest \</div>
-              <div class="text-ink">&nbsp;&nbsp;gufo serve --host 0.0.0.0 --port 8080 llm \</div>
-              <div class="text-ink">&nbsp;&nbsp;--model /models/Qwen3.8-27B-GGUF/Qwen3.8-27B-UD-Q8_K_XL.gguf \</div>
-              <div class="text-ink">&nbsp;&nbsp;--speculative dflash2 \</div>
-              <div class="text-ink">&nbsp;&nbsp;--dflash-model /models/Qwen3.8-27B-DFlash2-GGUF/Qwen3.8-27B-DFlash2-Q4_K_M.gguf</div>
-            </div>
+          <div class="code-block">
+            <div class="code-block-header"><span>Serve with DFlash2 speculative decoding</span><span>sh</span></div>
+            <pre><code>podman pull ghcr.io/gufo-org/toolboxes/gufo-runtime:latest
+
+podman run --rm \
+  --userns=keep-id:uid=1000,gid=1000 \
+  --device /dev/kfd --device /dev/dri \
+  --group-add keep-groups --ulimit memlock=-1 \
+  -p 8080:8080 -v ./models:/models:ro \
+  ghcr.io/gufo-org/toolboxes/gufo-runtime:latest \
+  gufo serve --host 0.0.0.0 --port 8080 llm \
+  --model /models/Qwen3.8-27B-GGUF/Qwen3.8-27B-UD-Q8_K_XL.gguf \
+  --speculative dflash2 \
+  --dflash-model /models/Qwen3.8-27B-DFlash2-GGUF/Qwen3.8-27B-DFlash2-Q4_K_M.gguf</code></pre>
           </div>
 
-          <div class="docusaurus-code">
-            <div class="docusaurus-code-header"><span>Ask it something</span><span>sh</span></div>
-            <div class="p-4 text-xs font-mono text-ink space-y-1 overflow-x-auto">
-              <div class="text-ink">curl http://localhost:8080/v1/chat/completions \</div>
-              <div class="text-ink">&nbsp;&nbsp;-H "Content-Type: application/json" \</div>
-              <div class="text-ink">&nbsp;&nbsp;-d '&#123;"model": "Qwen3.8-27B-UD-Q8_K_XL",</div>
-              <div class="text-ink">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;"messages": [&#123;"role": "user", "content": "Say something"&#125;]&#125;'</div>
-            </div>
+          <div class="code-block">
+            <div class="code-block-header"><span>Ask it something</span><span>sh</span></div>
+            <pre><code>curl http://localhost:8080/v1/chat/completions \
+  -H "Content-Type: application/json" \
+  -d '&#123;"model": "Qwen3.8-27B-UD-Q8_K_XL",
+      "messages": [&#123;"role": "user", "content": "Say something"&#125;]&#125;'</code></pre>
           </div>
 
           <div class="admonition admonition-important">
@@ -254,7 +268,7 @@ const commands = [
         </section>
 
         <!-- Platform -->
-        <section id="platform" class="space-y-4 border-b border-line pb-8">
+        <section id="platform" class="space-y-4 border-b border-line pb-8 scroll-mt-20">
           <h2 class="text-3xl text-ink">Supported platform</h2>
           <p class="text-[15px] text-ink-2 leading-relaxed">
             Linux x86-64 on AMD Strix Halo (<code class="text-ink font-mono">gfx1151</code>) is the supported
@@ -297,24 +311,24 @@ const commands = [
         </section>
 
         <!-- Build -->
-        <section id="build" class="space-y-4 border-b border-line pb-8">
+        <section id="build" class="space-y-4 border-b border-line pb-8 scroll-mt-20">
           <h2 class="text-3xl text-ink">Build from source</h2>
           <p class="text-[15px] text-ink-2 leading-relaxed">
             CMake owns one production configuration for both Nix and ordinary Linux builds. No wrapper script is needed.
           </p>
 
-          <div class="docusaurus-code">
-            <div class="docusaurus-code-header"><span>With Nix</span><span>sh</span></div>
-            <div class="p-4 text-xs font-mono text-ink space-y-1">
-              <div class="text-ink-4"># Production package, no tests or tools</div>
-              <div class="text-ink">nix build</div>
-              <div class="text-ink">./result/bin/gufo diagnose</div>
-              <div class="text-ink">./result/bin/gufo serve llm --model /path/to/model.gguf</div>
-              <div class="text-ink-4 pt-2"># Hosted CPU and repository checks</div>
-              <div class="text-ink">nix build .#checks.x86_64-linux.pr</div>
-              <div class="text-ink-4 pt-2"># GPU development, profilers, reference tools</div>
-              <div class="text-ink">nix develop</div>
-            </div>
+          <div class="code-block">
+            <div class="code-block-header"><span>With Nix</span><span>sh</span></div>
+            <pre><code><span class="code-comment"># Production package, no tests or tools</span>
+nix build
+./result/bin/gufo diagnose
+./result/bin/gufo serve llm --model /path/to/model.gguf
+
+<span class="code-comment"># Hosted CPU and repository checks</span>
+nix build .#checks.x86_64-linux.pr
+
+<span class="code-comment"># GPU development, profilers, reference tools</span>
+nix develop</code></pre>
           </div>
 
           <div class="admonition admonition-important">
@@ -355,17 +369,17 @@ const commands = [
             </table>
           </div>
 
-          <div class="docusaurus-code">
-            <div class="docusaurus-code-header"><span>Debian / Ubuntu example</span><span>sh</span></div>
-            <div class="p-4 text-xs font-mono text-ink space-y-1 overflow-x-auto">
-              <div class="text-ink">sudo apt install build-essential cmake ninja-build pkg-config \</div>
-              <div class="text-ink">&nbsp;&nbsp;libicu-dev libcurl4-openssl-dev libssl-dev libpng-dev libjpeg-dev ffmpeg</div>
-              <div class="text-ink pt-2">sudo apt install hipblas-dev hipblaslt-dev rocblas-dev \</div>
-              <div class="text-ink">&nbsp;&nbsp;hipcub-dev rocprim-dev rocwmma-dev</div>
-              <div class="text-ink pt-2">cmake --preset release -DCMAKE_INSTALL_PREFIX="$HOME/.local"</div>
-              <div class="text-ink">cmake --build --preset release --parallel 4</div>
-              <div class="text-ink">./build/release/gufo diagnose</div>
-            </div>
+          <div class="code-block">
+            <div class="code-block-header"><span>Debian / Ubuntu example</span><span>sh</span></div>
+            <pre><code>sudo apt install build-essential cmake ninja-build pkg-config \
+  libicu-dev libcurl4-openssl-dev libssl-dev libpng-dev libjpeg-dev ffmpeg
+
+sudo apt install hipblas-dev hipblaslt-dev rocblas-dev \
+  hipcub-dev rocprim-dev rocwmma-dev
+
+cmake --preset release -DCMAKE_INSTALL_PREFIX="$HOME/.local"
+cmake --build --preset release --parallel 4
+./build/release/gufo diagnose</code></pre>
           </div>
 
           <p class="text-xs text-ink-3 leading-relaxed">
@@ -379,7 +393,7 @@ const commands = [
         </section>
 
         <!-- CLI -->
-        <section id="cli" class="space-y-4 border-b border-line pb-8">
+        <section id="cli" class="space-y-4 border-b border-line pb-8 scroll-mt-20">
           <h2 class="text-3xl text-ink">CLI commands</h2>
           <p class="text-[15px] text-ink-2 leading-relaxed">
             Terminal generation and HTTP serving share model runtimes, tokenizers and sampling; the HTTP scheduler adds
@@ -414,16 +428,15 @@ const commands = [
             </p>
           </div>
 
-          <div class="docusaurus-code">
-            <div class="docusaurus-code-header"><span>Audio serving</span><span>sh</span></div>
-            <div class="p-4 text-xs font-mono text-ink space-y-1 overflow-x-auto">
-              <div class="text-ink-4"># Synthesis, with two named reference voices</div>
-              <div class="text-ink">gufo serve tts --model models/Qwen3-TTS-12Hz-1.7B-Base --context 4096 \</div>
-              <div class="text-ink">&nbsp;&nbsp;--voice narrator_eng=/audio/clear-english-voice.wav \</div>
-              <div class="text-ink">&nbsp;&nbsp;--voice-text narrator_eng=/audio/clear-english-voice.txt</div>
-              <div class="text-ink-4 pt-2"># Transcription</div>
-              <div class="text-ink">gufo serve asr --model models/Qwen3-ASR-1.7B --context 1024</div>
-            </div>
+          <div class="code-block">
+            <div class="code-block-header"><span>Audio serving</span><span>sh</span></div>
+            <pre><code><span class="code-comment"># Synthesis, with two named reference voices</span>
+gufo serve tts --model models/Qwen3-TTS-12Hz-1.7B-Base --context 4096 \
+  --voice narrator_eng=/audio/clear-english-voice.wav \
+  --voice-text narrator_eng=/audio/clear-english-voice.txt
+
+<span class="code-comment"># Transcription</span>
+gufo serve asr --model models/Qwen3-ASR-1.7B --context 1024</code></pre>
           </div>
 
           <p class="text-xs text-ink-3 leading-relaxed">
@@ -434,7 +447,7 @@ const commands = [
         </section>
 
         <!-- Models -->
-        <section id="models" class="space-y-4 border-b border-line pb-8">
+        <section id="models" class="space-y-4 border-b border-line pb-8 scroll-mt-20">
           <h2 class="text-3xl text-ink">Model guides</h2>
           <p class="text-[15px] text-ink-2 leading-relaxed">
             Weights are downloaded separately and are not part of the runtime package. Each model guide lists the
@@ -493,7 +506,7 @@ const commands = [
         </section>
 
         <!-- API -->
-        <section id="api" class="space-y-4 border-b border-line pb-8">
+        <section id="api" class="space-y-4 border-b border-line pb-8 scroll-mt-20">
           <h2 class="text-3xl text-ink">OpenAI-compatible API</h2>
           <p class="text-[15px] text-ink-2 leading-relaxed">
             Chat Completions is the main API, with streaming, images and tools. Responses supports text and image input
@@ -530,45 +543,37 @@ const commands = [
           </p>
 
           <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
-            <div class="docusaurus-code">
-              <div class="docusaurus-code-header"><span>Chat completion</span><span>sh</span></div>
-              <div class="p-4 text-xs font-mono text-ink space-y-1 overflow-x-auto">
-                <div class="text-ink">curl http://localhost:8080/v1/chat/completions \</div>
-                <div class="text-ink">&nbsp;&nbsp;-H "Content-Type: application/json" \</div>
-                <div class="text-ink">&nbsp;&nbsp;-d '&#123;"model": "qwen", "stream": true,</div>
-                <div class="text-ink">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;"reasoning_effort": "high",</div>
-                <div class="text-ink">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;"messages": [&#123;"role": "user", "content": "Hi"&#125;]&#125;'</div>
-              </div>
+            <div class="code-block">
+              <div class="code-block-header"><span>Chat completion</span><span>sh</span></div>
+              <pre><code>curl http://localhost:8080/v1/chat/completions \
+  -H "Content-Type: application/json" \
+  -d '&#123;"model": "qwen", "stream": true,
+      "reasoning_effort": "high",
+      "messages": [&#123;"role": "user", "content": "Hi"&#125;]&#125;'</code></pre>
             </div>
 
-            <div class="docusaurus-code">
-              <div class="docusaurus-code-header"><span>Speech synthesis</span><span>sh</span></div>
-              <div class="p-4 text-xs font-mono text-ink space-y-1 overflow-x-auto">
-                <div class="text-ink">curl -sS http://127.0.0.1:8080/v1/audio/speech \</div>
-                <div class="text-ink">&nbsp;&nbsp;-H 'Content-Type: application/json' \</div>
-                <div class="text-ink">&nbsp;&nbsp;-d '&#123;"model": "qwen3-tts-12hz-1.7b-base",</div>
-                <div class="text-ink">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;"voice": "narrator", "input": "Hello from Gufo."&#125;' \</div>
-                <div class="text-ink">&nbsp;&nbsp;--output speech.wav</div>
-              </div>
+            <div class="code-block">
+              <div class="code-block-header"><span>Speech synthesis</span><span>sh</span></div>
+              <pre><code>curl -sS http://127.0.0.1:8080/v1/audio/speech \
+  -H 'Content-Type: application/json' \
+  -d '&#123;"model": "qwen3-tts-12hz-1.7b-base",
+      "voice": "narrator", "input": "Hello from Gufo."&#125;' \
+  --output speech.wav</code></pre>
             </div>
 
-            <div class="docusaurus-code">
-              <div class="docusaurus-code-header"><span>Transcription</span><span>sh</span></div>
-              <div class="p-4 text-xs font-mono text-ink space-y-1 overflow-x-auto">
-                <div class="text-ink">curl -sS http://127.0.0.1:8080/v1/audio/transcriptions \</div>
-                <div class="text-ink">&nbsp;&nbsp;-F file=@speech.wav -F model=qwen3-asr-1.7b \</div>
-                <div class="text-ink">&nbsp;&nbsp;-F response_format=json</div>
-              </div>
+            <div class="code-block">
+              <div class="code-block-header"><span>Transcription</span><span>sh</span></div>
+              <pre><code>curl -sS http://127.0.0.1:8080/v1/audio/transcriptions \
+  -F file=@speech.wav -F model=qwen3-asr-1.7b \
+  -F response_format=json</code></pre>
             </div>
 
-            <div class="docusaurus-code">
-              <div class="docusaurus-code-header"><span>Image generation</span><span>sh</span></div>
-              <div class="p-4 text-xs font-mono text-ink space-y-1 overflow-x-auto">
-                <div class="text-ink">curl --fail-with-body http://127.0.0.1:8080/v1/images/generations \</div>
-                <div class="text-ink">&nbsp;&nbsp;-H 'Content-Type: application/json' \</div>
-                <div class="text-ink">&nbsp;&nbsp;-d '&#123;"model": "Qwen-Image-2.1", "prompt": "A red ceramic teapot",</div>
-                <div class="text-ink">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;"size": "1024x1024", "seed": 42&#125;' &gt; response.json</div>
-              </div>
+            <div class="code-block">
+              <div class="code-block-header"><span>Image generation</span><span>sh</span></div>
+              <pre><code>curl --fail-with-body http://127.0.0.1:8080/v1/images/generations \
+  -H 'Content-Type: application/json' \
+  -d '&#123;"model": "Qwen-Image-2.1", "prompt": "A red ceramic teapot",
+      "size": "1024x1024", "seed": 42&#125;' &gt; response.json</code></pre>
             </div>
           </div>
 
@@ -582,7 +587,7 @@ const commands = [
         </section>
 
         <!-- Clients -->
-        <section id="clients" class="space-y-4 border-b border-line pb-8">
+        <section id="clients" class="space-y-4 border-b border-line pb-8 scroll-mt-20">
           <h2 class="text-3xl text-ink">Clients and UIs</h2>
           <p class="text-[15px] text-ink-2 leading-relaxed">
             For Open WebUI, VS Code and OpenAI SDK clients, set the API base URL to
@@ -592,18 +597,16 @@ const commands = [
           <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
             <div class="space-y-2">
               <h3 class="font-semibold text-ink text-sm">Python, openai SDK</h3>
-              <div class="docusaurus-code">
-                <div class="docusaurus-code-header"><span>example.py</span><span>python</span></div>
-                <div class="p-4 text-xs font-mono text-ink space-y-1 overflow-x-auto">
-                  <div><span class="text-violet-700">from</span> openai <span class="text-violet-700">import</span> OpenAI</div>
-                  <div class="pt-1">client = OpenAI(</div>
-                  <div>&nbsp;&nbsp;base_url=<span class="text-ink">"http://localhost:8080/v1"</span>,</div>
-                  <div>&nbsp;&nbsp;api_key=<span class="text-ink">"not-needed"</span>,</div>
-                  <div>)</div>
-                  <div class="pt-1">stream = client.responses.create(</div>
-                  <div>&nbsp;&nbsp;model=<span class="text-ink">"qwen"</span>, input=<span class="text-ink">"Hello"</span>, store=<span class="text-violet-700">False</span>, stream=<span class="text-violet-700">True</span></div>
-                  <div>)</div>
-                </div>
+              <div class="code-block">
+                <div class="code-block-header"><span>example.py</span><span>python</span></div>
+                <pre><code>from openai import OpenAI
+client = OpenAI(
+  base_url="http://localhost:8080/v1",
+  api_key="not-needed",
+)
+stream = client.responses.create(
+  model="qwen", input="Hello", store=False, stream=True
+)</code></pre>
               </div>
             </div>
 
@@ -631,7 +634,7 @@ const commands = [
         </section>
 
         <!-- Speculative decoding -->
-        <section id="speculative" class="space-y-4 border-b border-line pb-8">
+        <section id="speculative" class="space-y-4 border-b border-line pb-8 scroll-mt-20">
           <h2 class="text-3xl text-ink">Speculative decoding</h2>
           <p class="text-[15px] text-ink-2 leading-relaxed">
             A draft model proposes tokens for the target model to verify. Greedy decoding must reproduce the target's
@@ -663,7 +666,7 @@ const commands = [
         </section>
 
         <!-- Concurrent serving -->
-        <section id="serving" class="space-y-4 border-b border-line pb-8">
+        <section id="serving" class="space-y-4 border-b border-line pb-8 scroll-mt-20">
           <h2 class="text-3xl text-ink">Concurrent serving and caching</h2>
           <a href="/cache" class="block p-4 rounded-lg border border-line-strong bg-paper text-sm text-ink hover:bg-paper transition-colors">Explore the cache interactively → <span class="text-ink-3">Follow live sessions, checkpoint restores, shared KV and disk persistence.</span></a>
           <p class="text-[15px] text-ink-2 leading-relaxed">
@@ -708,7 +711,7 @@ const commands = [
         </section>
 
         <!-- Queue budget -->
-        <section id="queues" class="space-y-4 border-b border-line pb-8">
+        <section id="queues" class="space-y-4 border-b border-line pb-8 scroll-mt-20">
           <h2 class="text-3xl text-ink">Hardware compute queue budget</h2>
           <p class="text-[15px] text-ink-2 leading-relaxed">
             The <code class="text-ink font-mono">gfx1151</code> command processor keeps eight compute queues mapped
@@ -745,7 +748,7 @@ const commands = [
         </section>
 
         <!-- Presets -->
-        <section id="presets" class="space-y-4 border-b border-line pb-8">
+        <section id="presets" class="space-y-4 border-b border-line pb-8 scroll-mt-20">
           <h2 class="text-3xl text-ink">CMake presets and options</h2>
 
           <div class="border border-line rounded-lg overflow-hidden">
@@ -801,25 +804,25 @@ const commands = [
         </section>
 
         <!-- Workflow -->
-        <section id="workflow" class="space-y-4 border-b border-line pb-8">
+        <section id="workflow" class="space-y-4 border-b border-line pb-8 scroll-mt-20">
           <h2 class="text-3xl text-ink">Development loop</h2>
           <p class="text-[15px] text-ink-2 leading-relaxed">
             Run the smallest check that covers the change. Formatting and the Python repository checks need no GPU and no
             Gufo build; build only the affected target while iterating.
           </p>
 
-          <div class="docusaurus-code">
-            <div class="docusaurus-code-header"><span>Focused checks</span><span>sh</span></div>
-            <div class="p-4 text-xs font-mono text-ink space-y-1 overflow-x-auto">
-              <div class="text-ink-4"># Formatting, shared with CI; add --fix to apply</div>
-              <div class="text-ink">nix shell --inputs-from . nixpkgs#clang-tools -c python3 tools/ci/check-format.py</div>
-              <div class="text-ink-4 pt-2"># Build and run one test target</div>
-              <div class="text-ink">nix develop -c cmake --preset gpu-test</div>
-              <div class="text-ink">nix develop -c cmake --build --preset gpu-test --target &lt;test-target&gt;</div>
-              <div class="text-ink">nix develop -c ctest --preset gpu-full -R '^&lt;test-name&gt;$' --output-on-failure</div>
-              <div class="text-ink-4 pt-2"># Documentation-only changes</div>
-              <div class="text-ink">nix build .#checks.x86_64-linux.docs</div>
-            </div>
+          <div class="code-block">
+            <div class="code-block-header"><span>Focused checks</span><span>sh</span></div>
+            <pre><code><span class="code-comment"># Formatting, shared with CI; add --fix to apply</span>
+nix shell --inputs-from . nixpkgs#clang-tools -c python3 tools/ci/check-format.py
+
+<span class="code-comment"># Build and run one test target</span>
+nix develop -c cmake --preset gpu-test
+nix develop -c cmake --build --preset gpu-test --target &lt;test-target&gt;
+nix develop -c ctest --preset gpu-full -R '^&lt;test-name&gt;$' --output-on-failure
+
+<span class="code-comment"># Documentation-only changes</span>
+nix build .#checks.x86_64-linux.docs</code></pre>
           </div>
 
           <p class="text-xs text-ink-3 leading-relaxed">
@@ -860,7 +863,7 @@ const commands = [
         </section>
 
         <!-- Profiling -->
-        <section id="profiling" class="space-y-4 border-b border-line pb-8">
+        <section id="profiling" class="space-y-4 border-b border-line pb-8 scroll-mt-20">
           <h2 class="text-3xl text-ink">Profiling and benchmarking</h2>
           <p class="text-[15px] text-ink-2 leading-relaxed">
             Measure with <code class="text-ink font-mono">result/bin/gufo</code> from a
@@ -896,7 +899,7 @@ const commands = [
         </section>
 
         <!-- Toolboxes -->
-        <section id="toolboxes" class="space-y-4 border-b border-line pb-8">
+        <section id="toolboxes" class="space-y-4 border-b border-line pb-8 scroll-mt-20">
           <h2 class="text-3xl text-ink">OCI images</h2>
           <p class="text-[15px] text-ink-2 leading-relaxed">
             The companion
@@ -920,14 +923,12 @@ const commands = [
             ))}
           </div>
 
-          <div class="docusaurus-code">
-            <div class="docusaurus-code-header"><span>Run Gufo with GPU access</span><span>sh</span></div>
-            <div class="p-4 text-xs font-mono text-ink space-y-1 break-all">
-              <div>podman run --rm -it --userns=keep-id:uid=1000,gid=1000 \</div>
-              <div>&nbsp;&nbsp;--device /dev/kfd --device /dev/dri --group-add keep-groups \</div>
-              <div>&nbsp;&nbsp;--ulimit memlock=-1 \</div>
-              <div>&nbsp;&nbsp;ghcr.io/gufo-org/toolboxes/gufo-runtime:latest gufo diagnose</div>
-            </div>
+          <div class="code-block">
+            <div class="code-block-header"><span>Run Gufo with GPU access</span><span>sh</span></div>
+            <pre><code>podman run --rm -it --userns=keep-id:uid=1000,gid=1000 \
+  --device /dev/kfd --device /dev/dri --group-add keep-groups \
+  --ulimit memlock=-1 \
+  ghcr.io/gufo-org/toolboxes/gufo-runtime:latest gufo diagnose</code></pre>
           </div>
         </section>
 
@@ -940,19 +941,17 @@ const commands = [
             written command line, and a repository check verifies the command it produces.
           </p>
 
-          <div class="docusaurus-code">
-            <div class="docusaurus-code-header"><span>mk-serve attributes</span><span>nix</span></div>
-            <div class="p-4 text-xs font-mono text-ink space-y-1 overflow-x-auto">
-              <div>&#123;</div>
-              <div>&nbsp;&nbsp;modality = <span class="text-ink">"llm"</span>;&nbsp;<span class="text-ink-4"># llm, image, video, tts, asr</span></div>
-              <div>&nbsp;&nbsp;model = <span class="text-ink">"/var/models/qwen3.8-27b.gguf"</span>;</div>
-              <div>&nbsp;&nbsp;servedModelName = <span class="text-ink">"qwen"</span>;</div>
-              <div>&nbsp;&nbsp;context = 32768;</div>
-              <div>&nbsp;&nbsp;sessions = 2;</div>
-              <div>&nbsp;&nbsp;speculative = <span class="text-ink">"dflash2"</span>;</div>
-              <div>&nbsp;&nbsp;dflashModel = <span class="text-ink">"/var/models/dflash2.gguf"</span>;</div>
-              <div>&#125;</div>
-            </div>
+          <div class="code-block">
+            <div class="code-block-header"><span>mk-serve attributes</span><span>nix</span></div>
+            <pre><code>&#123;
+  modality = "llm"; <span class="code-comment"># llm, image, video, tts, asr</span>
+  model = "/var/models/qwen3.8-27b.gguf";
+  servedModelName = "qwen";
+  context = 32768;
+  sessions = 2;
+  speculative = "dflash2";
+  dflashModel = "/var/models/dflash2.gguf";
+&#125;</code></pre>
           </div>
 
           <p class="text-xs text-ink-3 leading-relaxed">
@@ -967,3 +966,40 @@ const commands = [
 
   <Footer />
 </Layout>
+
+<script>
+  // Highlight the sidebar entry for the section currently at the top of the viewport.
+  const links = new Map(
+    [...document.querySelectorAll<HTMLAnchorElement>('[data-toc]')].map((a) => [a.dataset.toc!, a]),
+  );
+  const sections = [...links.keys()]
+    .map((id) => document.getElementById(id))
+    .filter((el): el is HTMLElement => el !== null);
+
+  function update() {
+    // The last section whose top has passed just below the sticky navbar.
+    let current = sections[0];
+    for (const section of sections) {
+      if (section.getBoundingClientRect().top <= 120) current = section;
+    }
+    if (window.innerHeight + window.scrollY >= document.documentElement.scrollHeight - 4) {
+      current = sections[sections.length - 1];
+    }
+    links.forEach((link, id) => link.classList.toggle('sidebar-link-active', id === current?.id));
+  }
+
+  let queued = false;
+  window.addEventListener(
+    'scroll',
+    () => {
+      if (queued) return;
+      queued = true;
+      requestAnimationFrame(() => {
+        queued = false;
+        update();
+      });
+    },
+    { passive: true },
+  );
+  update();
+</script>
