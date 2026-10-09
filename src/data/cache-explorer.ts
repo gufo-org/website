@@ -16,12 +16,21 @@ export type CacheView = {
   sessions: { name: string; position: number }[];
   route?: { kind: 'live' | 'ram' | 'disk' | 'miss'; from: string; target: number; checkpoint?: string };
 };
+// `previous` names the step whose cache state this one evolves from, when it is not the step before.
 export type CacheStep = {
   title: string; explanation: string; prompt: number; common: number;
-  state: CacheView;
+  state: CacheView; previous?: number;
 };
 export type CacheScenario = { id: string; name: string; caption: string; lesson: string; steps: CacheStep[] };
-export type ConversationPoint = { role: 'user' | 'assistant' | 'tool' | 'event'; speaker: string; text: string; boundary: string };
+// `lane` groups turns into one conversation branch; `from` forks a branch off an earlier point.
+// A message spans tokens [start, end): `start` defaults to where its history ends, and earlier
+// tokens of a root message are system prompt, tools and older history. Events carry no tokens.
+export type ConversationPoint = {
+  lane: string; role: 'user' | 'assistant' | 'tool' | 'event'; speaker: string; text: string; boundary: string;
+  from?: number; fork?: string; start?: number; end?: number;
+  // An async subagent's report: the point whose work this message returns. It is text, not shared history.
+  result?: number; resultLabel?: string;
+};
 
 // Abbreviated example messages, not the recorded benchmark conversations.
 // Each point corresponds to the same-index cache step, including lifecycle events.
@@ -29,85 +38,91 @@ export const cacheConversations: Record<string, { setup: string; points: Convers
   continuation: {
     setup: 'A coding assistant has a system prompt and tool definitions. The client replays assistant messages exactly.',
     points: [
-      { role: 'user', speaker: 'You', text: 'Find the cache entry points and explain how a request gets a session.', boundary: 'Prompt arrives · 4,096 tokens total' },
-      { role: 'assistant', speaker: 'Gufo', text: 'The request leases a session. Its prompt state is checkpointed before generation continues.', boundary: '+512 generated tokens · live frontier 4,608' },
-      { role: 'user', speaker: 'You', text: 'Now follow the next turn. Which part of this conversation is reused?', boundary: 'Next prompt arrives · 5,120 tokens total' },
-      { role: 'assistant', speaker: 'Gufo', text: 'The previous live frontier is reused. The new prompt boundary is saved for later turns.', boundary: '+256 generated tokens · live frontier 5,376' },
-      { role: 'user', speaker: 'You', text: 'Read the checkpoint capture code. What is saved before generation starts?', boundary: 'Next prompt · 5,888 tokens total' },
-      { role: 'assistant', speaker: 'Gufo · tool call', text: 'I’ll read the capture path and the model’s snapshot interface.', boundary: '+256 generated tokens · live frontier 6,144' },
-      { role: 'tool', speaker: 'Read file · result', text: 'The source contains fixed recurrent state, position metadata and the attention KV payload. Here are the relevant definitions…', boundary: 'Tool output appended · prompt 7,680' },
-      { role: 'assistant', speaker: 'Gufo', text: 'Fixed state belongs to an exact boundary. The proposed hybrid can share KV chunks, while each checkpoint still needs its own fixed state.', boundary: '+512 generated tokens · live frontier 8,192' },
-      { role: 'user', speaker: 'You', text: 'Check the disk writer too. When is a checkpoint safe after a restart?', boundary: 'Next prompt · 8,704 tokens total' },
-      { role: 'assistant', speaker: 'Gufo · tool call', text: 'I’ll inspect the publication order and the durability checks.', boundary: '+512 generated tokens · live frontier 9,216' },
-      { role: 'tool', speaker: 'Read file · result', text: 'The proposed writer persists missing chunks before publishing the checkpoint manifest. Queued writes have not reached that boundary yet…', boundary: 'Tool output appended · prompt 10,240' },
-      { role: 'assistant', speaker: 'Gufo', text: 'A finished response does not imply a durable checkpoint. After a crash, only successfully published state can be restored.', boundary: '+512 generated tokens · live frontier 10,752' },
-      { role: 'user', speaker: 'You', text: 'Put the live-session, RAM and disk paths together in a short explanation.', boundary: 'Final prompt · 11,264 tokens total' },
-      { role: 'assistant', speaker: 'Gufo', text: 'Continue live when the exact history is still available; otherwise restore an exact checkpoint and prefill the remaining suffix. Durable disk state also survives a restart.', boundary: '+256 generated tokens · live frontier 11,520' },
+      { lane: 'A', role: 'user', speaker: 'You', text: 'Some users sign up with addresses like “anna@example”. Where does the signup form check emails?', boundary: 'Prompt arrives · 4,096 tokens total', end: 4096 },
+      { lane: 'A', role: 'assistant', speaker: 'Gufo', text: 'The signup handler calls validateEmail() before it creates the account. That function decides what counts as a valid address.', boundary: '+512 generated tokens · live frontier 4,608', end: 4608 },
+      { lane: 'A', role: 'user', speaker: 'You', text: 'Why does “anna@example” pass that check?', boundary: 'Next prompt arrives · 5,120 tokens total', end: 5120 },
+      { lane: 'A', role: 'assistant', speaker: 'Gufo', text: 'Its pattern only needs an @ followed by some characters, so a domain without a dot is accepted.', boundary: '+256 generated tokens · live frontier 5,376', end: 5376 },
+      { lane: 'A', role: 'user', speaker: 'You', text: 'Show me the handler. What happens after validation?', boundary: 'Next prompt · 5,888 tokens total', end: 5888 },
+      { lane: 'A', role: 'assistant', speaker: 'Gufo · tool call', text: 'I’ll open the signup handler.', boundary: '+256 generated tokens · live frontier 6,144', end: 6144 },
+      { lane: 'A', role: 'tool', speaker: 'Read file · result', text: 'signup.ts: the handler trims the address, calls validateEmail(), saves the account, then sends a welcome email…', boundary: 'Tool output appended · prompt 7,680', end: 7680 },
+      { lane: 'A', role: 'assistant', speaker: 'Gufo', text: 'Validation runs before anything is saved, so tightening the pattern is enough. I suggest requiring a dot after the @.', boundary: '+512 generated tokens · live frontier 8,192', end: 8192 },
+      { lane: 'A', role: 'user', speaker: 'You', text: 'Are there tests for this? I don’t want to lock out existing users.', boundary: 'Next prompt · 8,704 tokens total', end: 8704 },
+      { lane: 'A', role: 'assistant', speaker: 'Gufo · tool call', text: 'I’ll look for the existing validation tests.', boundary: '+512 generated tokens · live frontier 9,216', end: 9216 },
+      { lane: 'A', role: 'tool', speaker: 'Read file · result', text: 'validate.test.ts: eight cases cover empty input and a missing @. None covers a domain without a dot…', boundary: 'Tool output appended · prompt 10,240', end: 10240 },
+      { lane: 'A', role: 'assistant', speaker: 'Gufo', text: 'The tests miss this case, so I’ll add “anna@example” as invalid. Existing accounts are not re-validated, so nobody is locked out.', boundary: '+512 generated tokens · live frontier 10,752', end: 10752 },
+      { lane: 'A', role: 'user', speaker: 'You', text: 'Summarize the fix in two sentences for the pull request.', boundary: 'Final prompt · 11,264 tokens total', end: 11264 },
+      { lane: 'A', role: 'assistant', speaker: 'Gufo', text: 'Require a dot in the domain of new email addresses, and test addresses such as “anna@example”. Existing accounts are unaffected because only new signups are validated.', boundary: '+256 generated tokens · live frontier 11,520', end: 11520 },
     ],
   },
   sessions: {
     setup: 'Three independent conversations, A/B/C, rotate through two execution slots. D later branches from A’s exact 4,096-token prefix. Disk caching is enabled. Slot choices and retained boundaries are illustrative; clients replay history rather than naming an execution slot.',
     points: [
-      { role: 'user', speaker: 'A · you', text: 'Review the cache request path and explain the first request.', boundary: 'A arrives · prompt 4,096 · slot 1' },
-      { role: 'assistant', speaker: 'A · Gufo', text: 'The initial prompt is computed. Its checkpoint is retained while this response extends the live state.', boundary: 'A@4096 saved · live frontier 4,608' },
-      { role: 'user', speaker: 'B · you', text: 'Start a separate review of the tokenizer, with different instructions and history.', boundary: 'B arrives · prompt 6,144 · slot 2' },
-      { role: 'assistant', speaker: 'B · Gufo', text: 'The tokenizer review is ready. A’s live state is still in the other slot.', boundary: 'B@6144 saved · live frontier 6,400' },
-      { role: 'user', speaker: 'A · you', text: 'Continue the cache review. Which tokens can we avoid computing?', boundary: 'A returns · prompt 5,120 · live hit in slot 1' },
-      { role: 'assistant', speaker: 'A · Gufo', text: 'This turn continues from the live frontier. We also save its new prompt boundary.', boundary: 'A@5120 saved · live frontier 5,376' },
-      { role: 'user', speaker: 'C · you', text: 'Start a third, unrelated conversation to inspect model loading.', boundary: 'C arrives · prompt 8,192 · reassign slot 1' },
-      { role: 'assistant', speaker: 'C · Gufo', text: 'Model loading is explained. A’s checkpoints survived the slot change; this prompt’s checkpoint has also finished its disk write.', boundary: 'C@8192 durable · live frontier 8,448' },
-      { role: 'user', speaker: 'A · you', text: 'Return to the cache review and inspect checkpoint eviction.', boundary: 'A returns · prompt 5,888 · RAM hit → slot 2' },
-      { role: 'assistant', speaker: 'A · Gufo', text: 'A resumed in a different slot. The frozen checkpoint did not include all of the previous response, so that suffix was computed again.', boundary: 'A@5888 saved · live frontier 6,144' },
-      { role: 'user', speaker: 'B · you', text: 'Continue the tokenizer review with the edge cases.', boundary: 'B returns · prompt 6,912 · RAM hit → slot 1' },
-      { role: 'assistant', speaker: 'B · Gufo', text: 'B’s history was restored after its old execution slot was reused by A.', boundary: 'B@6912 saved · live frontier 7,168' },
-      { role: 'user', speaker: 'D · new branch', text: 'Use A’s original instructions and context, but investigate cancellation instead.', boundary: 'Different conversation · shared prefix 4,096 · prompt 6,144' },
-      { role: 'assistant', speaker: 'D · Gufo', text: 'This branch starts from A’s checkpoint. Its first two full chunks inherit A’s physical rows; its new suffix belongs to D.', boundary: 'D@6144 saved · live frontier 6,400' },
-      { role: 'event', speaker: 'Cache · RAM pressure', text: 'Evict C’s checkpoint from RAM. Its completed disk copy remains available, and A and D keep their live slots.', boundary: 'C@8192 becomes disk-only' },
-      { role: 'user', speaker: 'C · you', text: 'Continue the model-loading discussion from the earlier response.', boundary: 'C returns · prompt 8,960 · disk hit → slot 1' },
-      { role: 'assistant', speaker: 'C · Gufo', text: 'Restore the durable prefix, compute the remaining 768 tokens, then continue generating.', boundary: 'C@8960 saved in RAM · live frontier 9,216' },
-      { role: 'user', speaker: 'E · changed instructions', text: 'Begin with a different system prompt. Can the old review state still be used?', boundary: 'Changed input identity/prefix · prompt 4,096 · cache miss' },
+      { lane: 'A', role: 'user', speaker: 'A · you', text: 'Plan a three-day trip to Lisbon for two people who love food and walking.', boundary: 'A arrives · prompt 4,096 · slot 1', end: 4096 },
+      { lane: 'A', role: 'assistant', speaker: 'A · Gufo', text: 'Day one: Alfama and the castle, with lunch at a tasca. Day two: Belém and pastéis de nata. Day three: Sintra.', boundary: 'A@4096 saved · live frontier 4,608', end: 4608 },
+      { lane: 'B', role: 'user', speaker: 'B · you', text: 'Help me write a cover letter for a junior data analyst job.', boundary: 'B arrives · prompt 6,144 · slot 2', end: 6144 },
+      { lane: 'B', role: 'assistant', speaker: 'B · Gufo', text: 'Here’s a first draft. It opens with your internship results and closes by asking for an interview.', boundary: 'B@6144 saved · live frontier 6,400', end: 6400 },
+      { lane: 'A', role: 'user', speaker: 'A · you', text: 'Swap Sintra for a day at the beach. Which one is easiest by train?', boundary: 'A returns · prompt 5,120 · live hit in slot 1', end: 5120 },
+      { lane: 'A', role: 'assistant', speaker: 'A · Gufo', text: 'Cascais is about 40 minutes from Cais do Sodré, with frequent trains. I’ve updated day three.', boundary: 'A@5120 saved · live frontier 5,376', end: 5376 },
+      { lane: 'C', role: 'user', speaker: 'C · you', text: 'Explain how a heat pump can heat a house when it’s cold outside.', boundary: 'C arrives · prompt 8,192 · reassign slot 1', end: 8192 },
+      { lane: 'C', role: 'assistant', speaker: 'C · Gufo', text: 'It moves heat instead of making it: a refrigerant absorbs warmth from the outside air, even below freezing, and releases it indoors.', boundary: 'C@8192 durable · live frontier 8,448', end: 8448 },
+      { lane: 'A', role: 'user', speaker: 'A · you', text: 'Back to Lisbon: suggest a restaurant for our last night.', boundary: 'A returns · prompt 5,888 · RAM hit → slot 2', end: 5888 },
+      { lane: 'A', role: 'assistant', speaker: 'A · Gufo', text: 'Try a seafood restaurant near Cais do Sodré, close to the Cascais train. Book ahead for Saturday.', boundary: 'A@5888 saved · live frontier 6,144', end: 6144 },
+      { lane: 'B', role: 'user', speaker: 'B · you', text: 'Make the cover letter shorter and mention my SQL skills.', boundary: 'B returns · prompt 6,912 · RAM hit → slot 1', end: 6912 },
+      { lane: 'B', role: 'assistant', speaker: 'B · Gufo', text: 'Done: it’s now three paragraphs, with SQL in the second one next to your dashboard project.', boundary: 'B@6912 saved · live frontier 7,168', end: 7168 },
+      { lane: 'D', role: 'user', speaker: 'D · new branch', text: 'Actually, we’re travelling with two young kids. Can you adapt the plan?', boundary: 'Different conversation · shared prefix 4,096 · prompt 6,144', from: 0, fork: 'shares 4,096', end: 6144 },
+      { lane: 'D', role: 'assistant', speaker: 'D · Gufo', text: 'With kids, keep mornings busy and afternoons light: the Oceanário, tram 28 and an early dinner each day.', boundary: 'D@6144 saved · live frontier 6,400', end: 6400 },
+      { lane: 'C', role: 'event', speaker: 'Cache · RAM pressure', text: 'Evict C’s checkpoint from RAM. Its completed disk copy remains available, and A and D keep their live slots.', boundary: 'C@8192 becomes disk-only' },
+      { lane: 'C', role: 'user', speaker: 'C · you', text: 'How much would a heat pump save compared with my gas boiler?', boundary: 'C returns · prompt 8,960 · disk hit → slot 1', end: 8960 },
+      { lane: 'C', role: 'assistant', speaker: 'C · Gufo', text: 'It depends on local prices, but heat pumps are typically three to four times as efficient. Here’s a rough estimate for your house…', boundary: 'C@8960 saved in RAM · live frontier 9,216', end: 9216 },
+      { lane: 'E', role: 'user', speaker: 'E · changed instructions', text: 'Plan a three-day trip to Lisbon for two people who love food and walking.', boundary: 'Changed input identity/prefix · prompt 4,096 · cache miss', end: 4096 },
     ],
   },
   edit: {
     setup: 'The conversation has reached 8,192 tokens. An earlier user message sits after token 7,000.',
     points: [
-      { role: 'assistant', speaker: 'Gufo · original history', text: 'I have finished the first analysis. The conversation now has several possible restore points.', boundary: 'Before the edit · live frontier 8,192' },
-      { role: 'user', speaker: 'You · edited message', text: 'Change that earlier request: inspect disk persistence instead of RAM retention.', boundary: 'Edit at token 7,001 · new prompt 8,192' },
-      { role: 'event', speaker: 'Cache · edited branch ready', text: 'Restore an earlier exact boundary, then compute the rewritten suffix. The recomputed rows have new provenance.', boundary: 'After prefill · new branch frontier 8,192' },
+      { lane: 'Original', role: 'assistant', speaker: 'Gufo · original history', text: 'Here is the summary of the sales report: revenue grew 12%, driven mostly by the new subscription plan.', boundary: 'Before the edit · live frontier 8,192', start: 7000, end: 8192 },
+      { lane: 'Edit', role: 'user', speaker: 'You · edited message', text: 'Change that earlier request: summarize customer churn instead of revenue.', boundary: 'Edit at token 7,001 · new prompt 8,192', from: 0, fork: 'edit @ 7,001', start: 7000, end: 8192 },
+      { lane: 'Edit', role: 'event', speaker: 'Cache · edited branch ready', text: 'Restore an earlier exact boundary, then compute the rewritten suffix. The recomputed rows have new provenance.', boundary: 'After prefill · new branch frontier 8,192' },
+      { lane: 'Edit', role: 'assistant', speaker: 'Gufo · edited branch', text: 'Churn rose from 3.2% to 4.1% this quarter. Most of the increase came from customers on monthly plans.', boundary: '+512 generated tokens · live frontier 8,704', end: 8704 },
+      { lane: 'Edit', role: 'user', speaker: 'You', text: 'Which customers churned the most?', boundary: 'Next prompt · 9,216 tokens total', end: 9216 },
+      { lane: 'Edit', role: 'assistant', speaker: 'Gufo · edited branch', text: 'New monthly customers in their first 90 days: 7.8%, against 2.1% for annual plans.', boundary: 'Edit@9216 saved · live frontier 9,472', end: 9472 },
     ],
   },
   fork: {
-    setup: 'A parent agent has a 10,000-token history. Its system prompt and tools occupy a shared 6,000-token prefix.',
+    setup: 'A parent agent has a 10,000-token history. Its system prompt and tools occupy a shared 6,000-token prefix. Subagents run asynchronously: the parent does not wait, and each report returns to it as a tool result.',
     points: [
-      { role: 'user', speaker: 'Subagent S · first task', text: 'Using the shared instructions and tools, investigate cache performance.', boundary: 'First fork arrives · 8,192-token prompt' },
-      { role: 'event', speaker: 'Cache · shared boundary reached', text: 'Pause at token 6,000 and save the exact state where the shared instructions end.', boundary: 'New learned checkpoint · token 6,000' },
-      { role: 'user', speaker: 'Subagent T · second task', text: 'Using those same instructions and tools, investigate cache correctness.', boundary: 'Next fork arrives · reuse the 6,000-token boundary' },
+      { lane: 'S', role: 'user', speaker: 'Subagent S · first task', text: 'Using the shared instructions and tools, find every place the app sends an email.', boundary: 'First fork arrives · 8,192-token prompt', start: 6000, end: 8192 },
+      { lane: 'S', role: 'event', speaker: 'Cache · shared boundary reached', text: 'Pause at token 6,000 and save the exact state where the shared instructions end.', boundary: 'New learned checkpoint · token 6,000' },
+      { lane: 'T', role: 'user', speaker: 'Subagent T · second task', text: 'Using the same instructions and tools, write tests for the password-reset flow.', boundary: 'Next fork arrives · reuse the 6,000-token boundary', from: 1, fork: 'restore @ 6,000', start: 6000, end: 8192 },
+      { lane: 'Parent', role: 'tool', speaker: 'Subagent S · async result', text: 'Emails are sent from three places: signup, password reset and the weekly digest. Each one builds its own template…', boundary: 'S finished · report appended to the parent · prompt 10,768', start: 10000, end: 10768, result: 1, resultLabel: 'S report' },
+      { lane: 'Parent', role: 'assistant', speaker: 'Parent · Gufo', text: 'S found three senders. I’ll move them onto one shared template, starting with signup; T is still writing the reset tests.', boundary: 'Parent@10768 saved · live frontier 11,024', end: 11024 },
+      { lane: 'Parent', role: 'tool', speaker: 'Subagent T · async result', text: 'Added four tests for the password-reset flow. All of them pass against the current code.', boundary: 'T finished · report appended to the parent · prompt 11,536', end: 11536, result: 2, resultLabel: 'T report' },
     ],
   },
   spill: {
     setup: 'Two independent conversations share a small execution pool. Checkpoints can outlive the session that computed them.',
     points: [
-      { role: 'assistant', speaker: 'Gufo · conversation A', text: 'The long analysis is ready. We can return to this conversation later.', boundary: 'A pauses · checkpoints at 8,192 and 12,288' },
-      { role: 'user', speaker: 'You · conversation B', text: 'Start a separate task with a different history.', boundary: 'B takes A’s slot · preserve A before overwrite' },
-      { role: 'event', speaker: 'Cache · memory pressure', text: 'Remove A’s older checkpoint. Its chunks remain needed by the newer checkpoint.', boundary: 'Evict A@8192 · shared rows remain referenced' },
-      { role: 'user', speaker: 'You · back in conversation A', text: 'Continue the earlier analysis from where we left off.', boundary: 'A returns · 12,800-token prompt' },
+      { lane: 'A', role: 'assistant', speaker: 'Gufo · conversation A', text: 'Your novel outline is ready: three acts, twelve chapters and a twist in chapter nine.', boundary: 'A pauses · checkpoints at 8,192 and 12,288', end: 12288 },
+      { lane: 'B', role: 'user', speaker: 'You · conversation B', text: 'Translate this product description into Spanish.', boundary: 'B takes A’s slot · preserve A before overwrite', end: 2048 },
+      { lane: 'A', role: 'event', speaker: 'Cache · memory pressure', text: 'Remove A’s older checkpoint. Its chunks remain needed by the newer checkpoint.', boundary: 'Evict A@8192 · shared rows remain referenced' },
+      { lane: 'A', role: 'user', speaker: 'You · back in conversation A', text: 'Great. Now draft the opening of chapter one from that outline.', boundary: 'A returns · 12,800-token prompt', end: 12800 },
     ],
   },
   restart: {
     setup: 'Disk caching is enabled. The newest response can finish before its checkpoint is durable.',
     points: [
-      { role: 'assistant', speaker: 'Gufo · conversation A', text: 'The latest turn is complete. The disk writer is still catching up.', boundary: '12,288 in RAM · only 8,192 durable on disk' },
-      { role: 'event', speaker: 'Disk writer · publication complete', text: 'The checkpoint and all its dependencies are durable. It can now survive a process restart.', boundary: '12,288 becomes durable' },
-      { role: 'user', speaker: 'You · after restart', text: 'Continue the conversation using the same history.', boundary: 'Restore durable state · 12,800-token prompt' },
-      { role: 'event', speaker: 'Alternative · crash before publication', text: 'Rewind to the first point: what if the server died while the newest write was unfinished?', boundary: 'Alternative crash path · only 8,192 survives' },
+      { lane: 'A', role: 'assistant', speaker: 'Gufo · conversation A', text: 'Here’s the refactored payment module. The retry logic now lives in its own function.', boundary: '12,288 in RAM · only 8,192 durable on disk', end: 12288 },
+      { lane: 'A', role: 'event', speaker: 'Disk writer · publication complete', text: 'The checkpoint and all its dependencies are durable. It can now survive a process restart.', boundary: '12,288 becomes durable' },
+      { lane: 'A', role: 'user', speaker: 'You · after restart', text: 'Thanks. Now add unit tests for the retry function.', boundary: 'Restore durable state · 12,800-token prompt', end: 12800 },
+      { lane: 'Crash', role: 'event', speaker: 'Alternative · crash before publication', text: 'Rewind to the first point: what if the server died while the newest write was unfinished?', boundary: 'Alternative crash path · only 8,192 survives', from: 0, fork: 'crash before publish' },
     ],
   },
   provenance: {
     setup: 'Two clients submit identical tokens independently. A later client actually restores one of their checkpoints.',
     points: [
-      { role: 'user', speaker: 'Clients A and B', text: 'Review the same source tree using the same instructions.', boundary: 'Two independent cold prompts · 6,144 tokens each' },
-      { role: 'event', speaker: 'Cache · preserve both computations', text: 'The tokens match, but independent prefill shapes can produce different bytes. Keep A’s state and B’s state separate.', boundary: 'Two provenances · six full chunks in the hybrid' },
-      { role: 'user', speaker: 'Client C · extends A', text: 'Continue A’s review and investigate the next module.', boundary: 'Restore A’s 6,144 tokens · new prompt 8,192' },
+      { lane: 'A + B', role: 'user', speaker: 'Clients A and B', text: 'Summarize this supplier contract and list its termination clauses.', boundary: 'Two independent cold prompts · 6,144 tokens each', end: 6144 },
+      { lane: 'A + B', role: 'event', speaker: 'Cache · preserve both computations', text: 'The tokens match, but independent prefill shapes can produce different bytes. Keep A’s state and B’s state separate.', boundary: 'Two provenances · six full chunks in the hybrid' },
+      { lane: 'C', role: 'user', speaker: 'Client C · extends A', text: 'Following A’s summary: which of those clauses favour the supplier?', boundary: 'Restore A’s 6,144 tokens · new prompt 8,192', from: 1, fork: 'restores A', end: 8192 },
     ],
   },
 };
@@ -148,6 +163,8 @@ const afterBranch = [...beforeBranch.map(c => c.id === resumedB.id ? { ...c, bor
 const diskOnlyC = afterBranch.map(c => c.id === c8.id ? { ...c, ram: false } : c);
 const returningC = diskOnlyC.map(c => c.id === d6.id ? { ...c, borrowed: false } : c);
 const slotPair = (first: string, p1: number, second: string, p2: number) => [{ name: first, position: p1 }, { name: second, position: p2 }];
+const edit8 = cp('Edit@8192', 8192, 'E', { shared: 6144, borrowed: false });
+const forkCheckpoints = [a4, cp('Parent@10000', 10000), cp('Shared@6000', 6000, 'S', { shared: 4096, borrowed: false })];
 
 export const cacheScenarios: CacheScenario[] = [
   {
@@ -162,23 +179,23 @@ export const cacheScenarios: CacheScenario[] = [
         ...withState(view(4608, 'Live session · no restore', 'Reusing live state avoids restoring fixed state and copying KV.', [a4], slots('Conversation A', 4608))) },
       { title: 'The stable checkpoint advances too', explanation: 'Save the new prompt boundary at 5,120. Retaining this boundary also helps clients that rewrite or omit the previous assistant reasoning.', prompt: 5120, common: 4608,
         ...withState(view(4608, 'Live session · no restore', 'A new boundary means future turns can resume farther into the history.', [a4, cp('A@5120', 5120)], slots('Conversation A', 5376))) },
-      { title: 'Ask for a source inspection', explanation: 'A’s 5,376-token live frontier is an exact prefix of this 5,888-token request. The next user message adds 512 tokens.', prompt: 5888, common: 5376,
+      { title: 'Ask to see the source', explanation: 'A’s 5,376-token live frontier is an exact prefix of this 5,888-token request. The next user message adds 512 tokens.', prompt: 5888, common: 5376,
         ...withState(view(5376, 'Live session · no restore', 'Only the new user message needs prefill.', [a4, cp('A@5120', 5120)], slots('Conversation A', 5376))) },
       { title: 'A tool call is generated history too', explanation: 'Save the prompt at 5,888, then generate 256 tokens containing the assistant’s tool call. The live state reaches 6,144.', prompt: 5888, common: 5376,
         ...withState(view(5376, 'Live session · no restore', 'Exact replay includes tool calls as well as ordinary assistant text.', [a4, cp('A@5120', 5120), cp('A@5888', 5888)], slots('Conversation A', 6144))) },
       { title: 'Append a large tool result', explanation: 'The file-reading result adds 1,536 tokens. Gufo can reuse the 6,144 tokens already executed and prefill just the appended result.', prompt: 7680, common: 6144,
         ...withState(view(6144, 'Live session · no restore', 'Tool output is new input. The preceding tool call is already in the live frontier.', [a4, cp('A@5120', 5120), cp('A@5888', 5888)], slots('Conversation A', 6144))) },
-      { title: 'Explain the captured state', explanation: 'Capture the 7,680-token prompt, then generate 512 tokens. Multiple checkpoints now remember this same computation history.', prompt: 7680, common: 6144,
+      { title: 'Gufo explains what it found', explanation: 'Capture the 7,680-token prompt, then generate 512 tokens. Multiple checkpoints now remember this same computation history.', prompt: 7680, common: 6144,
         ...withState(view(6144, 'Live session · no restore', 'Full chunks share provenance; each checkpoint keeps its own partial tail and fixed state.', [a4, cp('A@5120', 5120), cp('A@5888', 5888), cp('A@7680', 7680)], slots('Conversation A', 8192))) },
       { title: 'Start another investigation', explanation: 'The next user message extends the 8,192-token live frontier by 512 tokens. The older checkpoint depth does not limit this live hit.', prompt: 8704, common: 8192,
         ...withState(view(8192, 'Live session · no restore', 'The retained prompt boundary is 7,680; the live frontier also includes the assistant’s response.', [a4, cp('A@5120', 5120), cp('A@5888', 5888), cp('A@7680', 7680)], slots('Conversation A', 8192))) },
       { title: 'Issue the second tool call', explanation: 'Checkpoint the 8,704-token prompt. The next generated tool call extends the live session to 9,216.', prompt: 8704, common: 8192,
         ...withState(view(8192, 'Live session · no restore', 'Growing history increases retained bytes even when execution continues without a restore.', [a4, cp('A@5120', 5120), cp('A@5888', 5888), cp('A@7680', 7680), cp('A@8704', 8704)], slots('Conversation A', 9216))) },
-      { title: 'The disk-writer source returns', explanation: 'Another 1,024-token tool result extends the live history. This request reaches 10,240 tokens, with just 1,024 requiring prefill.', prompt: 10240, common: 9216,
+      { title: 'The test file returns', explanation: 'Another 1,024-token tool result extends the live history. This request reaches 10,240 tokens, with just 1,024 requiring prefill.', prompt: 10240, common: 9216,
         ...withState(view(9216, 'Live session · no restore', 'A long conversation can alternate user turns and tool results while continuing in the same slot.', [a4, cp('A@5120', 5120), cp('A@5888', 5888), cp('A@7680', 7680), cp('A@8704', 8704)], slots('Conversation A', 9216))) },
       { title: 'Keep another exact boundary', explanation: 'Retain the prompt at 10,240, then generate 512 tokens. Older restore points remain in this illustrative checkpoint set.', prompt: 10240, common: 9216,
         ...withState(view(9216, 'Live session · no restore', 'These checkpoints share complete chunks from this uninterrupted history; fixed state and partial tails remain private.', [a4, cp('A@5120', 5120), cp('A@5888', 5888), cp('A@7680', 7680), cp('A@8704', 8704), cp('A@10240', 10240)], slots('Conversation A', 10752))) },
-      { title: 'Ask for the final explanation', explanation: 'A’s 10,752 executed tokens match the new prompt exactly. Only the final 512-token user message needs prefill.', prompt: 11264, common: 10752,
+      { title: 'Ask for a final summary', explanation: 'A’s 10,752 executed tokens match the new prompt exactly. Only the final 512-token user message needs prefill.', prompt: 11264, common: 10752,
         ...withState(view(10752, 'Live session · no restore', 'No snapshot restore is necessary while this exact frontier remains available.', [a4, cp('A@5120', 5120), cp('A@5888', 5888), cp('A@7680', 7680), cp('A@8704', 8704), cp('A@10240', 10240)], slots('Conversation A', 10752))) },
       { title: 'Seven requests, one live history', explanation: 'The last prompt checkpoint is at 11,264; 256 generated tokens take the live session to 11,520. Six subsequent requests have continued directly from live state.', prompt: 11264, common: 10752,
         ...withState(view(10752, 'Live session · no restore', 'Retained storage and execution reuse are separate: checkpoints share chunks while this exact live frontier continues without a restore.', [a4, cp('A@5120', 5120), cp('A@5888', 5888), cp('A@7680', 7680), cp('A@8704', 8704), cp('A@10240', 10240), cp('A@11264', 11264)], slots('Conversation A', 11520))) },
@@ -228,26 +245,38 @@ export const cacheScenarios: CacheScenario[] = [
   },
   {
     id: 'edit', name: 'Edit an earlier message', caption: 'Common prefix ≠ usable state',
-    lesson: 'Matching tokens alone are insufficient for hybrid models. Recurrent state must exist at the exact restore position. Denser checkpoints reduce the gap, subject to memory and record limits.',
+    lesson: 'Matching tokens alone are insufficient for hybrid models. Recurrent state must exist at the exact restore position. Denser checkpoints reduce the gap, subject to memory and record limits. Once restored, the edited branch is an ordinary conversation with its own provenance.',
     steps: [
       { title: 'Keep a few restore points', explanation: 'A is at 8,192 tokens. This example retains exact checkpoints at 4,096, 6,144 and 8,192, sharing full chunks from the same computation.', prompt: 8192, common: 8192,
         state: view(8192, 'Live session', 'An extra boundary costs fixed state, while full chunks are shared.', [a4, a6, a8], slots('Conversation A', 8192)) },
       { title: 'An edit changes token 7,001', explanation: 'The new prompt shares 7,000 tokens with A. Its 8,192-token frontier is no longer a prefix, so the recurrent state cannot simply be truncated to 7,000.', prompt: 8192, common: 7000,
         state: view(6144, 'RAM checkpoint @ 6,144', '6,144 reused; 2,048 prefilled. The extra checkpoint makes the difference.', [a4, a6, a8], slots('Conversation A · old branch', 8192)) },
       { title: 'The edited tail has new provenance', explanation: 'Restore the chosen boundary and compute the edited branch. The new branch shares only the rows it actually restored, including rows before the edit that it otherwise recomputes.', prompt: 8192, common: 7000,
-        state: view(6144, 'Branch from 6,144', 'The first three chunks descend from A; the fourth was computed on the new branch.', [a4, a6, cp('Edit@8192', 8192, 'E', { shared: 6144, borrowed: false })], slots('Edited conversation', 8192)) },
+        state: view(6144, 'Branch from 6,144', 'The first three chunks descend from A; the fourth was computed on the new branch.', [a4, a6, edit8], slots('Edited conversation', 8192)) },
+      { title: 'The edited branch answers', explanation: 'Generate the reply to the edited request. The live session advances to 8,704, while the edited prompt stays checkpointed at 8,192.', prompt: 8192, common: 7000,
+        state: view(6144, 'Branch from 6,144 · request complete', 'The original branch’s live state is gone. Its checkpoints at 4,096 and 6,144 remain available to other edits.', [a4, a6, edit8], slots('Edited conversation', 8704)) },
+      { title: 'The new branch continues live', explanation: 'The follow-up extends the edited branch’s 8,704-token live frontier exactly. No restore is needed; only the 512-token question is prefilled.', prompt: 9216, common: 8704,
+        state: view(8704, 'Live session · edited branch', 'After an edit, the new branch behaves like any conversation: it continues in place.', [a4, a6, edit8], slots('Edited conversation', 8704)) },
+      { title: 'Branch checkpoints share their own rows', explanation: 'Save the 9,216-token prompt, then generate 256 tokens. Edit@9216 references A’s first three chunks and the chunk computed on the edited branch.', prompt: 9216, common: 8704,
+        state: view(8704, 'Live session · request complete', 'Edit@8192 and Edit@9216 share chunk E:4. Each keeps its own fixed state and partial tail.', [a4, a6, edit8, cp('Edit@9216', 9216, 'E', { shared: 6144 })], slots('Edited conversation', 9472)) },
     ],
   },
   {
     id: 'fork', name: 'Start a subagent', caption: 'Learn the divergence boundary',
-    lesson: 'A learned checkpoint saves recurrent state where histories actually diverge. Later requests restore that state and inherit its KV provenance. Independent cold computations are not automatically merged.',
+    lesson: 'A learned checkpoint saves recurrent state where histories actually diverge. Later requests restore that state and inherit its KV provenance. Independent cold computations are not automatically merged. An async subagent returns text, not state: its report is appended to the parent’s history and prefilled there.',
     steps: [
       { title: 'A parent has a long history', explanation: 'The parent has 10,000 tokens. A subagent shares the first 6,000, then follows its own task. Only the 4,096 checkpoint is usable below the divergence.', prompt: 8192, common: 6000,
         ...withState(view(4096, 'RAM checkpoint @ 4,096', 'Restore 4,096, then compute the shared gap and the new task.', [a4, cp('Parent@10000', 10000)], slots('Parent', 10000))) },
       { title: 'Capture the actual shared boundary', explanation: 'The subagent stops prefill at 6,000 and captures its recurrent state. Its first 4,096 KV rows came from A; the remaining 1,904 were recomputed.', prompt: 8192, common: 6000,
         ...withState(view(4096, 'Learning @ 6,000', 'A partial chunk holds the tail; its bytes belong to the subagent computation.', [a4, cp('Parent@10000', 10000), cp('Shared@6000', 6000, 'S', { shared: 4096 })], [{ name: 'Parent', position: 10000 }, { name: 'Subagent S', position: 6000 }])) },
       { title: 'The next subagent restores 6,000', explanation: 'A later subagent finds an exact checkpoint at the shared boundary. It restores all 6,000 tokens and prefills only its own 2,192-token task.', prompt: 8192, common: 6000,
-        ...withState(view(6000, 'RAM checkpoint @ 6,000', 'The learned boundary improves reuse; checkpoints retain shared KV with its proven computation lineage.', [a4, cp('Parent@10000', 10000), cp('Shared@6000', 6000, 'S', { shared: 4096, borrowed: false })], [{ name: 'Parent', position: 10000 }, { name: 'Subagent T', position: 6000 }])) },
+        ...withState(view(6000, 'RAM checkpoint @ 6,000', 'The learned boundary improves reuse; checkpoints retain shared KV with its proven computation lineage.', forkCheckpoints, [{ name: 'Parent', position: 10000 }, { name: 'Subagent T', position: 6000 }])) },
+      { title: 'S reports back to the parent', explanation: 'S ran asynchronously, so the parent did not wait. Its 768-token report is appended to the parent’s history as a tool result. The parent’s live frontier is still an exact prefix, so only the report needs prefill.', prompt: 10768, common: 10000,
+        ...withState(routed(view(10000, 'Live hit · parent in slot 1', 'The parent receives S’s report as text. S’s own KV after token 6,000 belongs to a different history and is not reused here.', forkCheckpoints, [{ name: 'Parent', position: 10000 }, { name: 'Subagent T', position: 8448 }]), { kind: 'live', from: 'Parent live @ 10,000 · slot 1', target: 1 })) },
+      { title: 'The parent continues while T works', explanation: 'Save the parent’s 10,768-token prompt, then generate 256 tokens. T is still running in slot 2; neither request waits for the other.', prompt: 10768, common: 10000,
+        ...withState(routed(view(10000, 'Live hit · request complete', 'Parent@10000 and Parent@10768 share the parent’s full chunks. The learned 6,000-token checkpoint is unaffected.', [...forkCheckpoints, cp('Parent@10768', 10768)], [{ name: 'Parent', position: 11024 }, { name: 'Subagent T', position: 8704 }]), { kind: 'live', from: 'Parent live continuation', target: 1 })) },
+      { title: 'T reports back too', explanation: 'T finishes and its 512-token report is appended the same way. The parent continues live from 11,024, and slot 2 is free for the next subagent.', prompt: 11536, common: 11024,
+        ...withState(routed(view(11024, 'Live hit · parent in slot 1', 'Finished subagents leave no live state behind. Shared@6000 stays retained, so the next subagent can restore the shared instructions directly.', [...forkCheckpoints, cp('Parent@10768', 10768)], slotPair('Parent', 11024, 'Free', 0)), { kind: 'live', from: 'Parent live @ 11,024 · slot 1', target: 1 })) },
     ],
   },
   {
@@ -274,7 +303,7 @@ export const cacheScenarios: CacheScenario[] = [
         state: view(12288, 'Chunks + manifest durable', 'Only two new full chunks and the new fixed state need to be added.', [cp('A@8192', 8192, 'A', { disk: 'durable' }), cp('A@12288', 12288, 'A', { disk: 'durable' })], slots('Conversation A', 12288)) },
       { title: 'Restart after publication', explanation: 'The process loses every live session and RAM record. The durable A@12288 checkpoint restores the prefix, leaving 512 tokens to prefill.', prompt: 12800, common: 12288,
         ...withState(view(12288, 'Disk restore @ 12,288', 'Disk survival is about completed publication, not about when the HTTP response finished.', [cp('A@8192', 8192, 'A', { borrowed: false, ram: false, disk: 'durable' }), cp('A@12288', 12288, 'A', { borrowed: false, ram: false, disk: 'durable' })], slots('Free', 0))) },
-      { title: 'What if the restart had been abrupt earlier?', explanation: 'If the process died before the queued write became durable, only A@8192 would survive. The remaining 4,608 prompt tokens must be prefilled in that history.', prompt: 12800, common: 8192,
+      { title: 'What if the restart had been abrupt earlier?', explanation: 'If the process died before the queued write became durable, only A@8192 would survive. The remaining 4,608 prompt tokens must be prefilled in that history.', prompt: 12800, common: 8192, previous: 0,
         ...withState(view(8192, 'Disk restore @ 8,192', 'This is the alternative crash path from step 1. Smaller hybrid writes can reduce the vulnerable window.', [cp('A@8192', 8192, 'A', { borrowed: false, ram: false, disk: 'durable' })], slots('Free', 0))) },
     ],
   },

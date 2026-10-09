@@ -26,43 +26,39 @@ import '../styles/cache-explorer.css';
     </div>
 
     <section class="cache-lab" aria-labelledby="walkthrough-heading">
-      <div class="cache-section-heading"><div><p class="cache-eyebrow">01 / Walk through the state</p><h2 id="walkthrough-heading">Choose a cache story</h2></div><label class="cache-model-label">Model<select id="cache-model"><option value="qwen">27B · DFlash2</option><option value="flash">Flash-Next · MTP</option></select></label></div>
+      <div class="cache-section-heading"><div><p class="cache-eyebrow">01 / Walk through the state</p><h2 id="walkthrough-heading">Choose a cache story</h2></div><label class="cache-model-label">Model<select id="cache-model"><option value="flash" selected>Flash-Next · MTP</option><option value="qwen">27B · DFlash2</option></select></label></div>
       <div class="cache-scenarios" aria-label="Cache scenarios">
         {cacheScenarios.map((s, i) => <button type="button" class={`scenario-button ${i === 0 ? 'active' : ''}`} data-scenario={s.id} aria-pressed={i === 0}><span>{s.name}</span><small>{s.caption}</small></button>)}
       </div>
-      <div class="cache-time-machine">
-        <aside class="cache-conversation" aria-labelledby="conversation-heading">
-          <div class="conversation-header"><p class="cache-eyebrow">Conversation timeline</p><h3 id="conversation-heading">Click a point in time</h3><p>Rewind or advance the conversation. The cache beside it follows your selection.</p></div>
-          <div class="conversation-context"><span>System + history</span><p id="cache-conversation-context"></p></div>
-          <ol id="cache-conversation-points" class="conversation-points" aria-label="Messages and cache events"></ol>
-          <a class="conversation-jump" href="#cache-state">See cache at this point ↓</a>
-          <p class="conversation-footnote">Illustrative messages are abbreviated. Counts include the full prompt history, not just the visible text.</p>
-        </aside>
-        <div class="cache-state" id="cache-state">
-      <div class="cache-story-panel">
-        <div class="cache-story-copy" aria-live="polite" aria-atomic="true"><span id="cache-step-number" class="cache-step-number">Step 1</span><h3 id="cache-step-title">A cold prompt arrives</h3><p id="cache-step-explanation">Choose a story, then step through its requests.</p></div>
-        <div class="cache-playback"><button type="button" id="cache-prev" aria-label="Previous step">←</button><button type="button" id="cache-play">Play story</button><button type="button" id="cache-next" aria-label="Next step">→</button><div id="cache-step-dots" class="cache-step-dots" aria-label="Jump to a story step"></div></div>
-      </div>
-      <div class="cache-legend"><span><i class="legend-reused"></i>Reused prefix</span><span><i class="legend-new"></i>Needs prefill</span><span><i class="legend-fixed"></i>Fixed state</span><span><i class="legend-queued"></i>Queued for disk</span><span><i class="legend-durable"></i>Durable on disk</span></div>
-        <article class="cache-lane hybrid-lane" id="cache-hybrid">
-          <header><div><p class="cache-eyebrow">Proposed hybrid</p><h3>Shared rows, exact state</h3></div><span class="cache-lane-tag">Research proposal</span></header>
-          <div class="cache-request" data-request></div>
-          <div class="cache-route" data-route hidden></div>
-          <div class="cache-flow-label">↓ continue live, or restore a checkpoint</div>
-          <div class="cache-store-heading"><h4>Execution pool</h4><span id="cache-slot-count">Example · 2 slots</span></div>
-          <p class="cache-slot-explanation">This walkthrough uses <code>--sessions 2</code> to show slot reuse with just three conversations. Gufo supports a configurable pool of up to 8 slots. More slots keep more live histories available and use more memory. Retained checkpoints are separate: up to 128 records, subject to the cache budget.</p>
-          <div class="cache-sessions" data-sessions></div>
-          <div class="cache-store-heading"><h4>Retained cache</h4><span data-storage></span></div>
-          <div class="cache-memory-grid">
-            <section><h4>Checkpoint manifests + fixed state</h4><div class="cache-checkpoints" data-checkpoints></div></section>
-            <section class="cache-pool"><h4>Shared KV chunks · RAM / disk</h4><p>Click a chunk to trace its checkpoint references.</p><div data-chunks class="cache-chunks"></div></section>
-          </div>
-          <p class="cache-lane-note" data-note></p>
-        </article>
-      <aside class="cache-inspector" aria-live="polite" aria-atomic="true"><span class="cache-eyebrow">State inspector</span><h3 id="cache-inspector-title">Click a checkpoint or a chunk</h3><p id="cache-inspector-copy">Inspect the token boundary, storage tier and shared references.</p></aside>
-      <p id="cache-lesson" class="cache-lesson"></p>
+      <div class="cache-tree-panel">
+        <div class="cache-tree-header">
+          <div><p class="cache-eyebrow">Conversation tree</p><p id="cache-conversation-context" class="cache-tree-context"></p></div>
+          <div class="cache-playback"><button type="button" id="cache-prev" aria-label="Previous step">←</button><button type="button" id="cache-play">Play story</button><button type="button" id="cache-next" aria-label="Next step">→</button><span id="cache-step-number" class="cache-step-number">Step 1</span></div>
+        </div>
+        <div class="cache-tree-body">
+          <ol id="cache-tree-lanes" class="cache-tree-lanes" aria-label="Conversation branches"></ol>
+          <div id="cache-tree-scroll" class="cache-tree-scroll"><div id="cache-tree" class="cache-tree" role="toolbar" aria-label="Conversation turns. Use the arrow keys to move through time."></div></div>
+        </div>
+        <div class="cache-tree-footer">
+          <p id="cache-tree-readout" class="cache-tree-readout"></p>
+          <div class="cache-tree-legend"><span><i class="node-user"></i>User</span><span><i class="node-assistant"></i>Gufo</span><span><i class="node-tool"></i>Tool result</span><span><i class="node-event"></i>Cache event</span><span><i class="node-history"></i>History of the selected turn</span></div>
         </div>
       </div>
+      <p id="cache-step-status" class="sr-only" aria-live="polite" aria-atomic="true"></p>
+      <div class="cache-key">
+        <div class="cache-key-group"><span class="cache-key-title">Cache state</span><span><i class="legend-reused"></i>Reused prefix</span><span><i class="legend-new"></i>Needs prefill</span><span><i class="legend-fixed"></i>Fixed state</span><span><i class="legend-queued"></i>Queued for disk</span><span><i class="legend-durable"></i>Durable on disk</span></div>
+        <div class="cache-key-group"><label class="cache-diff-switch"><input id="cache-diff-toggle" type="checkbox" role="switch" checked autocomplete="off" />Highlight changes</label><span><i class="key-added"></i>+ New in this step</span><span><i class="key-changed"></i>~ Changed</span><span><i class="key-removed"></i>− Removed · marked on the earlier card</span></div>
+      </div>
+      <div class="cache-carousel" id="cache-state">
+        <div id="cache-diff" class="cache-diff" aria-label="Changes from the earlier state"></div>
+        <div id="cache-peek-prev" class="cache-peek cache-peek-prev" aria-hidden="true"></div>
+        <article id="cache-previous" class="cache-lane cache-card is-previous" aria-label="Cache state at the earlier step"></article>
+        <article id="cache-hybrid" class="cache-lane hybrid-lane cache-card is-current" aria-label="Cache state at the selected turn"></article>
+        <div id="cache-peek-next" class="cache-peek cache-peek-next" aria-hidden="true"></div>
+        <aside class="cache-inspector" aria-live="polite" aria-atomic="true"><span class="cache-eyebrow">State inspector</span><h3 id="cache-inspector-title"></h3><p id="cache-inspector-copy"></p></aside>
+      </div>
+      <p id="cache-lesson" class="cache-lesson"></p>
+      <p class="cache-slot-explanation">This walkthrough uses <code>--sessions 2</code> to show slot reuse with just three conversations. Gufo supports a configurable pool of up to 8 slots. More slots keep more live histories available and use more memory. Retained checkpoints are separate: up to 128 records, subject to the cache budget.</p>
       <p class="cache-method-note">These illustrative histories explain the proposed design. Slot assignments and checkpoint sets are chosen to show each mechanism; small template suffixes are omitted. RAM totals include fixed state, private tails and unique KV rows, including reserved spill capacity for borrowed rows. Execution-slot memory is additional.</p>
       <noscript><p class="cache-noscript">Enable JavaScript to step through the visualization. The concepts and source links on this page remain available without it.</p></noscript>
     </section>
