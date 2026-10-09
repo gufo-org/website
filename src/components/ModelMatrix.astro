@@ -2,39 +2,33 @@
 import { catalogue } from '../data/models';
 ---
 
-<div class="rounded-lg border border-[#3e4042] bg-[#1b1b1d] overflow-hidden font-mono text-xs">
-  <div class="overflow-x-auto">
-    <table class="w-full text-left spec-table">
-      <thead class="bg-[#242526] text-slate-400 uppercase text-[11px] border-b border-[#3e4042]">
-        <tr>
-          <th class="px-4 py-3">Model</th>
-          <th class="px-4 py-3">Task</th>
-          <th class="px-4 py-3">Weights</th>
-          <th class="px-4 py-3">Modes</th>
-          <th class="px-4 py-3">Package</th>
-          <th class="px-4 py-3">Retained measurement</th>
+<div class="overflow-x-auto border-t border-line">
+  <table class="w-full text-left text-sm">
+    <thead class="text-ink-3">
+      <tr class="border-b border-line">
+        <th class="py-3 pr-6 font-normal">Model</th>
+        <th class="py-3 pr-6 font-normal">Task</th>
+        <th class="py-3 pr-6 font-normal">Weights</th>
+        <th class="py-3 pr-6 font-normal">Modes</th>
+        <th class="py-3 font-normal">Retained measurement</th>
+      </tr>
+    </thead>
+    <tbody class="divide-y divide-line text-ink-2">
+      {catalogue.map((m) => (
+        <tr class="align-top">
+          <td class="py-4 pr-6 text-ink font-medium whitespace-nowrap">{m.name}</td>
+          <td class="py-4 pr-6">{m.role}</td>
+          <td class="py-4 pr-6 min-w-40">{m.weights}</td>
+          <td class="py-4 pr-6 whitespace-nowrap">{m.modes}</td>
+          <td class={`py-4 min-w-48 ${m.status === 'measured' ? 'text-ink' : 'text-ink-4'}`}>{m.headline}</td>
         </tr>
-      </thead>
-      <tbody class="divide-y divide-[#3e4042] text-slate-300">
-        {catalogue.map((m) => (
-          <tr class="hover:bg-[#242526] transition-colors align-top">
-            <td class="px-4 py-3 font-bold text-white whitespace-nowrap">{m.name}</td>
-            <td class="px-4 py-3 text-slate-300">{m.role}</td>
-            <td class="px-4 py-3 text-rose-400">{m.weights}</td>
-            <td class="px-4 py-3 text-sky-400 whitespace-nowrap">{m.modes}</td>
-            <td class="px-4 py-3 text-slate-400 whitespace-nowrap">{m.sourceDir}</td>
-            <td class={`px-4 py-3 font-semibold ${m.status === 'measured' ? 'text-emerald-400' : 'text-amber-400'}`}>
-              {m.headline}
-            </td>
-          </tr>
-        ))}
-      </tbody>
-    </table>
-  </div>
+      ))}
+    </tbody>
+  </table>
 </div>
 
-<p class="text-xs text-slate-400 mt-3 leading-relaxed">
-  Peak measured workloads. Text <code class="text-slate-300">pp</code> is autoregressive; <code class="text-slate-300">tg</code>
-  uses the named speculative mode. Aggregated rates sum individual request decode rates across concurrent requests.
-  Each model guide lists the required files and complete benchmark settings.
+<p class="text-sm text-ink-3 mt-4 leading-relaxed max-w-3xl">
+  Peak measured workloads. Text <code>pp</code> is autoregressive; <code>tg</code> uses the named speculative mode.
+  Aggregated rates sum individual request decode rates across concurrent requests. Each model guide lists the required
+  files and complete benchmark settings.
 </p>

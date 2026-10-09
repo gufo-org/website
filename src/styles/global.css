@@ -1,110 +1,142 @@
 @import "tailwindcss";
 
+/* Palette comes from the Gufo owl: forest green and amber eyes on a pale,
+   slightly green-tinted paper. Serif display type, mono labels. */
+@theme {
+  --color-ivory: #f7f8f3;
+  --color-paper: #eceee6;
+  --color-paper-2: #e2e5db;
+  --color-line: #dcdfd5;
+  --color-line-strong: #c0c5b8;
+  --color-ink: #141714;
+  --color-ink-2: #3a3f3a;
+  --color-ink-3: #626862;
+  --color-ink-4: #899088;
+  --color-forest: #2f5d3a;
+  --color-forest-dark: #244a2d;
+  --color-amber: #e8891c;
+  --color-amber-ink: #a95c07;
+
+  --font-sans: "Instrument Sans", ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
+  --font-serif: "Source Serif 4", ui-serif, Georgia, "Times New Roman", serif;
+  --font-mono: "JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+}
+
 :root {
-  color-scheme: dark;
-  --ifm-color-primary: #25c2a0;
-  --ifm-color-primary-dark: #21af90;
-  --ifm-color-primary-darker: #1fa588;
-  --ifm-color-primary-darkest: #1a8870;
-  --ifm-color-primary-light: #29d5b0;
-  --ifm-color-primary-lighter: #32d8b4;
-  --ifm-color-primary-lightest: #4fddbf;
-  
-  --ifm-background-color: #1b1b1d;
-  --ifm-background-surface-color: #242526;
-  --ifm-navbar-background-color: #242526;
-  --ifm-footer-background-color: #18191a;
-  
-  --ifm-border-color: #3e4042;
-  --ifm-text-color: #e3e3e3;
-  --ifm-text-muted: #a3a3a3;
-  --ifm-code-background: #282a36;
+  color-scheme: light;
 }
 
-/* Reserve the scrollbar gutter so filtering a page down to a shorter list
-   does not drop the scrollbar and widen the centred layout under it. */
-html {
-  scrollbar-gutter: stable;
+/* Base rules live in the base layer so Tailwind utilities can override them. */
+@layer base {
+  /* Reserve the scrollbar gutter so filtering a page down to a shorter list
+     does not drop the scrollbar and widen the centred layout under it. */
+  html {
+    scrollbar-gutter: stable;
+  }
+
+  body {
+    background-color: var(--color-ivory);
+    color: var(--color-ink);
+    font-family: var(--font-sans);
+    -webkit-font-smoothing: antialiased;
+    /* `clip` rather than `hidden`: it stops a stray wide child from widening the
+       page on a phone without creating a scroll container, so `position: sticky`
+       keeps working for the navbar and the in-page bars. */
+    overflow-x: clip;
+  }
+
+  /* Display headings use the serif face; the sans face stays for UI. */
+  h1,
+  h2 {
+    font-family: var(--font-serif);
+    font-weight: 400;
+    letter-spacing: -0.015em;
+  }
+
+  code {
+    font-family: var(--font-mono);
+    font-size: 0.92em;
+  }
+
+  a {
+    text-underline-offset: 3px;
+  }
+
+  /* `body` is a column flex container, so its children are sized against their
+     content's minimum width and a horizontal scroller inside one of them can make
+     the whole page wider than the viewport. Let them shrink to the viewport
+     instead, so the scroller scrolls rather than the page. */
+  body > * {
+    min-width: 0;
+    max-width: 100%;
+  }
+
+  /* Chart.js writes an explicit pixel width onto its canvas when it measures the
+     container. If it ever measures wide, that width sticks and pushes the page
+     past the viewport, so cap it. */
+  canvas {
+    max-width: 100%;
+  }
 }
 
-body {
-  background-color: var(--ifm-background-color);
-  color: var(--ifm-text-color);
-  font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
-  -webkit-font-smoothing: antialiased;
-  /* `clip` rather than `hidden`: it stops a stray wide child from widening the
-     page on a phone without creating a scroll container, so `position: sticky`
-     keeps working for the navbar and the in-page bars. */
-  overflow-x: clip;
-}
-
-/* `body` is a column flex container, so its children are sized against their
-   content's minimum width and a horizontal scroller inside one of them can make
-   the whole page wider than the viewport. Let them shrink to the viewport
-   instead, so the scroller scrolls rather than the page. */
-body > * {
-  min-width: 0;
-  max-width: 100%;
-}
-
-/* Chart.js writes an explicit pixel width onto its canvas when it measures the
-   container. If it ever measures wide, that width sticks and pushes the page
-   past the viewport, so cap it. */
-canvas {
-  max-width: 100%;
-}
-
-/* Docusaurus Admonition / Callout Boxes */
+/* Callouts: a quiet rule and a paper tint, no colour coding beyond the rule. */
 .admonition {
-  border-left: 4px solid var(--ifm-color-primary);
-  background-color: rgba(37, 194, 160, 0.08);
+  border-left: 2px solid var(--color-ink-3);
+  background-color: var(--color-paper);
   border-radius: 0 6px 6px 0;
   padding: 1rem 1.25rem;
   margin: 1.25rem 0;
 }
-.admonition-info {
-  border-left-color: #3578e5;
-  background-color: rgba(53, 120, 229, 0.08);
-}
 .admonition-tip {
-  border-left-color: #00d68f;
-  background-color: rgba(0, 214, 143, 0.08);
+  border-left-color: var(--color-forest);
 }
+.admonition-info {
+  border-left-color: #6a9bcc;
+}
+.admonition-important,
 .admonition-warning {
-  border-left-color: #ffba00;
-  background-color: rgba(255, 186, 0, 0.08);
+  border-left-color: var(--color-amber);
 }
 .admonition-danger {
-  border-left-color: #fa5252;
-  background-color: rgba(250, 82, 82, 0.08);
+  border-left-color: #bf4d43;
 }
 
 .admonition-title {
-  font-weight: 700;
-  font-size: 0.875rem;
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
+  font-weight: 600;
+  font-size: 0.8125rem;
+  color: var(--color-ink);
   margin-bottom: 0.5rem;
   display: flex;
   align-items: center;
   gap: 0.5rem;
 }
+.admonition-title svg {
+  display: none;
+}
 
-/* Docusaurus Code Blocks */
+/* Small monospace label above a section heading, e.g. "01 / Why Gufo". */
+.eyebrow {
+  font-family: var(--font-mono);
+  font-size: 12px;
+  letter-spacing: 0.02em;
+  color: var(--color-ink-3);
+}
+
+/* Code blocks */
 .docusaurus-code {
-  background-color: #1e1e1e;
-  border: 1px solid #333336;
+  background-color: var(--color-paper);
+  border: 1px solid var(--color-line);
   border-radius: 8px;
   overflow: hidden;
-  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+  font-family: var(--font-mono);
 }
 
 .docusaurus-code-header {
-  background-color: #252526;
-  border-bottom: 1px solid #333336;
-  padding: 6px 12px;
+  border-bottom: 1px solid var(--color-line);
+  padding: 7px 14px;
+  font-family: var(--font-sans);
   font-size: 11px;
-  color: #999;
+  color: var(--color-ink-3);
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -112,8 +144,8 @@ canvas {
 
 /* Sidebar item active style */
 .sidebar-link-active {
-  color: var(--ifm-color-primary) !important;
-  background-color: rgba(37, 194, 160, 0.1);
+  color: var(--color-ink) !important;
+  background-color: var(--color-paper);
   font-weight: 600;
   border-radius: 4px;
 }

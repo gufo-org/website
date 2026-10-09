@@ -53,11 +53,11 @@ export interface BenchModel {
   reproduce: string[];
 }
 
-const GUFO = '#25c2a0';
-const REF = '#e06c75';
-const ACCENT = '#3578e5';
-const GOLD = '#ffba00';
-const GREEN = '#00d68f';
+const GUFO = '#e8891c';
+const REF = '#6a9bcc';
+const ACCENT = '#2f5d3a';
+const GOLD = '#c2a14d';
+const GREEN = '#8a76c4';
 
 const DEPTHS = ['0', '4,096', '8,192', '12,288', '16,384', '32,768', '65,536', '131,072'];
 const DEPTH_AXIS = 'Cached prefix depth (tokens)';
@@ -1071,7 +1071,7 @@ export const benchmarks: BenchModel[] = [
         ],
         table: {
           title: 'Short development control',
-          note: 'Warm C1, 1024×1024, two steps, seed 42. For kernel iteration only — not generation quality or normal performance.',
+          note: 'Warm C1, 1024×1024, two steps, seed 42. For kernel iteration only, not generation quality or normal performance.',
           columns: ['Prompt', 'Denoising', 'VAE', 'HTTP total'],
           rows: [['0.089 s', '4.865 s', '0.826 s', '5.838 s']],
         },

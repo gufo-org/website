@@ -1,67 +1,81 @@
-<footer class="bg-[#18191a] border-t border-[#3e4042] text-slate-300 text-sm mt-auto">
-  <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
-    <div class="grid grid-cols-2 md:grid-cols-4 gap-8">
-      <!-- Col 1: Docs -->
-      <div>
-        <h3 class="font-bold text-white uppercase text-xs tracking-wider mb-3">Docs &amp; project</h3>
-        <ul class="space-y-2 text-sm text-slate-400">
-          <li><a href="/docs#quickstart" class="hover:text-[#25c2a0] transition-colors">Quickstart</a></li>
-          <li><a href="/docs#build" class="hover:text-[#25c2a0] transition-colors">Build from source</a></li>
-          <li><a href="/docs#cli" class="hover:text-[#25c2a0] transition-colors">CLI commands</a></li>
-          <li><a href="/philosophy" class="hover:text-[#25c2a0] transition-colors">Philosophy</a></li>
-        </ul>
+---
+const columns = [
+  {
+    title: 'Docs',
+    links: [
+      { name: 'Quickstart', href: '/docs#quickstart' },
+      { name: 'Build from source', href: '/docs#build' },
+      { name: 'CLI commands', href: '/docs#cli' },
+      { name: 'Philosophy', href: '/philosophy' },
+    ],
+  },
+  {
+    title: 'How it works',
+    links: [
+      { name: 'Speculative decoding', href: '/docs#speculative' },
+      { name: 'Concurrent serving', href: '/docs#serving' },
+      { name: 'Cache explorer', href: '/cache' },
+      { name: 'OpenAI-compatible API', href: '/docs#api' },
+      { name: 'Compute queue budget', href: '/docs#queues' },
+    ],
+  },
+  {
+    title: 'Models',
+    links: [
+      { name: 'Qwen3.8 27B', href: '/benchmarks' },
+      { name: 'Qwen3.8 Flash-Next', href: '/benchmarks' },
+      { name: 'DeepSeek V4 Flash', href: '/benchmarks' },
+      { name: 'Audio, image and video', href: '/docs#models' },
+    ],
+  },
+  {
+    title: 'Project',
+    links: [
+      { name: 'GitHub', href: 'https://github.com/gufo-org/gufo', external: true },
+      { name: 'OCI images', href: 'https://github.com/gufo-org/toolboxes', external: true },
+      { name: 'Nix serve helper', href: '/docs#nix-serve' },
+      { name: 'Profiling and benchmarking', href: '/docs#profiling' },
+    ],
+  },
+];
+---
+
+<footer class="bg-paper border-t border-line text-ink mt-auto">
+  <div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 pt-16 pb-10">
+    <div class="grid grid-cols-2 md:grid-cols-6 gap-10">
+      <div class="col-span-2">
+        <a href="/" class="flex items-center gap-2.5">
+          <img src="/images/gufo-logo.jpg" alt="" class="w-7 h-7 rounded-md object-cover" />
+          <span class="font-serif text-xl">Gufo</span>
+        </a>
+        <p class="mt-4 text-sm text-ink-3 leading-relaxed max-w-xs">
+          The Strix Halo inference engine. Built in the open with the Strix Halo community.
+        </p>
       </div>
 
-      <!-- Col 2: Features -->
-      <div>
-        <h3 class="font-bold text-white uppercase text-xs tracking-wider mb-3">How it works</h3>
-        <ul class="space-y-2 text-sm text-slate-400">
-          <li><a href="/docs#speculative" class="hover:text-[#25c2a0] transition-colors">Speculative decoding</a></li>
-          <li><a href="/docs#serving" class="hover:text-[#25c2a0] transition-colors">Concurrent serving</a></li>
-          <li><a href="/cache" class="hover:text-[#25c2a0] transition-colors">Interactive cache explorer</a></li>
-          <li><a href="/docs#api" class="hover:text-[#25c2a0] transition-colors">OpenAI-compatible API</a></li>
-          <li><a href="/docs#queues" class="hover:text-[#25c2a0] transition-colors">Compute queue budget</a></li>
-        </ul>
-      </div>
-
-      <!-- Col 3: Models -->
-      <div>
-        <h3 class="font-bold text-white uppercase text-xs tracking-wider mb-3">Models</h3>
-        <ul class="space-y-2 text-sm text-slate-400">
-          <li><a href="/benchmarks" class="hover:text-[#25c2a0] transition-colors">Qwen3.8 27B</a></li>
-          <li><a href="/benchmarks" class="hover:text-[#25c2a0] transition-colors">Qwen3.8 Flash-Next</a></li>
-          <li><a href="/benchmarks" class="hover:text-[#25c2a0] transition-colors">DeepSeek V4 Flash</a></li>
-          <li><a href="/docs#models" class="hover:text-[#25c2a0] transition-colors">Audio, image and video</a></li>
-        </ul>
-      </div>
-
-      <!-- Col 4: Ecosystem -->
-      <div>
-        <h3 class="font-bold text-white uppercase text-xs tracking-wider mb-3">Ecosystem</h3>
-        <ul class="space-y-2 text-sm text-slate-400">
-          <li>
-            <a href="https://github.com/gufo-org/gufo" target="_blank" rel="noopener noreferrer" class="hover:text-[#25c2a0] transition-colors">
-              GitHub repository
-            </a>
-          </li>
-          <li>
-            <a href="https://github.com/gufo-org/toolboxes" target="_blank" rel="noopener noreferrer" class="hover:text-[#25c2a0] transition-colors">
-              OCI images (Docker/Podman)
-            </a>
-          </li>
-          <li><a href="/docs#nix-serve" class="hover:text-[#25c2a0] transition-colors">Nix serve helper</a></li>
-          <li><a href="/docs#profiling" class="hover:text-[#25c2a0] transition-colors">Profiling and benchmarking</a></li>
-        </ul>
-      </div>
+      {columns.map((col) => (
+        <div>
+          <h3 class="text-sm text-ink-4 mb-4">{col.title}</h3>
+          <ul class="space-y-2.5 text-sm">
+            {col.links.map((link) => (
+              <li>
+                <a
+                  href={link.href}
+                  {...(link.external ? { target: '_blank', rel: 'noopener noreferrer' } : {})}
+                  class="text-ink-2 hover:text-ink hover:underline"
+                >
+                  {link.name}
+                </a>
+              </li>
+            ))}
+          </ul>
+        </div>
+      ))}
     </div>
 
-    <!-- Bottom -->
-    <div class="mt-12 pt-8 border-t border-[#2e3032] flex flex-col sm:flex-row items-center justify-between text-xs text-slate-400 gap-3">
-      <div class="flex items-center gap-2 text-center sm:text-left">
-        <img src="/images/gufo-logo.jpg" alt="gufo" class="w-5 h-5 rounded object-cover" />
-        <span><b>gufo</b> — the Strix Halo inference engine. MIT licensed; model weights keep their publishers' terms.</span>
-      </div>
-      <div>Built with Astro.</div>
+    <div class="mt-16 pt-6 border-t border-line flex flex-col sm:flex-row justify-between gap-2 text-xs text-ink-4">
+      <span>MIT licensed. Model weights keep their publishers' terms.</span>
+      <span>Built with Astro.</span>
     </div>
   </div>
 </footer>

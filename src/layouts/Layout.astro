@@ -4,7 +4,7 @@ interface Props {
   description?: string;
 }
 
-const { title, description = "gufo - the Strix Halo inference engine: local text, audio, image and video inference for AMD gfx1151" } = Astro.props;
+const { title, description = "Gufo, the Strix Halo inference engine: local text, audio, image and video inference for AMD gfx1151" } = Astro.props;
 import '../styles/global.css';
 ---
 
@@ -17,8 +17,14 @@ import '../styles/global.css';
     <meta name="generator" content={Astro.generator} />
     <title>{title}</title>
     <meta name="description" content={description} />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      rel="stylesheet"
+      href="https://fonts.googleapis.com/css2?family=Instrument+Sans:wght@400..700&family=JetBrains+Mono:wght@400;500&family=Source+Serif+4:opsz,wght@8..60,400;8..60,500&display=swap"
+    />
   </head>
-  <body class="min-h-screen flex flex-col bg-[#080c14] text-slate-100 selection:bg-rose-500/30 selection:text-rose-200">
+  <body class="min-h-screen flex flex-col bg-ivory text-ink selection:bg-forest/20">
     <slot />
   </body>
 </html>

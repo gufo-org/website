@@ -17,32 +17,25 @@ const isActive = (href: string) =>
   currentPath === href || (href !== '/' && currentPath.startsWith(href.split('#')[0]));
 ---
 
-<!-- Announcement Bar -->
-<div class="bg-gradient-to-r from-emerald-800 via-teal-800 to-cyan-900 text-white text-xs py-1.5 px-4 text-center border-b border-emerald-700/50 font-medium">
-  <span>⚡ <b>gufo</b> — local inference for AMD Strix Halo: Ryzen AI MAX+ 395, Radeon 8060S (<b>gfx1151</b>), up to 128 GiB unified memory</span>
-</div>
-
-<!-- Main Navbar -->
-<nav class="sticky top-0 z-50 bg-[#242526] border-b border-[#3e4042] text-sm font-medium shadow-sm">
+<nav class="sticky top-0 z-50 bg-ivory/90 backdrop-blur border-b border-line text-sm">
   <!-- Drawer state. Sibling of the overlay and panel so `peer-checked` can reach them. -->
   <input type="checkbox" id="nav-drawer" class="peer sr-only" aria-label="Open navigation menu" />
 
-  <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-    <div class="flex items-center justify-between h-14 gap-3">
-      <!-- Left: logo and desktop links -->
-      <div class="flex items-center gap-6 min-w-0">
-        <a href="/" class="flex items-center gap-2.5 hover:opacity-90 transition-opacity shrink-0">
-          <img src="/images/gufo-logo.jpg" alt="gufo" class="w-8 h-8 rounded object-cover" />
-          <span class="font-bold text-base text-white tracking-tight">gufo</span>
+  <div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
+    <div class="flex items-center justify-between h-16 gap-3">
+      <!-- Left: wordmark and desktop links -->
+      <div class="flex items-center gap-8 min-w-0">
+        <a href="/" class="flex items-center gap-2.5 shrink-0">
+          <img src="/images/gufo-logo.jpg" alt="" class="w-7 h-7 rounded-md object-cover" />
+          <span class="font-serif text-xl text-ink tracking-tight">Gufo</span>
         </a>
 
-        <div class="hidden md:flex items-center gap-1">
+        <div class="hidden md:flex items-center gap-6">
           {navItems.map((item) => (
             <a
               href={item.href}
-              class={`px-3 py-1.5 rounded text-sm transition-colors ${
-                isActive(item.href) ? 'text-[#25c2a0] font-semibold' : 'text-slate-300 hover:text-white'
-              }`}
+              aria-current={isActive(item.href) ? 'page' : undefined}
+              class={`transition-colors ${isActive(item.href) ? 'text-ink' : 'text-ink-3 hover:text-ink'}`}
             >
               {item.name}
             </a>
@@ -50,38 +43,30 @@ const isActive = (href: string) =>
         </div>
       </div>
 
-      <!-- Right: desktop chrome, then the kebab on small screens -->
-      <div class="flex items-center gap-3">
-        <div class="hidden lg:flex items-center gap-1.5 px-2 py-0.5 rounded text-xs bg-[#1b1b1d] border border-[#3e4042] text-slate-300 font-mono">
-          <span class="w-2 h-2 rounded-full bg-emerald-400"></span>
-          <span>ROCm HIP · gfx1151</span>
-        </div>
-
+      <!-- Right: GitHub, then the menu button on small screens -->
+      <div class="flex items-center gap-2">
         <a
           href="https://github.com/gufo-org/gufo"
           target="_blank"
           rel="noopener noreferrer"
-          class="hidden md:flex items-center gap-1.5 px-2.5 py-1 text-xs text-slate-200 bg-[#1b1b1d] hover:bg-[#2d2f31] border border-[#3e4042] rounded transition-colors"
+          class="hidden md:inline-flex items-center gap-2 h-9 pl-3 pr-3.5 rounded-full bg-ink text-ivory hover:bg-ink-2 transition-colors"
         >
-          <svg class="w-4 h-4 fill-current" viewBox="0 0 24 24">
+          <svg class="w-4 h-4 fill-current" viewBox="0 0 24 24" aria-hidden="true">
             <path d="M12 0C5.37 0 0 5.37 0 12c0 5.31 3.435 9.795 8.205 11.385.6.105.825-.255.825-.57 0-.285-.015-1.23-.015-2.235-3.015.555-3.795-.735-4.035-1.41-.135-.345-.72-1.41-1.23-1.695-.42-.225-1.02-.78-.015-.795.945-.015 1.62.87 1.845 1.23 1.08 1.815 2.805 1.305 3.495.99.105-.78.42-1.305.765-1.605-2.67-.3-5.46-1.335-5.46-5.925 0-1.305.465-2.385 1.23-3.225-.12-.3-.54-1.53.12-3.18 0 0 1.005-.315 3.3 1.23.96-.27 1.98-.405 3-.405s2.04.135 3 .405c2.295-1.56 3.3-1.23 3.3-1.23.66 1.65.24 2.88.12 3.18.765.84 1.23 1.905 1.23 3.225 0 4.605-2.805 5.625-5.475 5.925.435.375.81 1.095.81 2.22 0 1.605-.015 2.895-.015 3.3 0 .315.225.69.825.57A12.02 12.02 0 0024 12c0-6.63-5.37-12-12-12z" />
           </svg>
-          <span>GitHub</span>
+          <span>gufo-org/gufo</span>
         </a>
 
-        <!-- Kebab -->
         <label
           for="nav-drawer"
           role="button"
           tabindex="0"
           aria-controls="nav-drawer"
-          class="md:hidden flex items-center justify-center w-10 h-10 -mr-2 rounded text-slate-200 hover:bg-[#1b1b1d] cursor-pointer transition-colors"
+          class="md:hidden flex items-center justify-center w-10 h-10 -mr-2 rounded text-ink hover:bg-paper cursor-pointer transition-colors"
         >
           <span class="sr-only">Open menu</span>
-          <svg class="w-5 h-5" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
-            <circle cx="12" cy="5" r="1.75" />
-            <circle cx="12" cy="12" r="1.75" />
-            <circle cx="12" cy="19" r="1.75" />
+          <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
+            <path stroke-linecap="round" stroke-width="1.75" d="M4 7h16M4 12h16M4 17h16" />
           </svg>
         </label>
       </div>
@@ -91,58 +76,54 @@ const isActive = (href: string) =>
   <!-- Scrim: tapping outside closes the panel -->
   <label
     for="nav-drawer"
-    class="md:hidden fixed inset-0 z-40 bg-black/60 opacity-0 pointer-events-none peer-checked:opacity-100 peer-checked:pointer-events-auto transition-opacity duration-200"
+    class="md:hidden fixed inset-0 z-40 bg-ink/30 opacity-0 pointer-events-none peer-checked:opacity-100 peer-checked:pointer-events-auto transition-opacity duration-200"
     aria-hidden="true"
   ></label>
 
   <!-- Side panel -->
   <aside
-    class="md:hidden fixed top-0 right-0 z-50 h-dvh w-72 max-w-[85vw] bg-[#242526] border-l border-[#3e4042] shadow-2xl translate-x-full peer-checked:translate-x-0 transition-transform duration-200 ease-out flex flex-col"
+    class="md:hidden fixed top-0 right-0 z-50 h-dvh w-72 max-w-[85vw] bg-ivory border-l border-line translate-x-full peer-checked:translate-x-0 transition-transform duration-200 ease-out flex flex-col"
   >
-    <div class="flex items-center justify-between h-14 px-4 border-b border-[#3e4042] shrink-0">
-      <span class="font-bold text-white">Menu</span>
+    <div class="flex items-center justify-between h-16 px-4 border-b border-line shrink-0">
+      <span class="font-serif text-lg text-ink">Gufo</span>
       <label
         for="nav-drawer"
         role="button"
         tabindex="0"
-        class="flex items-center justify-center w-10 h-10 -mr-2 rounded text-slate-300 hover:bg-[#1b1b1d] cursor-pointer transition-colors"
+        class="flex items-center justify-center w-10 h-10 -mr-2 rounded text-ink-3 hover:bg-paper cursor-pointer transition-colors"
       >
         <span class="sr-only">Close menu</span>
         <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.75" d="M6 18L18 6M6 6l12 12" />
         </svg>
       </label>
     </div>
 
-    <nav class="flex-1 overflow-y-auto p-3 space-y-1">
+    <nav class="flex-1 overflow-y-auto p-3 space-y-0.5">
       {navItems.map((item) => (
         <a
           href={item.href}
-          class={`block px-3 py-3 rounded text-sm transition-colors ${
-            isActive(item.href)
-              ? 'text-[#25c2a0] font-semibold bg-[#1b1b1d]'
-              : 'text-slate-300 hover:text-white hover:bg-[#1b1b1d]'
+          class={`block px-3 py-3 rounded text-base transition-colors ${
+            isActive(item.href) ? 'text-ink bg-paper' : 'text-ink-2 hover:bg-paper'
           }`}
         >
           {item.name}
         </a>
       ))}
+    </nav>
 
+    <div class="p-4 border-t border-line shrink-0">
       <a
         href="https://github.com/gufo-org/gufo"
         target="_blank"
         rel="noopener noreferrer"
-        class="flex items-center gap-2 px-3 py-3 rounded text-sm text-slate-300 hover:text-white hover:bg-[#1b1b1d] transition-colors"
+        class="flex items-center justify-center gap-2 h-10 rounded-full bg-ink text-ivory text-sm"
       >
         <svg class="w-4 h-4 fill-current" viewBox="0 0 24 24" aria-hidden="true">
           <path d="M12 0C5.37 0 0 5.37 0 12c0 5.31 3.435 9.795 8.205 11.385.6.105.825-.255.825-.57 0-.285-.015-1.23-.015-2.235-3.015.555-3.795-.735-4.035-1.41-.135-.345-.72-1.41-1.23-1.695-.42-.225-1.02-.78-.015-.795.945-.015 1.62.87 1.845 1.23 1.08 1.815 2.805 1.305 3.495.99.105-.78.42-1.305.765-1.605-2.67-.3-5.46-1.335-5.46-5.925 0-1.305.465-2.385 1.23-3.225-.12-.3-.54-1.53.12-3.18 0 0 1.005-.315 3.3 1.23.96-.27 1.98-.405 3-.405s2.04.135 3 .405c2.295-1.56 3.3-1.23 3.3-1.23.66 1.65.24 2.88.12 3.18.765.84 1.23 1.905 1.23 3.225 0 4.605-2.805 5.625-5.475 5.925.435.375.81 1.095.81 2.22 0 1.605-.015 2.895-.015 3.3 0 .315.225.69.825.57A12.02 12.02 0 0024 12c0-6.63-5.37-12-12-12z" />
         </svg>
-        GitHub repository
+        View on GitHub
       </a>
-    </nav>
-
-    <div class="p-4 border-t border-[#3e4042] text-[11px] text-slate-500 font-mono shrink-0">
-      ROCm HIP · gfx1151
     </div>
   </aside>
 </nav>

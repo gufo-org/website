@@ -10,64 +10,64 @@ const chartPayload = benchmarks.map((m) => ({
 }));
 ---
 
-<Layout title="Benchmarks — gufo">
+<Layout title="Benchmarks · Gufo">
   <Navbar currentPath="/benchmarks" />
 
-  <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-6">
+  <div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-6">
     <!-- Breadcrumbs -->
-    <div class="flex items-center gap-2 text-xs text-slate-400">
-      <a href="/" class="hover:text-white">Home</a>
+    <div class="flex items-center gap-2 text-xs text-ink-3">
+      <a href="/" class="hover:text-ink">Home</a>
       <span>/</span>
-      <span class="text-slate-200">Benchmarks</span>
+      <span class="text-ink">Benchmarks</span>
       <span>/</span>
-      <span class="text-[#25c2a0] font-semibold">Retained measurements</span>
+      <span class="text-ink font-semibold">Retained measurements</span>
     </div>
 
     <!-- Header -->
     <div class="space-y-3">
-      <h1 class="text-3xl sm:text-4xl font-extrabold text-white tracking-tight">
+      <h1 class="text-4xl sm:text-5xl text-ink">
         Benchmarks on AMD Strix Halo
       </h1>
-      <p class="text-sm text-slate-300 max-w-4xl leading-relaxed">
-        Every figure below is transcribed from <code class="text-[#25c2a0]">docs/models/&lt;model&gt;/BENCHMARKS.md</code> in
-        the Gufo repository. Measurements come from <code class="text-[#25c2a0]">nix build</code> binaries on one
-        <code class="text-[#25c2a0] font-mono">gfx1151</code> machine with 128 GB of unified memory. Pending cells stay
-        <b class="text-white">TODO</b> and comparisons a reference engine cannot run stay <b class="text-white">N/A</b>,
+      <p class="text-sm text-ink-2 max-w-4xl leading-relaxed">
+        Every figure below is transcribed from <code class="text-ink">docs/models/&lt;model&gt;/BENCHMARKS.md</code> in
+        the Gufo repository. Measurements come from <code class="text-ink">nix build</code> binaries on one
+        <code class="text-ink font-mono">gfx1151</code> machine with 128 GB of unified memory. Pending cells stay
+        <b class="text-ink">TODO</b> and comparisons a reference engine cannot run stay <b class="text-ink">N/A</b>,
         rather than being estimated.
       </p>
-      <details class="text-xs text-slate-400 bg-[#242526] border border-[#3e4042] rounded-lg">
-        <summary class="cursor-pointer px-4 py-2.5 text-slate-300 font-semibold select-none">
+      <details class="text-xs text-ink-3 bg-paper border border-line rounded-lg">
+        <summary class="cursor-pointer px-4 py-2.5 text-ink-2 font-semibold select-none">
           How these numbers are measured
         </summary>
         <div class="px-4 pb-4 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 leading-relaxed">
           <div>
-            <div class="text-slate-400 font-mono mb-1">Reading the columns</div>
-            <code class="text-slate-300">pp</code> is prompt processing, <code class="text-slate-300">tg</code> is token
+            <div class="text-ink-3 font-mono mb-1">Reading the columns</div>
+            <code class="text-ink-2">pp</code> is prompt processing, <code class="text-ink-2">tg</code> is token
             generation, and depth is the cached prefix in tokens. Text results are HTTP, greedy, thinking off.
           </div>
           <div>
-            <div class="text-slate-400 font-mono mb-1">Concurrency</div>
+            <div class="text-ink-3 font-mono mb-1">Concurrency</div>
             Rows sum individual request decode rates and exclude prefill and scheduling, so they are not whole-request
             throughput.
           </div>
           <div>
-            <div class="text-slate-400 font-mono mb-1">Comparable runs</div>
+            <div class="text-ink-3 font-mono mb-1">Comparable runs</div>
             Same source revision, model artifact, quantization, prompt and generation lengths, depth, concurrency, GPU
             route, driver and ROCm version, warmup policy.
           </div>
           <div>
-            <div class="text-slate-400 font-mono mb-1">Reference engines</div>
+            <div class="text-ink-3 font-mono mb-1">Reference engines</div>
             Separate Nix packages, excluded from Gufo and the normal dev shell:
-            <code class="text-[#25c2a0]">.#llama-cpp-reference</code>,
-            <code class="text-[#25c2a0]">.#llama-cpp-mtp-reference</code>,
-            <code class="text-[#25c2a0]">.#ds4-reference</code>. Headline numbers come from unprofiled runs.
+            <code class="text-ink">.#llama-cpp-reference</code>,
+            <code class="text-ink">.#llama-cpp-mtp-reference</code>,
+            <code class="text-ink">.#ds4-reference</code>. Headline numbers come from unprofiled runs.
           </div>
         </div>
       </details>
     </div>
 
     <!-- Horizontal model bar -->
-    <div class="sticky top-14 z-40 py-2 bg-[#080c14]/95 backdrop-blur border-b border-[#3e4042]">
+    <div class="sticky top-14 z-40 py-2 bg-ivory/95 backdrop-blur border-b border-line">
       <div class="flex gap-2 overflow-x-auto pb-1" id="model-bar" role="tablist">
         {benchmarks.map((m, idx) => (
           <button
@@ -77,12 +77,12 @@ const chartPayload = benchmarks.map((m) => ({
             aria-selected={idx === 0 ? 'true' : 'false'}
             class={`model-tab shrink-0 px-3 py-2 rounded text-xs border transition-colors ${
               idx === 0
-                ? 'bg-[#242526] text-white border-[#25c2a0] font-semibold'
-                : 'bg-[#1b1b1d] text-slate-400 border-[#3e4042] hover:text-slate-200 hover:border-slate-500'
+                ? 'bg-paper text-ink border-ink font-semibold'
+                : 'bg-ivory text-ink-3 border-line hover:text-ink hover:border-line-strong'
             }`}
           >
-            <span class="font-bold">{m.short}</span>
-            <span class="ml-2 text-[11px] text-slate-500">{m.reference ? `vs ${m.reference.split(' ')[0]}` : 'no reference'}</span>
+            <span class="font-semibold">{m.short}</span>
+            <span class="ml-2 text-[11px] text-ink-4">{m.reference ? `vs ${m.reference.split(' ')[0]}` : 'no reference'}</span>
           </button>
         ))}
       </div>
@@ -92,43 +92,43 @@ const chartPayload = benchmarks.map((m) => ({
     {benchmarks.map((m, idx) => (
       <div id={`model-panel-${m.id}`} class={`model-panel space-y-6 ${idx === 0 ? 'block' : 'hidden'}`}>
         <!-- Model header -->
-        <div class="p-5 rounded-lg bg-[#242526] border border-[#3e4042] space-y-3">
-          <div class="flex flex-col sm:flex-row sm:items-start justify-between gap-3 border-b border-[#3e4042] pb-3">
+        <div class="p-5 rounded-lg bg-paper border border-line space-y-3">
+          <div class="flex flex-col sm:flex-row sm:items-start justify-between gap-3 border-b border-line pb-3">
             <div>
-              <h2 class="text-2xl font-bold text-white tracking-tight">{m.name}</h2>
-              <p class="text-xs text-slate-400 mt-1">
-                <span class="text-slate-300 font-semibold">{m.type}</span> ·
-                <span class="text-[#25c2a0]"> {m.format}</span> ·
-                <code class="text-slate-400"> {m.sourceDir}</code>
+              <h2 class="text-3xl text-ink">{m.name}</h2>
+              <p class="text-xs text-ink-3 mt-1">
+                <span class="text-ink-2 font-semibold">{m.type}</span> ·
+                <span class="text-ink"> {m.format}</span> ·
+                <code class="text-ink-3"> {m.sourceDir}</code>
               </p>
             </div>
-            <div class="text-xs text-slate-300 bg-[#1b1b1d] px-2.5 py-1.5 rounded border border-[#3e4042]">
+            <div class="text-xs text-ink-2 bg-ivory px-2.5 py-1.5 rounded border border-line">
               {m.reference ? (
-                <span>Reference: <span class="font-bold text-white">{m.reference}</span></span>
+                <span>Reference: <span class="font-semibold text-ink">{m.reference}</span></span>
               ) : (
-                <span class="text-slate-400">No reference engine comparison retained</span>
+                <span class="text-ink-3">No reference engine comparison retained</span>
               )}
             </div>
           </div>
-          <p class="text-xs text-slate-300 leading-relaxed">{m.summary}</p>
-          <p class="text-[11px] text-slate-400 font-mono">{m.measured}</p>
+          <p class="text-[15px] text-ink-2 leading-relaxed">{m.summary}</p>
+          <p class="text-[11px] text-ink-3 font-mono">{m.measured}</p>
         </div>
 
         <!-- Highlights -->
         <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
           {m.highlights.map((h) => (
-            <div class="p-3.5 rounded-lg bg-[#242526] border border-[#3e4042] space-y-1">
-              <div class="text-[11px] text-slate-400 uppercase tracking-wide">{h.label}</div>
-              <div class="text-lg font-bold text-[#25c2a0] font-mono">{h.value}</div>
-              <div class="text-[11px] text-slate-400 leading-relaxed">{h.note}</div>
+            <div class="p-3.5 rounded-lg bg-paper border border-line space-y-1">
+              <div class="text-xs text-ink-3">{h.label}</div>
+              <div class="text-lg font-semibold text-ink font-mono">{h.value}</div>
+              <div class="text-[11px] text-ink-3 leading-relaxed">{h.note}</div>
             </div>
           ))}
         </div>
 
         <!-- Benchmark sidebar + centre panel -->
         <div class="grid grid-cols-1 lg:grid-cols-4 gap-6 items-start">
-          <aside class="lg:col-span-1 min-w-0 border border-[#3e4042] rounded-lg bg-[#242526] p-3 space-y-2 lg:sticky lg:top-32">
-            <div class="text-xs font-bold text-slate-300 uppercase tracking-wider px-2 py-1 border-b border-[#3e4042]">
+          <aside class="lg:col-span-1 min-w-0 border border-line rounded-lg bg-paper p-3 space-y-2 lg:sticky lg:top-32">
+            <div class="text-xs text-ink-4 px-2 py-1 border-b border-line">
               Benchmark
             </div>
             <div class="flex lg:block gap-2 overflow-x-auto lg:overflow-visible view-list" data-model-id={m.id}>
@@ -138,17 +138,17 @@ const chartPayload = benchmarks.map((m) => ({
                   data-view-id={v.id}
                   class={`view-btn shrink-0 lg:w-full text-left p-2.5 rounded text-xs transition-colors border lg:mb-1.5 ${
                     vIdx === 0
-                      ? 'bg-[#1b1b1d] text-white border-[#25c2a0] font-semibold'
-                      : 'bg-[#242526] text-slate-400 border-transparent hover:text-slate-200 hover:bg-[#2c2d30]'
+                      ? 'bg-ivory text-ink border-ink font-semibold'
+                      : 'bg-paper text-ink-3 border-transparent hover:text-ink hover:bg-paper-2'
                   }`}
                 >
-                  <div class="font-bold whitespace-nowrap">{v.label}</div>
-                  <div class="text-[11px] text-slate-500 mt-0.5 whitespace-nowrap">{v.kicker}</div>
+                  <div class="font-semibold whitespace-nowrap">{v.label}</div>
+                  <div class="text-[11px] text-ink-4 mt-0.5 whitespace-nowrap">{v.kicker}</div>
                 </button>
               ))}
             </div>
 
-            <div class="hidden lg:block pt-2 border-t border-[#3e4042] text-[11px] text-slate-500 font-mono px-1 leading-relaxed">
+            <div class="hidden lg:block pt-2 border-t border-line text-[11px] text-ink-4 font-mono px-1 leading-relaxed">
               {m.docPath}
             </div>
           </aside>
@@ -161,43 +161,43 @@ const chartPayload = benchmarks.map((m) => ({
                 class={`view-panel space-y-6 ${vIdx === 0 ? 'block' : 'hidden'}`}
               >
                 {v.charts.map((c) => (
-                  <div class="min-w-0 p-4 sm:p-5 rounded-lg bg-[#242526] border border-[#3e4042] space-y-3 overflow-hidden">
-                    <h3 class="text-sm font-bold text-white">{c.title}</h3>
+                  <div class="min-w-0 p-4 sm:p-5 rounded-lg bg-paper border border-line space-y-3 overflow-hidden">
+                    <h3 class="text-sm font-semibold text-ink">{c.title}</h3>
                     <div class="relative w-full min-w-0 h-72 sm:h-80">
                       <canvas id={`chart-${c.id}`} class="max-w-full"></canvas>
                     </div>
                   </div>
                 ))}
 
-                <div class="border border-[#3e4042] rounded-lg bg-[#242526] overflow-hidden">
-                  <div class="px-4 py-3 bg-[#1b1b1d] border-b border-[#3e4042] space-y-1">
-                    <h3 class="text-xs font-bold text-white uppercase tracking-wider">{v.table.title}</h3>
-                    {v.table.note && <p class="text-[11px] text-slate-400 leading-relaxed">{v.table.note}</p>}
+                <div class="border border-line rounded-lg bg-paper overflow-hidden">
+                  <div class="px-4 py-3 bg-ivory border-b border-line space-y-1">
+                    <h3 class="text-sm font-semibold text-ink">{v.table.title}</h3>
+                    {v.table.note && <p class="text-[11px] text-ink-3 leading-relaxed">{v.table.note}</p>}
                   </div>
                   <div class="overflow-x-auto">
                     <table class="w-full text-left text-xs font-mono">
-                      <thead class="bg-[#242526] text-slate-400 uppercase text-[11px] border-b border-[#3e4042]">
+                      <thead class="bg-paper text-ink-3 text-xs border-b border-line">
                         <tr>
                           {v.table.columns.map((col, i) => (
-                            <th class={`px-4 py-3 whitespace-nowrap ${i === 0 ? 'font-sans' : ''} ${col.startsWith('Gufo') ? 'text-[#25c2a0]' : ''}`}>
+                            <th class={`px-4 py-3 whitespace-nowrap ${i === 0 ? 'font-sans' : ''} ${col.startsWith('Gufo') ? 'text-amber-ink' : ''}`}>
                               {col}
                             </th>
                           ))}
                         </tr>
                       </thead>
-                      <tbody class="divide-y divide-[#3e4042] text-slate-300">
+                      <tbody class="divide-y divide-line text-ink-2">
                         {v.table.rows.map((row) => (
-                          <tr class="hover:bg-[#2c2d30] transition-colors">
+                          <tr class="hover:bg-paper-2 transition-colors">
                             {row.map((cell, i) => (
                               <td
                                 class={`px-4 py-3 whitespace-nowrap ${
                                   i === 0
-                                    ? 'font-bold text-white'
+                                    ? 'font-semibold text-ink'
                                     : cell === 'TODO' || cell === 'N/A'
-                                      ? 'text-slate-500'
+                                      ? 'text-ink-4'
                                       : v.table.columns[i]?.startsWith('Gufo')
-                                        ? 'text-[#25c2a0] font-semibold'
-                                        : 'text-slate-300'
+                                        ? 'text-amber-ink font-semibold'
+                                        : 'text-ink-2'
                                 }`}
                               >
                                 {cell}
@@ -220,10 +220,10 @@ const chartPayload = benchmarks.map((m) => ({
                 </svg>
                 <span>Reading these numbers</span>
               </div>
-              <ul class="space-y-1.5 text-xs text-slate-300">
+              <ul class="space-y-1.5 text-xs text-ink-2">
                 {m.notes.map((note) => (
                   <li class="flex items-start gap-2">
-                    <span class="text-[#25c2a0] font-bold">·</span>
+                    <span class="text-ink font-semibold">·</span>
                     <span>{note}</span>
                   </li>
                 ))}
@@ -236,7 +236,7 @@ const chartPayload = benchmarks.map((m) => ({
                 <span>Reproduce</span>
                 <span>sh</span>
               </div>
-              <div class="p-3 text-xs font-mono text-[#25c2a0] space-y-1 break-all">
+              <div class="p-3 text-xs font-mono text-ink space-y-1 break-all">
                 {m.reproduce.map((line) => <div>{line}</div>)}
               </div>
             </div>
@@ -282,8 +282,8 @@ const chartPayload = benchmarks.map((m) => ({
   const instances: Record<string, any> = {};
 
   const axis = {
-    grid: { color: 'rgba(255, 255, 255, 0.05)' },
-    ticks: { color: '#a3a3a3', font: { family: 'ui-monospace, monospace', size: 11 } },
+    grid: { color: '#dcdfd5' },
+    ticks: { color: '#626862', font: { family: 'JetBrains Mono, ui-monospace, monospace', size: 11 } },
   };
 
   function renderChart(spec: ChartSpec) {
@@ -312,25 +312,25 @@ const chartPayload = benchmarks.map((m) => ({
         plugins: {
           legend: {
             display: spec.series.length > 1,
-            labels: { color: '#e3e3e3', font: { family: 'ui-monospace, monospace', size: 11 } },
+            labels: { color: '#3a3f3a', font: { family: 'JetBrains Mono, ui-monospace, monospace', size: 11 } },
           },
           tooltip: {
-            backgroundColor: '#1b1b1d',
-            borderColor: '#3e4042',
+            backgroundColor: '#141714',
+            borderColor: '#141714',
             borderWidth: 1,
-            titleColor: '#25c2a0',
-            bodyColor: '#e3e3e3',
+            titleColor: '#f7f8f3',
+            bodyColor: '#f7f8f3',
             padding: 10,
           },
         },
         scales: {
           x: {
             ...axis,
-            title: spec.xTitle ? { display: true, text: spec.xTitle, color: '#888', font: { size: 11 } } : undefined,
+            title: spec.xTitle ? { display: true, text: spec.xTitle, color: '#626862', font: { size: 11 } } : undefined,
           },
           y: {
             ...axis,
-            title: { display: true, text: spec.yTitle, color: '#888', font: { size: 11 } },
+            title: { display: true, text: spec.yTitle, color: '#626862', font: { size: 11 } },
           },
         },
       },
@@ -342,10 +342,10 @@ const chartPayload = benchmarks.map((m) => ({
     view?.charts.forEach(renderChart);
   }
 
-  const ACTIVE_MODEL = ['bg-[#242526]', 'text-white', 'border-[#25c2a0]', 'font-semibold'];
-  const IDLE_MODEL = ['bg-[#1b1b1d]', 'text-slate-400', 'border-[#3e4042]', 'hover:text-slate-200', 'hover:border-slate-500'];
-  const ACTIVE_VIEW = ['bg-[#1b1b1d]', 'text-white', 'border-[#25c2a0]', 'font-semibold'];
-  const IDLE_VIEW = ['bg-[#242526]', 'text-slate-400', 'border-transparent', 'hover:text-slate-200', 'hover:bg-[#2c2d30]'];
+  const ACTIVE_MODEL = ['bg-paper', 'text-ink', 'border-ink', 'font-semibold'];
+  const IDLE_MODEL = ['bg-ivory', 'text-ink-3', 'border-line', 'hover:text-ink', 'hover:border-line-strong'];
+  const ACTIVE_VIEW = ['bg-ivory', 'text-ink', 'border-ink', 'font-semibold'];
+  const IDLE_VIEW = ['bg-paper', 'text-ink-3', 'border-transparent', 'hover:text-ink', 'hover:bg-paper-2'];
 
   function activeViewOf(modelId: string): string | null {
     const btn = document.querySelector(`.view-list[data-model-id="${modelId}"] .view-btn.is-active`) as HTMLElement | null;

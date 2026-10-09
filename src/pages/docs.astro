@@ -117,22 +117,22 @@ const commands = [
 ];
 ---
 
-<Layout title="Documentation — gufo">
+<Layout title="Documentation · Gufo">
   <Navbar currentPath="/docs" />
 
-  <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+  <div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
     <div class="grid grid-cols-1 lg:grid-cols-4 gap-8 items-start">
       <!-- Sidebar -->
-      <aside class="lg:col-span-1 min-w-0 border-b lg:border-b-0 lg:border-r border-[#3e4042]/50 pb-4 lg:pb-0 lg:pr-4 space-y-6 text-sm lg:sticky lg:top-20">
+      <aside class="lg:col-span-1 min-w-0 border-b lg:border-b-0 lg:border-r border-line pb-4 lg:pb-0 lg:pr-4 space-y-6 text-sm lg:sticky lg:top-20">
         {nav.map((section) => (
           <div>
-            <div class="font-bold uppercase text-xs tracking-wider mb-2 text-slate-400">{section.group}</div>
+            <div class="text-xs mb-2 text-ink-4">{section.group}</div>
             <ul class="space-y-1">
               {section.items.map((item) => (
                 <li>
                   <a
                     href={`#${item.id}`}
-                    class="block px-2.5 py-1.5 rounded text-slate-300 hover:text-[#25c2a0] hover:bg-[#242526] transition-colors"
+                    class="block px-2.5 py-1.5 rounded text-ink-2 hover:text-ink hover:bg-paper-2 transition-colors"
                   >
                     {item.label}
                   </a>
@@ -142,69 +142,69 @@ const commands = [
           </div>
         ))}
 
-        <div class="p-3 bg-[#242526] rounded border border-[#3e4042] text-xs space-y-1.5">
-          <div class="text-white font-bold font-mono">Canonical docs</div>
-          <p class="text-slate-400 leading-relaxed">
-            This page summarizes the repository's own documents. Flags are intentionally not enumerated here — use
-            <code class="text-[#25c2a0]">--help</code> so nothing drifts from the implementation.
+        <div class="p-3 bg-paper rounded border border-line text-xs space-y-1.5">
+          <div class="text-ink font-semibold font-mono">Canonical docs</div>
+          <p class="text-ink-3 leading-relaxed">
+            This page summarizes the repository's own documents. Flags are intentionally not enumerated here. Use
+            <code class="text-ink">--help</code> so nothing drifts from the implementation.
           </p>
         </div>
       </aside>
 
       <!-- Content -->
       <main class="lg:col-span-3 min-w-0 space-y-12">
-        <div class="flex items-center gap-2 text-xs text-slate-400">
-          <a href="/" class="hover:text-white">Home</a>
+        <div class="flex items-center gap-2 text-xs text-ink-3">
+          <a href="/" class="hover:text-ink">Home</a>
           <span>/</span>
-          <span class="text-slate-200">Documentation</span>
+          <span class="text-ink">Documentation</span>
           <span>/</span>
-          <span class="text-[#25c2a0] font-semibold">User and developer guide</span>
+          <span class="text-ink font-semibold">User and developer guide</span>
         </div>
 
         <!-- Quickstart -->
-        <section id="quickstart" class="space-y-4 border-b border-[#3e4042]/50 pb-8">
-          <h1 class="text-3xl font-extrabold text-white tracking-tight">Quickstart</h1>
-          <p class="text-sm text-slate-300 leading-relaxed">
+        <section id="quickstart" class="space-y-4 border-b border-line pb-8">
+          <h1 class="text-4xl sm:text-5xl text-ink">Quickstart</h1>
+          <p class="text-[15px] text-ink-2 leading-relaxed">
             The fastest path is the published runtime image. Download weights, start the server, then call it with any
             OpenAI-compatible client.
           </p>
 
           <div class="docusaurus-code">
             <div class="docusaurus-code-header"><span>Download weights</span><span>sh</span></div>
-            <div class="p-4 text-xs font-mono text-slate-200 space-y-1 overflow-x-auto">
-              <div class="text-[#25c2a0]">hf download unsloth/Qwen3.8-27B-GGUF Qwen3.8-27B-UD-Q8_K_XL.gguf \</div>
-              <div class="text-[#25c2a0]">&nbsp;&nbsp;--revision 4ca720788d1e01f1bff70c033e0d0028fd02e502 \</div>
-              <div class="text-[#25c2a0]">&nbsp;&nbsp;--repo-type model --local-dir models/Qwen3.8-27B-GGUF</div>
-              <div class="text-[#25c2a0] pt-2">hf download z-lab/Qwen3.8-27B-DFlash2-GGUF Qwen3.8-27B-DFlash2-Q4_K_M.gguf \</div>
-              <div class="text-[#25c2a0]">&nbsp;&nbsp;--revision 2d9571f8ce46e151f61c6499c99dee6079e1d610 \</div>
-              <div class="text-[#25c2a0]">&nbsp;&nbsp;--repo-type model --local-dir models/Qwen3.8-27B-DFlash2-GGUF</div>
+            <div class="p-4 text-xs font-mono text-ink space-y-1 overflow-x-auto">
+              <div class="text-ink">hf download unsloth/Qwen3.8-27B-GGUF Qwen3.8-27B-UD-Q8_K_XL.gguf \</div>
+              <div class="text-ink">&nbsp;&nbsp;--revision 4ca720788d1e01f1bff70c033e0d0028fd02e502 \</div>
+              <div class="text-ink">&nbsp;&nbsp;--repo-type model --local-dir models/Qwen3.8-27B-GGUF</div>
+              <div class="text-ink pt-2">hf download z-lab/Qwen3.8-27B-DFlash2-GGUF Qwen3.8-27B-DFlash2-Q4_K_M.gguf \</div>
+              <div class="text-ink">&nbsp;&nbsp;--revision 2d9571f8ce46e151f61c6499c99dee6079e1d610 \</div>
+              <div class="text-ink">&nbsp;&nbsp;--repo-type model --local-dir models/Qwen3.8-27B-DFlash2-GGUF</div>
             </div>
           </div>
 
           <div class="docusaurus-code">
             <div class="docusaurus-code-header"><span>Serve with DFlash2 speculative decoding</span><span>sh</span></div>
-            <div class="p-4 text-xs font-mono text-slate-200 space-y-1 overflow-x-auto">
-              <div class="text-[#25c2a0]">podman pull ghcr.io/gufo-org/toolboxes/gufo-runtime:latest</div>
-              <div class="text-[#25c2a0] pt-2">podman run --rm \</div>
-              <div class="text-[#25c2a0]">&nbsp;&nbsp;--userns=keep-id:uid=1000,gid=1000 \</div>
-              <div class="text-[#25c2a0]">&nbsp;&nbsp;--device /dev/kfd --device /dev/dri \</div>
-              <div class="text-[#25c2a0]">&nbsp;&nbsp;--group-add keep-groups --ulimit memlock=-1 \</div>
-              <div class="text-[#25c2a0]">&nbsp;&nbsp;-p 8080:8080 -v ./models:/models:ro \</div>
-              <div class="text-[#25c2a0]">&nbsp;&nbsp;ghcr.io/gufo-org/toolboxes/gufo-runtime:latest \</div>
-              <div class="text-[#25c2a0]">&nbsp;&nbsp;gufo serve --host 0.0.0.0 --port 8080 llm \</div>
-              <div class="text-[#25c2a0]">&nbsp;&nbsp;--model /models/Qwen3.8-27B-GGUF/Qwen3.8-27B-UD-Q8_K_XL.gguf \</div>
-              <div class="text-[#25c2a0]">&nbsp;&nbsp;--speculative dflash2 \</div>
-              <div class="text-[#25c2a0]">&nbsp;&nbsp;--dflash-model /models/Qwen3.8-27B-DFlash2-GGUF/Qwen3.8-27B-DFlash2-Q4_K_M.gguf</div>
+            <div class="p-4 text-xs font-mono text-ink space-y-1 overflow-x-auto">
+              <div class="text-ink">podman pull ghcr.io/gufo-org/toolboxes/gufo-runtime:latest</div>
+              <div class="text-ink pt-2">podman run --rm \</div>
+              <div class="text-ink">&nbsp;&nbsp;--userns=keep-id:uid=1000,gid=1000 \</div>
+              <div class="text-ink">&nbsp;&nbsp;--device /dev/kfd --device /dev/dri \</div>
+              <div class="text-ink">&nbsp;&nbsp;--group-add keep-groups --ulimit memlock=-1 \</div>
+              <div class="text-ink">&nbsp;&nbsp;-p 8080:8080 -v ./models:/models:ro \</div>
+              <div class="text-ink">&nbsp;&nbsp;ghcr.io/gufo-org/toolboxes/gufo-runtime:latest \</div>
+              <div class="text-ink">&nbsp;&nbsp;gufo serve --host 0.0.0.0 --port 8080 llm \</div>
+              <div class="text-ink">&nbsp;&nbsp;--model /models/Qwen3.8-27B-GGUF/Qwen3.8-27B-UD-Q8_K_XL.gguf \</div>
+              <div class="text-ink">&nbsp;&nbsp;--speculative dflash2 \</div>
+              <div class="text-ink">&nbsp;&nbsp;--dflash-model /models/Qwen3.8-27B-DFlash2-GGUF/Qwen3.8-27B-DFlash2-Q4_K_M.gguf</div>
             </div>
           </div>
 
           <div class="docusaurus-code">
             <div class="docusaurus-code-header"><span>Ask it something</span><span>sh</span></div>
-            <div class="p-4 text-xs font-mono text-slate-200 space-y-1 overflow-x-auto">
-              <div class="text-[#25c2a0]">curl http://localhost:8080/v1/chat/completions \</div>
-              <div class="text-[#25c2a0]">&nbsp;&nbsp;-H "Content-Type: application/json" \</div>
-              <div class="text-[#25c2a0]">&nbsp;&nbsp;-d '&#123;"model": "Qwen3.8-27B-UD-Q8_K_XL",</div>
-              <div class="text-[#25c2a0]">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;"messages": [&#123;"role": "user", "content": "Say something"&#125;]&#125;'</div>
+            <div class="p-4 text-xs font-mono text-ink space-y-1 overflow-x-auto">
+              <div class="text-ink">curl http://localhost:8080/v1/chat/completions \</div>
+              <div class="text-ink">&nbsp;&nbsp;-H "Content-Type: application/json" \</div>
+              <div class="text-ink">&nbsp;&nbsp;-d '&#123;"model": "Qwen3.8-27B-UD-Q8_K_XL",</div>
+              <div class="text-ink">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;"messages": [&#123;"role": "user", "content": "Say something"&#125;]&#125;'</div>
             </div>
           </div>
 
@@ -215,16 +215,16 @@ const commands = [
               </svg>
               <span>GPU access for rootless containers</span>
             </div>
-            <p class="text-xs text-slate-300 leading-relaxed">
-              Rootless Podman needs <code class="text-[#25c2a0] font-mono">crun</code> for
-              <code class="text-[#25c2a0] font-mono">--group-add keep-groups</code>. Your host user must have read/write
-              access to <code class="text-slate-200">/dev/kfd</code> and <code class="text-slate-200">/dev/dri/renderD*</code>,
-              usually through the <code class="text-slate-200">render</code> and <code class="text-slate-200">video</code>
+            <p class="text-[15px] text-ink-2 leading-relaxed">
+              Rootless Podman needs <code class="text-ink font-mono">crun</code> for
+              <code class="text-ink font-mono">--group-add keep-groups</code>. Your host user must have read/write
+              access to <code class="text-ink">/dev/kfd</code> and <code class="text-ink">/dev/dri/renderD*</code>,
+              usually through the <code class="text-ink">render</code> and <code class="text-ink">video</code>
               groups; log out and back in after changing membership. Container groups named
-              <code class="text-slate-200">video</code>/<code class="text-slate-200">render</code> do not preserve host
-              supplementary groups. If ROCm reports no device, check <code class="text-slate-200">id</code>,
-              <code class="text-slate-200">ls -l /dev/kfd /dev/dri/renderD*</code> and
-              <code class="text-slate-200">podman info --format '&#123;&#123;.Host.OCIRuntime.Name&#125;&#125;'</code>.
+              <code class="text-ink">video</code>/<code class="text-ink">render</code> do not preserve host
+              supplementary groups. If ROCm reports no device, check <code class="text-ink">id</code>,
+              <code class="text-ink">ls -l /dev/kfd /dev/dri/renderD*</code> and
+              <code class="text-ink">podman info --format '&#123;&#123;.Host.OCIRuntime.Name&#125;&#125;'</code>.
             </p>
           </div>
 
@@ -235,18 +235,18 @@ const commands = [
               </svg>
               <span>SELinux hosts</span>
             </div>
-            <div class="text-xs text-slate-300 leading-relaxed space-y-2">
+            <div class="text-[15px] text-ink-2 leading-relaxed space-y-2">
               <p>
                 On Fedora or another SELinux-enforcing host, GPU enumeration can succeed while SELinux blocks mapping
-                <code class="text-slate-200">/dev/kfd</code>, which ROCr reports as a misleading “Memory critical” error.
+                <code class="text-ink">/dev/kfd</code>, which ROCr reports as a misleading “Memory critical” error.
                 Check the host audit log:
               </p>
-              <div class="bg-[#1b1b1d] p-2 rounded font-mono text-[11px] text-slate-200">
+              <div class="bg-ivory p-2 rounded font-mono text-[11px] text-ink">
                 sudo ausearch -m avc -ts recent | grep -E '/dev/kfd|hsa_device_t'
               </div>
               <p>
-                If it shows a denied <code class="text-slate-200">map</code>, the documented fix is
-                <code class="text-slate-200">sudo setsebool -P container_use_devices true</code>. It affects every
+                If it shows a denied <code class="text-ink">map</code>, the documented fix is
+                <code class="text-ink">sudo setsebool -P container_use_devices true</code>. It affects every
                 container on that host, so review the policy scope before enabling it.
               </p>
             </div>
@@ -254,29 +254,29 @@ const commands = [
         </section>
 
         <!-- Platform -->
-        <section id="platform" class="space-y-4 border-b border-[#3e4042]/50 pb-8">
-          <h2 class="text-2xl font-bold text-white tracking-tight">Supported platform</h2>
-          <p class="text-sm text-slate-300 leading-relaxed">
-            Linux x86-64 on AMD Strix Halo (<code class="text-[#25c2a0] font-mono">gfx1151</code>) is the supported
+        <section id="platform" class="space-y-4 border-b border-line pb-8">
+          <h2 class="text-3xl text-ink">Supported platform</h2>
+          <p class="text-[15px] text-ink-2 leading-relaxed">
+            Linux x86-64 on AMD Strix Halo (<code class="text-ink font-mono">gfx1151</code>) is the supported
             production target: Ryzen AI MAX+ 395 systems with Radeon 8060S and up to 128 GiB of unified memory. The HIP
             backend accepts that architecture only. Tests, profilers, tuning executables and Python reference runners are
             not installed with the production package.
           </p>
 
           <div class="grid grid-cols-1 md:grid-cols-2 gap-4 text-xs">
-            <div class="p-3.5 rounded bg-[#242526] border border-[#3e4042] space-y-1.5 font-mono">
-              <div class="text-white font-bold">Runtime</div>
-              <div>GPU target: <span class="text-[#25c2a0]">gfx1151 (RDNA 3.5)</span></div>
-              <div>Wavefront: <span class="text-slate-300">Wave32</span></div>
-              <div>Memory: <span class="text-slate-300">unified LPDDR5X, CPU and GPU</span></div>
-              <div>Devices: <span class="text-slate-300">/dev/kfd, /dev/dri</span></div>
+            <div class="p-3.5 rounded bg-paper border border-line space-y-1.5 font-mono">
+              <div class="text-ink font-semibold">Runtime</div>
+              <div>GPU target: <span class="text-ink">gfx1151 (RDNA 3.5)</span></div>
+              <div>Wavefront: <span class="text-ink-2">Wave32</span></div>
+              <div>Memory: <span class="text-ink-2">unified LPDDR5X, CPU and GPU</span></div>
+              <div>Devices: <span class="text-ink-2">/dev/kfd, /dev/dri</span></div>
             </div>
-            <div class="p-3.5 rounded bg-[#242526] border border-[#3e4042] space-y-1.5 font-mono">
-              <div class="text-white font-bold">Qualified toolchain</div>
-              <div>Compiler: <span class="text-[#25c2a0]">GCC 15.3, C++20</span></div>
-              <div>ROCm: <span class="text-slate-300">7.2.3</span></div>
-              <div>Build: <span class="text-slate-300">CMake 3.21+, Ninja, pkg-config</span></div>
-              <div>Not required: <span class="text-slate-300">Python, Triton, CK, MIOpen</span></div>
+            <div class="p-3.5 rounded bg-paper border border-line space-y-1.5 font-mono">
+              <div class="text-ink font-semibold">Qualified toolchain</div>
+              <div>Compiler: <span class="text-ink">GCC 15.3, C++20</span></div>
+              <div>ROCm: <span class="text-ink-2">7.2.3</span></div>
+              <div>Build: <span class="text-ink-2">CMake 3.21+, Ninja, pkg-config</span></div>
+              <div>Not required: <span class="text-ink-2">Python, Triton, CK, MIOpen</span></div>
             </div>
           </div>
 
@@ -287,9 +287,9 @@ const commands = [
               </svg>
               <span>Probes, not spec sheets</span>
             </div>
-            <p class="text-xs text-slate-300 leading-relaxed">
+            <p class="text-[15px] text-ink-2 leading-relaxed">
               Runtime probes determine the available compute units, memory, firmware and power mode. Performance claims
-              come from measured hardware ceilings produced by <code class="text-[#25c2a0]">tools/bench/gfx1151_peak.hip</code>,
+              come from measured hardware ceilings produced by <code class="text-ink">tools/bench/gfx1151_peak.hip</code>,
               not from published peak specifications. Smaller memory configurations still work and keep the speed
               benefits for models that fit; Windows, macOS and non-AMD accelerators are out of scope.
             </p>
@@ -297,23 +297,23 @@ const commands = [
         </section>
 
         <!-- Build -->
-        <section id="build" class="space-y-4 border-b border-[#3e4042]/50 pb-8">
-          <h2 class="text-2xl font-bold text-white tracking-tight">Build from source</h2>
-          <p class="text-sm text-slate-300 leading-relaxed">
+        <section id="build" class="space-y-4 border-b border-line pb-8">
+          <h2 class="text-3xl text-ink">Build from source</h2>
+          <p class="text-[15px] text-ink-2 leading-relaxed">
             CMake owns one production configuration for both Nix and ordinary Linux builds. No wrapper script is needed.
           </p>
 
           <div class="docusaurus-code">
             <div class="docusaurus-code-header"><span>With Nix</span><span>sh</span></div>
-            <div class="p-4 text-xs font-mono text-slate-200 space-y-1">
-              <div class="text-slate-500"># Production package, no tests or tools</div>
-              <div class="text-[#25c2a0]">nix build</div>
-              <div class="text-[#25c2a0]">./result/bin/gufo diagnose</div>
-              <div class="text-[#25c2a0]">./result/bin/gufo serve llm --model /path/to/model.gguf</div>
-              <div class="text-slate-500 pt-2"># Hosted CPU and repository checks</div>
-              <div class="text-[#25c2a0]">nix build .#checks.x86_64-linux.pr</div>
-              <div class="text-slate-500 pt-2"># GPU development, profilers, reference tools</div>
-              <div class="text-[#25c2a0]">nix develop</div>
+            <div class="p-4 text-xs font-mono text-ink space-y-1">
+              <div class="text-ink-4"># Production package, no tests or tools</div>
+              <div class="text-ink">nix build</div>
+              <div class="text-ink">./result/bin/gufo diagnose</div>
+              <div class="text-ink">./result/bin/gufo serve llm --model /path/to/model.gguf</div>
+              <div class="text-ink-4 pt-2"># Hosted CPU and repository checks</div>
+              <div class="text-ink">nix build .#checks.x86_64-linux.pr</div>
+              <div class="text-ink-4 pt-2"># GPU development, profilers, reference tools</div>
+              <div class="text-ink">nix develop</div>
             </div>
           </div>
 
@@ -324,30 +324,30 @@ const commands = [
               </svg>
               <span>Stage new files before building</span>
             </div>
-            <p class="text-xs text-slate-300 leading-relaxed">
-              Flakes only see tracked files, so run <code class="text-[#25c2a0] font-mono">git add</code> on new paths
-              before <code class="text-[#25c2a0] font-mono">nix build</code>. Stage only the paths your task owns.
+            <p class="text-[15px] text-ink-2 leading-relaxed">
+              Flakes only see tracked files, so run <code class="text-ink font-mono">git add</code> on new paths
+              before <code class="text-ink font-mono">nix build</code>. Stage only the paths your task owns.
             </p>
           </div>
 
-          <h3 class="text-sm font-bold text-white pt-2">Without Nix</h3>
-          <p class="text-sm text-slate-300 leading-relaxed">
+          <h3 class="text-sm font-semibold text-ink pt-2">Without Nix</h3>
+          <p class="text-[15px] text-ink-2 leading-relaxed">
             Install a C++20 compiler, CMake 3.21+, Ninja, pkg-config and the development packages below. Attention and
             audio convolution kernels compile directly from HIP.
           </p>
 
-          <div class="border border-[#3e4042] rounded-lg overflow-hidden">
+          <div class="border border-line rounded-lg overflow-hidden">
             <table class="w-full text-left text-xs">
-              <thead class="bg-[#1b1b1d] text-slate-400 uppercase text-[11px] border-b border-[#3e4042]">
+              <thead class="bg-ivory text-ink-3 text-xs border-b border-line">
                 <tr>
                   <th class="px-4 py-2.5">Dependency</th>
                   <th class="px-4 py-2.5">Used for</th>
                 </tr>
               </thead>
-              <tbody class="divide-y divide-[#3e4042] bg-[#242526] text-slate-300">
+              <tbody class="divide-y divide-line bg-paper text-ink-2">
                 {dependencies.map(([dep, use]) => (
                   <tr>
-                    <td class="px-4 py-2.5 font-mono text-[#25c2a0]">{dep}</td>
+                    <td class="px-4 py-2.5 font-mono text-ink">{dep}</td>
                     <td class="px-4 py-2.5">{use}</td>
                   </tr>
                 ))}
@@ -357,42 +357,42 @@ const commands = [
 
           <div class="docusaurus-code">
             <div class="docusaurus-code-header"><span>Debian / Ubuntu example</span><span>sh</span></div>
-            <div class="p-4 text-xs font-mono text-slate-200 space-y-1 overflow-x-auto">
-              <div class="text-[#25c2a0]">sudo apt install build-essential cmake ninja-build pkg-config \</div>
-              <div class="text-[#25c2a0]">&nbsp;&nbsp;libicu-dev libcurl4-openssl-dev libssl-dev libpng-dev libjpeg-dev ffmpeg</div>
-              <div class="text-[#25c2a0] pt-2">sudo apt install hipblas-dev hipblaslt-dev rocblas-dev \</div>
-              <div class="text-[#25c2a0]">&nbsp;&nbsp;hipcub-dev rocprim-dev rocwmma-dev</div>
-              <div class="text-[#25c2a0] pt-2">cmake --preset release -DCMAKE_INSTALL_PREFIX="$HOME/.local"</div>
-              <div class="text-[#25c2a0]">cmake --build --preset release --parallel 4</div>
-              <div class="text-[#25c2a0]">./build/release/gufo diagnose</div>
+            <div class="p-4 text-xs font-mono text-ink space-y-1 overflow-x-auto">
+              <div class="text-ink">sudo apt install build-essential cmake ninja-build pkg-config \</div>
+              <div class="text-ink">&nbsp;&nbsp;libicu-dev libcurl4-openssl-dev libssl-dev libpng-dev libjpeg-dev ffmpeg</div>
+              <div class="text-ink pt-2">sudo apt install hipblas-dev hipblaslt-dev rocblas-dev \</div>
+              <div class="text-ink">&nbsp;&nbsp;hipcub-dev rocprim-dev rocwmma-dev</div>
+              <div class="text-ink pt-2">cmake --preset release -DCMAKE_INSTALL_PREFIX="$HOME/.local"</div>
+              <div class="text-ink">cmake --build --preset release --parallel 4</div>
+              <div class="text-ink">./build/release/gufo diagnose</div>
             </div>
           </div>
 
-          <p class="text-xs text-slate-400 leading-relaxed">
-            Configuring fails at <code class="text-slate-300">find_package(hipblas)</code> when those ROCm packages are
-            missing; other distributions name them <code class="text-slate-300">-devel</code>. For nonstandard
-            installations pass <code class="text-slate-300">-DCMAKE_PREFIX_PATH="/opt/rocm"</code>, and if compiler
+          <p class="text-xs text-ink-3 leading-relaxed">
+            Configuring fails at <code class="text-ink-2">find_package(hipblas)</code> when those ROCm packages are
+            missing; other distributions name them <code class="text-ink-2">-devel</code>. For nonstandard
+            installations pass <code class="text-ink-2">-DCMAKE_PREFIX_PATH="/opt/rocm"</code>, and if compiler
             discovery picks a system Clang also pass
-            <code class="text-slate-300">-DCMAKE_HIP_COMPILER=/opt/rocm/llvm/bin/clang++</code>. Install with
-            <code class="text-slate-300">cmake --install build/release</code>; model weights are acquired separately.
+            <code class="text-ink-2">-DCMAKE_HIP_COMPILER=/opt/rocm/llvm/bin/clang++</code>. Install with
+            <code class="text-ink-2">cmake --install build/release</code>; model weights are acquired separately.
           </p>
         </section>
 
         <!-- CLI -->
-        <section id="cli" class="space-y-4 border-b border-[#3e4042]/50 pb-8">
-          <h2 class="text-2xl font-bold text-white tracking-tight">CLI commands</h2>
-          <p class="text-sm text-slate-300 leading-relaxed">
+        <section id="cli" class="space-y-4 border-b border-line pb-8">
+          <h2 class="text-3xl text-ink">CLI commands</h2>
+          <p class="text-[15px] text-ink-2 leading-relaxed">
             Terminal generation and HTTP serving share model runtimes, tokenizers and sampling; the HTTP scheduler adds
             concurrent request management and persistent prompt caching. Every command supports
-            <code class="text-[#25c2a0] font-mono">--help</code> and <code class="text-[#25c2a0] font-mono">--version</code>,
+            <code class="text-ink font-mono">--help</code> and <code class="text-ink font-mono">--version</code>,
             and unknown options or invalid combinations return an error instead of being ignored.
           </p>
 
           <div class="space-y-2">
             {commands.map(([name, body]) => (
-              <div class="p-4 rounded-lg bg-[#242526] border border-[#3e4042] space-y-1">
-                <h3 class="font-bold text-white font-mono text-sm">{name}</h3>
-                <p class="text-xs text-slate-300 leading-relaxed">{body}</p>
+              <div class="p-4 rounded-lg bg-paper border border-line space-y-1">
+                <h3 class="font-semibold text-ink font-mono text-sm">{name}</h3>
+                <p class="text-[15px] text-ink-2 leading-relaxed">{body}</p>
               </div>
             ))}
           </div>
@@ -404,10 +404,10 @@ const commands = [
               </svg>
               <span>Flags live in --help, not here</span>
             </div>
-            <p class="text-xs text-slate-300 leading-relaxed">
+            <p class="text-[15px] text-ink-2 leading-relaxed">
               The repository deliberately does not document the feature-to-flag mapping, so it cannot drift from the
-              implementation. Run <code class="text-[#25c2a0] font-mono">gufo serve --help</code> or
-              <code class="text-[#25c2a0] font-mono">gufo serve llm --help</code> for the current options. Broadly, the
+              implementation. Run <code class="text-ink font-mono">gufo serve --help</code> or
+              <code class="text-ink font-mono">gufo serve llm --help</code> for the current options. Broadly, the
               LLM server exposes model identity, context and memory sizing, the full sampling set, reasoning controls, an
               optional on-disk prompt cache, speculative decoding, and per-client limits for queueing, timeouts and
               output size.
@@ -416,34 +416,34 @@ const commands = [
 
           <div class="docusaurus-code">
             <div class="docusaurus-code-header"><span>Audio serving</span><span>sh</span></div>
-            <div class="p-4 text-xs font-mono text-slate-200 space-y-1 overflow-x-auto">
-              <div class="text-slate-500"># Synthesis, with two named reference voices</div>
-              <div class="text-[#25c2a0]">gufo serve tts --model models/Qwen3-TTS-12Hz-1.7B-Base --context 4096 \</div>
-              <div class="text-[#25c2a0]">&nbsp;&nbsp;--voice narrator_eng=/audio/clear-english-voice.wav \</div>
-              <div class="text-[#25c2a0]">&nbsp;&nbsp;--voice-text narrator_eng=/audio/clear-english-voice.txt</div>
-              <div class="text-slate-500 pt-2"># Transcription</div>
-              <div class="text-[#25c2a0]">gufo serve asr --model models/Qwen3-ASR-1.7B --context 1024</div>
+            <div class="p-4 text-xs font-mono text-ink space-y-1 overflow-x-auto">
+              <div class="text-ink-4"># Synthesis, with two named reference voices</div>
+              <div class="text-ink">gufo serve tts --model models/Qwen3-TTS-12Hz-1.7B-Base --context 4096 \</div>
+              <div class="text-ink">&nbsp;&nbsp;--voice narrator_eng=/audio/clear-english-voice.wav \</div>
+              <div class="text-ink">&nbsp;&nbsp;--voice-text narrator_eng=/audio/clear-english-voice.txt</div>
+              <div class="text-ink-4 pt-2"># Transcription</div>
+              <div class="text-ink">gufo serve asr --model models/Qwen3-ASR-1.7B --context 1024</div>
             </div>
           </div>
 
-          <p class="text-xs text-slate-400 leading-relaxed">
+          <p class="text-xs text-ink-3 leading-relaxed">
             Each process loads one checkpoint; llama-swap can route several services under one API URL.
-            <code class="text-slate-300">--context</code> reserves the model's token capacity, and ASR applies that
+            <code class="text-ink-2">--context</code> reserves the model's token capacity, and ASR applies that
             capacity per audio chunk, so long recordings do not need one enormous context.
           </p>
         </section>
 
         <!-- Models -->
-        <section id="models" class="space-y-4 border-b border-[#3e4042]/50 pb-8">
-          <h2 class="text-2xl font-bold text-white tracking-tight">Model guides</h2>
-          <p class="text-sm text-slate-300 leading-relaxed">
+        <section id="models" class="space-y-4 border-b border-line pb-8">
+          <h2 class="text-3xl text-ink">Model guides</h2>
+          <p class="text-[15px] text-ink-2 leading-relaxed">
             Weights are downloaded separately and are not part of the runtime package. Each model guide lists the
             required files, supported modes and complete benchmark settings.
           </p>
 
-          <div class="border border-[#3e4042] rounded-lg overflow-hidden">
+          <div class="border border-line rounded-lg overflow-hidden">
             <table class="w-full text-left text-xs">
-              <thead class="bg-[#1b1b1d] text-slate-400 uppercase text-[11px] border-b border-[#3e4042]">
+              <thead class="bg-ivory text-ink-3 text-xs border-b border-line">
                 <tr>
                   <th class="px-4 py-2.5">Model</th>
                   <th class="px-4 py-2.5">Weights and inputs</th>
@@ -451,13 +451,13 @@ const commands = [
                   <th class="px-4 py-2.5 font-mono">Guide</th>
                 </tr>
               </thead>
-              <tbody class="divide-y divide-[#3e4042] bg-[#242526] text-slate-300">
+              <tbody class="divide-y divide-line bg-paper text-ink-2">
                 {catalogue.map((m) => (
                   <tr class="align-top">
-                    <td class="px-4 py-2.5 font-bold text-white whitespace-nowrap">{m.name}</td>
+                    <td class="px-4 py-2.5 font-semibold text-ink whitespace-nowrap">{m.name}</td>
                     <td class="px-4 py-2.5">{m.weights}</td>
-                    <td class="px-4 py-2.5 text-sky-400 whitespace-nowrap">{m.modes}</td>
-                    <td class="px-4 py-2.5 font-mono text-[11px] text-slate-400">{m.docPath}</td>
+                    <td class="px-4 py-2.5 text-sky-700 whitespace-nowrap">{m.modes}</td>
+                    <td class="px-4 py-2.5 font-mono text-[11px] text-ink-3">{m.docPath}</td>
                   </tr>
                 ))}
               </tbody>
@@ -465,27 +465,27 @@ const commands = [
           </div>
 
           <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div class="p-4 rounded-lg bg-[#242526] border border-[#3e4042] space-y-2">
-              <h3 class="font-bold text-white text-xs font-mono uppercase">Model-owned packages</h3>
-              <p class="text-xs text-slate-400 leading-relaxed">
-                Each family lives in <code class="text-slate-300">src/models/&lt;model&gt;</code> as its own static
+            <div class="p-4 rounded-lg bg-paper border border-line space-y-2">
+              <h3 class="font-semibold text-ink text-sm">Model-owned packages</h3>
+              <p class="text-xs text-ink-3 leading-relaxed">
+                Each family lives in <code class="text-ink-2">src/models/&lt;model&gt;</code> as its own static
                 library with its own config, loader, engine, kernels and CPU reference. Kernels are not reused across
                 models, which bounds the blast radius of a change. Tests sit in
-                <code class="text-slate-300">tests/models/&lt;model&gt;</code>.
+                <code class="text-ink-2">tests/models/&lt;model&gt;</code>.
               </p>
             </div>
-            <div class="p-4 rounded-lg bg-[#242526] border border-[#3e4042] space-y-2">
-              <h3 class="font-bold text-[#25c2a0] text-xs font-mono uppercase">Four documents per model</h3>
-              <p class="text-xs text-slate-400 leading-relaxed">
-                <code class="text-slate-300">README.md</code> for usage and modes,
-                <code class="text-slate-300">BENCHMARKS.md</code> for retained measurements with scope and date,
-                <code class="text-slate-300">QUALITY.md</code> for measured quality and unresolved gaps, and
-                <code class="text-slate-300">EXPERIMENTS.md</code> for retained and rejected decisions.
+            <div class="p-4 rounded-lg bg-paper border border-line space-y-2">
+              <h3 class="font-semibold text-ink text-sm">Four documents per model</h3>
+              <p class="text-xs text-ink-3 leading-relaxed">
+                <code class="text-ink-2">README.md</code> for usage and modes,
+                <code class="text-ink-2">BENCHMARKS.md</code> for retained measurements with scope and date,
+                <code class="text-ink-2">QUALITY.md</code> for measured quality and unresolved gaps, and
+                <code class="text-ink-2">EXPERIMENTS.md</code> for retained and rejected decisions.
               </p>
             </div>
           </div>
 
-          <p class="text-xs text-slate-400 leading-relaxed">
+          <p class="text-xs text-ink-3 leading-relaxed">
             Qwen-Image-2.1 weights use the non-commercial Qwen Research License and MiniMax H3 requires an
             operator-supplied checkpoint under its own community license; both are separate from Gufo's MIT license, and
             neither is downloaded during build, installation or server startup.
@@ -493,136 +493,136 @@ const commands = [
         </section>
 
         <!-- API -->
-        <section id="api" class="space-y-4 border-b border-[#3e4042]/50 pb-8">
-          <h2 class="text-2xl font-bold text-white tracking-tight">OpenAI-compatible API</h2>
-          <p class="text-sm text-slate-300 leading-relaxed">
+        <section id="api" class="space-y-4 border-b border-line pb-8">
+          <h2 class="text-3xl text-ink">OpenAI-compatible API</h2>
+          <p class="text-[15px] text-ink-2 leading-relaxed">
             Chat Completions is the main API, with streaming, images and tools. Responses supports text and image input
             with optional streaming, and Anthropic Messages exposes a synchronous text subset. Compatibility is a
             versioned contract: supported fields behave as documented and unsupported fields return explicit errors
             instead of being ignored.
           </p>
 
-          <div class="border border-[#3e4042] rounded-lg overflow-hidden">
+          <div class="border border-line rounded-lg overflow-hidden">
             <table class="w-full text-left text-xs font-mono">
-              <thead class="bg-[#1b1b1d] text-slate-400 uppercase text-[11px] border-b border-[#3e4042]">
+              <thead class="bg-ivory text-ink-3 text-xs border-b border-line">
                 <tr>
                   <th class="px-4 py-2.5">Method</th>
                   <th class="px-4 py-2.5">Path</th>
                   <th class="px-4 py-2.5 font-sans">Availability</th>
                 </tr>
               </thead>
-              <tbody class="divide-y divide-[#3e4042] bg-[#242526] text-slate-300">
+              <tbody class="divide-y divide-line bg-paper text-ink-2">
                 {endpoints.map(([method, path, note]) => (
-                  <tr class="hover:bg-[#2c2d30] transition-colors">
-                    <td class="px-4 py-2.5 text-[#25c2a0] font-bold whitespace-nowrap">{method}</td>
-                    <td class="px-4 py-2.5 text-white whitespace-nowrap">{path}</td>
-                    <td class="px-4 py-2.5 text-slate-400 font-sans">{note}</td>
+                  <tr class="hover:bg-paper-2 transition-colors">
+                    <td class="px-4 py-2.5 text-ink font-semibold whitespace-nowrap">{method}</td>
+                    <td class="px-4 py-2.5 text-ink whitespace-nowrap">{path}</td>
+                    <td class="px-4 py-2.5 text-ink-3 font-sans">{note}</td>
                   </tr>
                 ))}
               </tbody>
             </table>
           </div>
 
-          <p class="text-xs text-slate-400 leading-relaxed">
-            <code class="text-slate-300">/v1/embeddings</code> is not implemented and returns 501. JSON parsing rejects
+          <p class="text-xs text-ink-3 leading-relaxed">
+            <code class="text-ink-2">/v1/embeddings</code> is not implemented and returns 501. JSON parsing rejects
             duplicate keys, invalid numbers and nesting beyond 128 containers. Diagnostic telemetry carries status, token
-            counts, timing and cancellation state only — never prompt text, model paths or token IDs.
+            counts, timing and cancellation state only, never prompt text, model paths or token IDs.
           </p>
 
           <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
             <div class="docusaurus-code">
               <div class="docusaurus-code-header"><span>Chat completion</span><span>sh</span></div>
-              <div class="p-4 text-xs font-mono text-slate-200 space-y-1 overflow-x-auto">
-                <div class="text-[#25c2a0]">curl http://localhost:8080/v1/chat/completions \</div>
-                <div class="text-[#25c2a0]">&nbsp;&nbsp;-H "Content-Type: application/json" \</div>
-                <div class="text-[#25c2a0]">&nbsp;&nbsp;-d '&#123;"model": "qwen", "stream": true,</div>
-                <div class="text-[#25c2a0]">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;"reasoning_effort": "high",</div>
-                <div class="text-[#25c2a0]">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;"messages": [&#123;"role": "user", "content": "Hi"&#125;]&#125;'</div>
+              <div class="p-4 text-xs font-mono text-ink space-y-1 overflow-x-auto">
+                <div class="text-ink">curl http://localhost:8080/v1/chat/completions \</div>
+                <div class="text-ink">&nbsp;&nbsp;-H "Content-Type: application/json" \</div>
+                <div class="text-ink">&nbsp;&nbsp;-d '&#123;"model": "qwen", "stream": true,</div>
+                <div class="text-ink">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;"reasoning_effort": "high",</div>
+                <div class="text-ink">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;"messages": [&#123;"role": "user", "content": "Hi"&#125;]&#125;'</div>
               </div>
             </div>
 
             <div class="docusaurus-code">
               <div class="docusaurus-code-header"><span>Speech synthesis</span><span>sh</span></div>
-              <div class="p-4 text-xs font-mono text-slate-200 space-y-1 overflow-x-auto">
-                <div class="text-[#25c2a0]">curl -sS http://127.0.0.1:8080/v1/audio/speech \</div>
-                <div class="text-[#25c2a0]">&nbsp;&nbsp;-H 'Content-Type: application/json' \</div>
-                <div class="text-[#25c2a0]">&nbsp;&nbsp;-d '&#123;"model": "qwen3-tts-12hz-1.7b-base",</div>
-                <div class="text-[#25c2a0]">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;"voice": "narrator", "input": "Hello from Gufo."&#125;' \</div>
-                <div class="text-[#25c2a0]">&nbsp;&nbsp;--output speech.wav</div>
+              <div class="p-4 text-xs font-mono text-ink space-y-1 overflow-x-auto">
+                <div class="text-ink">curl -sS http://127.0.0.1:8080/v1/audio/speech \</div>
+                <div class="text-ink">&nbsp;&nbsp;-H 'Content-Type: application/json' \</div>
+                <div class="text-ink">&nbsp;&nbsp;-d '&#123;"model": "qwen3-tts-12hz-1.7b-base",</div>
+                <div class="text-ink">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;"voice": "narrator", "input": "Hello from Gufo."&#125;' \</div>
+                <div class="text-ink">&nbsp;&nbsp;--output speech.wav</div>
               </div>
             </div>
 
             <div class="docusaurus-code">
               <div class="docusaurus-code-header"><span>Transcription</span><span>sh</span></div>
-              <div class="p-4 text-xs font-mono text-slate-200 space-y-1 overflow-x-auto">
-                <div class="text-[#25c2a0]">curl -sS http://127.0.0.1:8080/v1/audio/transcriptions \</div>
-                <div class="text-[#25c2a0]">&nbsp;&nbsp;-F file=@speech.wav -F model=qwen3-asr-1.7b \</div>
-                <div class="text-[#25c2a0]">&nbsp;&nbsp;-F response_format=json</div>
+              <div class="p-4 text-xs font-mono text-ink space-y-1 overflow-x-auto">
+                <div class="text-ink">curl -sS http://127.0.0.1:8080/v1/audio/transcriptions \</div>
+                <div class="text-ink">&nbsp;&nbsp;-F file=@speech.wav -F model=qwen3-asr-1.7b \</div>
+                <div class="text-ink">&nbsp;&nbsp;-F response_format=json</div>
               </div>
             </div>
 
             <div class="docusaurus-code">
               <div class="docusaurus-code-header"><span>Image generation</span><span>sh</span></div>
-              <div class="p-4 text-xs font-mono text-slate-200 space-y-1 overflow-x-auto">
-                <div class="text-[#25c2a0]">curl --fail-with-body http://127.0.0.1:8080/v1/images/generations \</div>
-                <div class="text-[#25c2a0]">&nbsp;&nbsp;-H 'Content-Type: application/json' \</div>
-                <div class="text-[#25c2a0]">&nbsp;&nbsp;-d '&#123;"model": "Qwen-Image-2.1", "prompt": "A red ceramic teapot",</div>
-                <div class="text-[#25c2a0]">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;"size": "1024x1024", "seed": 42&#125;' &gt; response.json</div>
+              <div class="p-4 text-xs font-mono text-ink space-y-1 overflow-x-auto">
+                <div class="text-ink">curl --fail-with-body http://127.0.0.1:8080/v1/images/generations \</div>
+                <div class="text-ink">&nbsp;&nbsp;-H 'Content-Type: application/json' \</div>
+                <div class="text-ink">&nbsp;&nbsp;-d '&#123;"model": "Qwen-Image-2.1", "prompt": "A red ceramic teapot",</div>
+                <div class="text-ink">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;"size": "1024x1024", "seed": 42&#125;' &gt; response.json</div>
               </div>
             </div>
           </div>
 
-          <p class="text-xs text-slate-400 leading-relaxed">
-            Text serving defaults match llama.cpp: <code class="text-slate-300">--context 0</code> takes the model's
-            native context from metadata and <code class="text-slate-300">--max-tokens -1</code> generates until EOS or
+          <p class="text-xs text-ink-3 leading-relaxed">
+            Text serving defaults match llama.cpp: <code class="text-ink-2">--context 0</code> takes the model's
+            native context from metadata and <code class="text-ink-2">--max-tokens -1</code> generates until EOS or
             the context is exhausted. Reasoning tokens count toward a response limit, and a response can never exceed the
-            remaining context — exhaustion reports <code class="text-slate-300">length</code> or
-            <code class="text-slate-300">incomplete</code> without discarding earlier conversation tokens.
+            remaining context. Exhaustion reports <code class="text-ink-2">length</code> or
+            <code class="text-ink-2">incomplete</code> without discarding earlier conversation tokens.
           </p>
         </section>
 
         <!-- Clients -->
-        <section id="clients" class="space-y-4 border-b border-[#3e4042]/50 pb-8">
-          <h2 class="text-2xl font-bold text-white tracking-tight">Clients and UIs</h2>
-          <p class="text-sm text-slate-300 leading-relaxed">
+        <section id="clients" class="space-y-4 border-b border-line pb-8">
+          <h2 class="text-3xl text-ink">Clients and UIs</h2>
+          <p class="text-[15px] text-ink-2 leading-relaxed">
             For Open WebUI, VS Code and OpenAI SDK clients, set the API base URL to
-            <code class="text-[#25c2a0] font-mono">http://localhost:8080/v1</code>.
+            <code class="text-ink font-mono">http://localhost:8080/v1</code>.
           </p>
 
           <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
             <div class="space-y-2">
-              <h3 class="font-bold text-white text-xs uppercase font-mono">Python, openai SDK</h3>
+              <h3 class="font-semibold text-ink text-sm">Python, openai SDK</h3>
               <div class="docusaurus-code">
                 <div class="docusaurus-code-header"><span>example.py</span><span>python</span></div>
-                <div class="p-4 text-xs font-mono text-slate-200 space-y-1 overflow-x-auto">
-                  <div><span class="text-violet-400">from</span> openai <span class="text-violet-400">import</span> OpenAI</div>
+                <div class="p-4 text-xs font-mono text-ink space-y-1 overflow-x-auto">
+                  <div><span class="text-violet-700">from</span> openai <span class="text-violet-700">import</span> OpenAI</div>
                   <div class="pt-1">client = OpenAI(</div>
-                  <div>&nbsp;&nbsp;base_url=<span class="text-[#25c2a0]">"http://localhost:8080/v1"</span>,</div>
-                  <div>&nbsp;&nbsp;api_key=<span class="text-[#25c2a0]">"not-needed"</span>,</div>
+                  <div>&nbsp;&nbsp;base_url=<span class="text-ink">"http://localhost:8080/v1"</span>,</div>
+                  <div>&nbsp;&nbsp;api_key=<span class="text-ink">"not-needed"</span>,</div>
                   <div>)</div>
                   <div class="pt-1">stream = client.responses.create(</div>
-                  <div>&nbsp;&nbsp;model=<span class="text-[#25c2a0]">"qwen"</span>, input=<span class="text-[#25c2a0]">"Hello"</span>, store=<span class="text-violet-400">False</span>, stream=<span class="text-violet-400">True</span></div>
+                  <div>&nbsp;&nbsp;model=<span class="text-ink">"qwen"</span>, input=<span class="text-ink">"Hello"</span>, store=<span class="text-violet-700">False</span>, stream=<span class="text-violet-700">True</span></div>
                   <div>)</div>
                 </div>
               </div>
             </div>
 
             <div class="space-y-2">
-              <h3 class="font-bold text-white text-xs uppercase font-mono">Open WebUI and other frontends</h3>
-              <div class="p-4 rounded-lg bg-[#242526] border border-[#3e4042] text-xs text-slate-300 leading-relaxed space-y-2">
+              <h3 class="font-semibold text-ink text-sm">Open WebUI and other frontends</h3>
+              <div class="p-4 rounded-lg bg-paper border border-line text-[15px] text-ink-2 leading-relaxed space-y-2">
                 <p>
-                  Point the frontend's OpenAI-compatible endpoint at <code class="text-[#25c2a0]">http://&lt;host&gt;:8080/v1</code>.
-                  Serve with <code class="text-slate-200">--host 0.0.0.0</code> when running inside a container, or the
+                  Point the frontend's OpenAI-compatible endpoint at <code class="text-ink">http://&lt;host&gt;:8080/v1</code>.
+                  Serve with <code class="text-ink">--host 0.0.0.0</code> when running inside a container, or the
                   published port will not answer.
                 </p>
                 <p>
-                  Set <code class="text-slate-200">--api-key</code> to require
-                  <code class="text-slate-200">Authorization: Bearer &lt;key&gt;</code> on every request, including health
+                  Set <code class="text-ink">--api-key</code> to require
+                  <code class="text-ink">Authorization: Bearer &lt;key&gt;</code> on every request, including health
                   checks. Browser CORS preflight stays unauthenticated.
                 </p>
                 <p>
-                  <code class="text-slate-200">--served-model-name</code> chooses the name reported in
-                  <code class="text-slate-200">/v1/models</code>, which is what a client's <code class="text-slate-200">model</code>
+                  <code class="text-ink">--served-model-name</code> chooses the name reported in
+                  <code class="text-ink">/v1/models</code>, which is what a client's <code class="text-ink">model</code>
                   field should say. It is cosmetic and does not change which weights are loaded.
                 </p>
               </div>
@@ -631,9 +631,9 @@ const commands = [
         </section>
 
         <!-- Speculative decoding -->
-        <section id="speculative" class="space-y-4 border-b border-[#3e4042]/50 pb-8">
-          <h2 class="text-2xl font-bold text-white tracking-tight">Speculative decoding</h2>
-          <p class="text-sm text-slate-300 leading-relaxed">
+        <section id="speculative" class="space-y-4 border-b border-line pb-8">
+          <h2 class="text-3xl text-ink">Speculative decoding</h2>
+          <p class="text-[15px] text-ink-2 leading-relaxed">
             A draft model proposes tokens for the target model to verify. Greedy decoding must reproduce the target's
             tokens; sampled decoding must preserve the target's distribution, though it need not match an autoregressive
             run's sequence for the same seed. Speed depends on acceptance and verification cost.
@@ -641,126 +641,126 @@ const commands = [
 
           <div class="space-y-3">
             {speculative.map((s) => (
-              <div class="p-4 rounded-lg bg-[#242526] border border-[#3e4042] space-y-2">
+              <div class="p-4 rounded-lg bg-paper border border-line space-y-2">
                 <div class="flex flex-wrap items-center justify-between gap-2">
-                  <h3 class="font-bold text-white text-sm">
-                    {s.mode} <span class="text-slate-400 font-normal text-xs">· {s.model}</span>
+                  <h3 class="font-semibold text-ink text-sm">
+                    {s.mode} <span class="text-ink-3 font-normal text-xs">· {s.model}</span>
                   </h3>
-                  <code class="text-[11px] px-2 py-0.5 rounded bg-[#1b1b1d] border border-[#25c2a0]/30 text-[#25c2a0] font-mono">
+                  <code class="text-[11px] px-2 py-0.5 rounded bg-ivory border border-line-strong text-ink font-mono">
                     {s.flag}
                   </code>
                 </div>
-                <p class="text-xs text-slate-300 leading-relaxed">{s.body}</p>
+                <p class="text-[15px] text-ink-2 leading-relaxed">{s.body}</p>
               </div>
             ))}
           </div>
 
-          <p class="text-xs text-slate-400 leading-relaxed">
-            HTTP serving supports <code class="text-slate-300">dflash2</code>, <code class="text-slate-300">dspark</code>
-            and Flash-Next <code class="text-slate-300">mtp</code>. All three require a minimum draft length of one.
-            Per-model measured gains are on the <a href="/benchmarks" class="text-[#25c2a0] font-semibold hover:underline">benchmarks page</a>.
+          <p class="text-xs text-ink-3 leading-relaxed">
+            HTTP serving supports <code class="text-ink-2">dflash2</code>, <code class="text-ink-2">dspark</code>
+            and Flash-Next <code class="text-ink-2">mtp</code>. All three require a minimum draft length of one.
+            Per-model measured gains are on the <a href="/benchmarks" class="text-ink font-semibold hover:underline">benchmarks page</a>.
           </p>
         </section>
 
         <!-- Concurrent serving -->
-        <section id="serving" class="space-y-4 border-b border-[#3e4042]/50 pb-8">
-          <h2 class="text-2xl font-bold text-white tracking-tight">Concurrent serving and caching</h2>
-          <a href="/cache" class="block p-4 rounded-lg border border-[#25c2a0]/40 bg-[#25c2a0]/5 text-sm text-[#25c2a0] hover:bg-[#25c2a0]/10 transition-colors">Explore the cache interactively → <span class="text-slate-400">Follow live sessions, checkpoint restores, shared KV and disk persistence.</span></a>
-          <p class="text-sm text-slate-300 leading-relaxed">
+        <section id="serving" class="space-y-4 border-b border-line pb-8">
+          <h2 class="text-3xl text-ink">Concurrent serving and caching</h2>
+          <a href="/cache" class="block p-4 rounded-lg border border-line-strong bg-paper text-sm text-ink hover:bg-paper transition-colors">Explore the cache interactively → <span class="text-ink-3">Follow live sessions, checkpoint restores, shared KV and disk persistence.</span></a>
+          <p class="text-[15px] text-ink-2 leading-relaxed">
             HTTP requests share one immutable model containing the mapped weights and tokenizer. Each request leases a
             preallocated executor with independent KV, recurrent, graph, activation and logit state, from a bounded pool
-            sized by <code class="text-[#25c2a0] font-mono">--sessions N</code>. The scheduler batches ready requests
+            sized by <code class="text-ink font-mono">--sessions N</code>. The scheduler batches ready requests
             when the model runner supports their execution mode, and socket closure propagates cancellation into it.
           </p>
 
           <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <div class="p-4 rounded-lg bg-[#242526] border border-[#3e4042] space-y-2">
-              <h3 class="font-bold text-white text-xs font-mono uppercase">Prompt caching</h3>
-              <p class="text-xs text-slate-400 leading-relaxed">
+            <div class="p-4 rounded-lg bg-paper border border-line space-y-2">
+              <h3 class="font-semibold text-ink text-sm">Prompt caching</h3>
+              <p class="text-xs text-ink-3 leading-relaxed">
                 Computed prompt state is reused across requests, and optionally across restarts with
-                <code class="text-slate-300">--cache-disk</code>, bounded by explicit byte budgets for the cache and its
+                <code class="text-ink-2">--cache-disk</code>, bounded by explicit byte budgets for the cache and its
                 write staging area.
               </p>
             </div>
-            <div class="p-4 rounded-lg bg-[#242526] border border-[#3e4042] space-y-2">
-              <h3 class="font-bold text-white text-xs font-mono uppercase">Client limits</h3>
-              <p class="text-xs text-slate-400 leading-relaxed">
+            <div class="p-4 rounded-lg bg-paper border border-line space-y-2">
+              <h3 class="font-semibold text-ink text-sm">Client limits</h3>
+              <p class="text-xs text-ink-3 leading-relaxed">
                 Pending-request caps overall and per client, request timeouts, maximum output bytes, and buffered-output
                 budgets per request and in total, so one slow client cannot exhaust memory.
               </p>
             </div>
-            <div class="p-4 rounded-lg bg-[#242526] border border-[#3e4042] space-y-2">
-              <h3 class="font-bold text-white text-xs font-mono uppercase">Reasoning controls</h3>
-              <p class="text-xs text-slate-400 leading-relaxed">
-                Thinking on, off or model default, with effort from <code class="text-slate-300">minimal</code> to
-                <code class="text-slate-300">max</code> and a policy for preserving earlier turns' reasoning. Conflicting
+            <div class="p-4 rounded-lg bg-paper border border-line space-y-2">
+              <h3 class="font-semibold text-ink text-sm">Reasoning controls</h3>
+              <p class="text-xs text-ink-3 leading-relaxed">
+                Thinking on, off or model default, with effort from <code class="text-ink-2">minimal</code> to
+                <code class="text-ink-2">max</code> and a policy for preserving earlier turns' reasoning. Conflicting
                 controls return an error rather than a guess.
               </p>
             </div>
           </div>
 
-          <p class="text-xs text-slate-400 leading-relaxed">
+          <p class="text-xs text-ink-3 leading-relaxed">
             Sampling follows each model's officially recommended defaults. Explicit request values override explicit
             server options; null request values inherit where supported, and explicit zeros are preserved. Use
-            <code class="text-slate-300">--temperature 0</code> or <code class="text-slate-300">"temperature": 0</code>
+            <code class="text-ink-2">--temperature 0</code> or <code class="text-ink-2">"temperature": 0</code>
             for greedy output.
           </p>
         </section>
 
         <!-- Queue budget -->
-        <section id="queues" class="space-y-4 border-b border-[#3e4042]/50 pb-8">
-          <h2 class="text-2xl font-bold text-white tracking-tight">Hardware compute queue budget</h2>
-          <p class="text-sm text-slate-300 leading-relaxed">
-            The <code class="text-[#25c2a0] font-mono">gfx1151</code> command processor keeps eight compute queues mapped
+        <section id="queues" class="space-y-4 border-b border-line pb-8">
+          <h2 class="text-3xl text-ink">Hardware compute queue budget</h2>
+          <p class="text-[15px] text-ink-2 leading-relaxed">
+            The <code class="text-ink font-mono">gfx1151</code> command processor keeps eight compute queues mapped
             at once, counted across every process on the device. Past that total the firmware scheduler time-slices them
             even when they are empty: the GPU then reports a busy engine at its top shader clock and draws about 26 W
             above idle for as long as the processes live. Queues are claimed on a process's first HIP dispatch and never
             released, so four HIP processes is the ceiling on one device.
           </p>
 
-          <div class="border border-[#3e4042] rounded-lg overflow-hidden">
+          <div class="border border-line rounded-lg overflow-hidden">
             <table class="w-full text-left text-xs font-mono">
-              <thead class="bg-[#1b1b1d] text-slate-400 uppercase text-[11px] border-b border-[#3e4042]">
+              <thead class="bg-ivory text-ink-3 text-xs border-b border-line">
                 <tr>
                   <th class="px-4 py-2.5">Server</th>
                   <th class="px-4 py-2.5 text-right">GPU_MAX_HW_QUEUES</th>
                   <th class="px-4 py-2.5 text-right">Resident compute queues</th>
                 </tr>
               </thead>
-              <tbody class="divide-y divide-[#3e4042] bg-[#242526] text-slate-300">
-                <tr><td class="px-4 py-2.5 text-white">serve llm</td><td class="px-4 py-2.5 text-right">2</td><td class="px-4 py-2.5 text-right">3</td></tr>
-                <tr><td class="px-4 py-2.5 text-white">serve tts</td><td class="px-4 py-2.5 text-right">1</td><td class="px-4 py-2.5 text-right">2</td></tr>
-                <tr><td class="px-4 py-2.5 text-white">serve asr</td><td class="px-4 py-2.5 text-right">1</td><td class="px-4 py-2.5 text-right">2</td></tr>
-                <tr><td class="px-4 py-2.5 text-white">serve image, serve video</td><td class="px-4 py-2.5 text-right">runtime default</td><td class="px-4 py-2.5 text-right">up to 5</td></tr>
+              <tbody class="divide-y divide-line bg-paper text-ink-2">
+                <tr><td class="px-4 py-2.5 text-ink">serve llm</td><td class="px-4 py-2.5 text-right">2</td><td class="px-4 py-2.5 text-right">3</td></tr>
+                <tr><td class="px-4 py-2.5 text-ink">serve tts</td><td class="px-4 py-2.5 text-right">1</td><td class="px-4 py-2.5 text-right">2</td></tr>
+                <tr><td class="px-4 py-2.5 text-ink">serve asr</td><td class="px-4 py-2.5 text-right">1</td><td class="px-4 py-2.5 text-right">2</td></tr>
+                <tr><td class="px-4 py-2.5 text-ink">serve image, serve video</td><td class="px-4 py-2.5 text-right">runtime default</td><td class="px-4 py-2.5 text-right">up to 5</td></tr>
               </tbody>
             </table>
           </div>
 
-          <p class="text-xs text-slate-400 leading-relaxed">
+          <p class="text-xs text-ink-3 leading-relaxed">
             Each server reads the queues already in use from the kernel driver, exports its cap before loading a model
-            and logs a <code class="text-slate-300">queue_budget</code> event. The cap is only lowered to fit free slots,
+            and logs a <code class="text-ink-2">queue_budget</code> event. The cap is only lowered to fit free slots,
             never raised to fill them, so throughput does not depend on server start order. Text and audio caps are
             measured to cost no throughput. An operator-set value is honoured and still reported if it will not fit.
           </p>
         </section>
 
         <!-- Presets -->
-        <section id="presets" class="space-y-4 border-b border-[#3e4042]/50 pb-8">
-          <h2 class="text-2xl font-bold text-white tracking-tight">CMake presets and options</h2>
+        <section id="presets" class="space-y-4 border-b border-line pb-8">
+          <h2 class="text-3xl text-ink">CMake presets and options</h2>
 
-          <div class="border border-[#3e4042] rounded-lg overflow-hidden">
+          <div class="border border-line rounded-lg overflow-hidden">
             <table class="w-full text-left text-xs">
-              <thead class="bg-[#1b1b1d] text-slate-400 uppercase text-[11px] border-b border-[#3e4042]">
+              <thead class="bg-ivory text-ink-3 text-xs border-b border-line">
                 <tr>
                   <th class="px-4 py-2.5">Configure preset</th>
                   <th class="px-4 py-2.5">Build type</th>
                   <th class="px-4 py-2.5">Contents</th>
                 </tr>
               </thead>
-              <tbody class="divide-y divide-[#3e4042] bg-[#242526] text-slate-300">
+              <tbody class="divide-y divide-line bg-paper text-ink-2">
                 {presets.map(([name, type, contents]) => (
                   <tr>
-                    <td class="px-4 py-2.5 font-mono text-[#25c2a0] whitespace-nowrap">{name}</td>
+                    <td class="px-4 py-2.5 font-mono text-ink whitespace-nowrap">{name}</td>
                     <td class="px-4 py-2.5 whitespace-nowrap">{type}</td>
                     <td class="px-4 py-2.5">{contents}</td>
                   </tr>
@@ -769,28 +769,28 @@ const commands = [
             </table>
           </div>
 
-          <p class="text-xs text-slate-400 leading-relaxed">
-            The <code class="text-slate-300">pr</code> build preset configures against
-            <code class="text-slate-300">cpu-test</code> and runs the hosted contract target. Test presets are
-            <code class="text-slate-300">cpu-test</code>, <code class="text-slate-300">cpu-sanitizer</code>,
-            <code class="text-slate-300">gpu-fast</code> (excludes slow and external-model tests),
-            <code class="text-slate-300">gpu-full</code>, <code class="text-slate-300">deepseek-gpu</code> and
-            <code class="text-slate-300">qwen-gpu-kernel-oracle</code>.
+          <p class="text-xs text-ink-3 leading-relaxed">
+            The <code class="text-ink-2">pr</code> build preset configures against
+            <code class="text-ink-2">cpu-test</code> and runs the hosted contract target. Test presets are
+            <code class="text-ink-2">cpu-test</code>, <code class="text-ink-2">cpu-sanitizer</code>,
+            <code class="text-ink-2">gpu-fast</code> (excludes slow and external-model tests),
+            <code class="text-ink-2">gpu-full</code>, <code class="text-ink-2">deepseek-gpu</code> and
+            <code class="text-ink-2">qwen-gpu-kernel-oracle</code>.
           </p>
 
-          <div class="border border-[#3e4042] rounded-lg overflow-hidden">
+          <div class="border border-line rounded-lg overflow-hidden">
             <table class="w-full text-left text-xs">
-              <thead class="bg-[#1b1b1d] text-slate-400 uppercase text-[11px] border-b border-[#3e4042]">
+              <thead class="bg-ivory text-ink-3 text-xs border-b border-line">
                 <tr>
                   <th class="px-4 py-2.5">Option</th>
                   <th class="px-4 py-2.5">Default</th>
                   <th class="px-4 py-2.5">Effect</th>
                 </tr>
               </thead>
-              <tbody class="divide-y divide-[#3e4042] bg-[#242526] text-slate-300">
+              <tbody class="divide-y divide-line bg-paper text-ink-2">
                 {options.map(([name, def, effect]) => (
                   <tr>
-                    <td class="px-4 py-2.5 font-mono text-[#25c2a0] whitespace-nowrap">{name}</td>
+                    <td class="px-4 py-2.5 font-mono text-ink whitespace-nowrap">{name}</td>
                     <td class="px-4 py-2.5 font-mono whitespace-nowrap">{def}</td>
                     <td class="px-4 py-2.5">{effect}</td>
                   </tr>
@@ -801,58 +801,58 @@ const commands = [
         </section>
 
         <!-- Workflow -->
-        <section id="workflow" class="space-y-4 border-b border-[#3e4042]/50 pb-8">
-          <h2 class="text-2xl font-bold text-white tracking-tight">Development loop</h2>
-          <p class="text-sm text-slate-300 leading-relaxed">
+        <section id="workflow" class="space-y-4 border-b border-line pb-8">
+          <h2 class="text-3xl text-ink">Development loop</h2>
+          <p class="text-[15px] text-ink-2 leading-relaxed">
             Run the smallest check that covers the change. Formatting and the Python repository checks need no GPU and no
             Gufo build; build only the affected target while iterating.
           </p>
 
           <div class="docusaurus-code">
             <div class="docusaurus-code-header"><span>Focused checks</span><span>sh</span></div>
-            <div class="p-4 text-xs font-mono text-slate-200 space-y-1 overflow-x-auto">
-              <div class="text-slate-500"># Formatting, shared with CI; add --fix to apply</div>
-              <div class="text-[#25c2a0]">nix shell --inputs-from . nixpkgs#clang-tools -c python3 tools/ci/check-format.py</div>
-              <div class="text-slate-500 pt-2"># Build and run one test target</div>
-              <div class="text-[#25c2a0]">nix develop -c cmake --preset gpu-test</div>
-              <div class="text-[#25c2a0]">nix develop -c cmake --build --preset gpu-test --target &lt;test-target&gt;</div>
-              <div class="text-[#25c2a0]">nix develop -c ctest --preset gpu-full -R '^&lt;test-name&gt;$' --output-on-failure</div>
-              <div class="text-slate-500 pt-2"># Documentation-only changes</div>
-              <div class="text-[#25c2a0]">nix build .#checks.x86_64-linux.docs</div>
+            <div class="p-4 text-xs font-mono text-ink space-y-1 overflow-x-auto">
+              <div class="text-ink-4"># Formatting, shared with CI; add --fix to apply</div>
+              <div class="text-ink">nix shell --inputs-from . nixpkgs#clang-tools -c python3 tools/ci/check-format.py</div>
+              <div class="text-ink-4 pt-2"># Build and run one test target</div>
+              <div class="text-ink">nix develop -c cmake --preset gpu-test</div>
+              <div class="text-ink">nix develop -c cmake --build --preset gpu-test --target &lt;test-target&gt;</div>
+              <div class="text-ink">nix develop -c ctest --preset gpu-full -R '^&lt;test-name&gt;$' --output-on-failure</div>
+              <div class="text-ink-4 pt-2"># Documentation-only changes</div>
+              <div class="text-ink">nix build .#checks.x86_64-linux.docs</div>
             </div>
           </div>
 
-          <p class="text-xs text-slate-400 leading-relaxed">
-            Hosted CI runs <code class="text-slate-300">nix build .#checks.x86_64-linux.pr</code> on Ubuntu with a
+          <p class="text-xs text-ink-3 leading-relaxed">
+            Hosted CI runs <code class="text-ink-2">nix build .#checks.x86_64-linux.pr</code> on Ubuntu with a
             25-minute limit: formatting, documentation, dependency inventory, server-command checks and the CPU contract
             suite. It does not build ROCm, download weights or run model oracles, so run the GPU checks covering your
-            change locally. Do not run full model sweeps, video generation or duplicate suites for routine edits — and a
+            change locally. Do not run full model sweeps, video generation or duplicate suites for routine edits. A
             skip caused by a missing model or device is not a quality pass.
           </p>
 
           <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div class="p-4 rounded-lg bg-[#242526] border border-[#3e4042] space-y-2">
-              <h3 class="font-bold text-white text-xs font-mono uppercase">Conventions</h3>
-              <p class="text-xs text-slate-400 leading-relaxed">
+            <div class="p-4 rounded-lg bg-paper border border-line space-y-2">
+              <h3 class="font-semibold text-ink text-sm">Conventions</h3>
+              <p class="text-xs text-ink-3 leading-relaxed">
                 Google style C++20, two-space indent, 80 columns, sorted includes. clang-tidy runs bugprone, cert,
-                clang-analyzer, cppcoreguidelines, misc and performance checks over <code class="text-slate-300">src/</code>
+                clang-analyzer, cppcoreguidelines, misc and performance checks over <code class="text-ink-2">src/</code>
                 with warnings as errors. One canonical long option and backend name per behavior; no aliases.
               </p>
             </div>
-            <div class="p-4 rounded-lg bg-[#242526] border border-[#3e4042] space-y-2">
-              <h3 class="font-bold text-white text-xs font-mono uppercase">Evidence, then promotion</h3>
-              <p class="text-xs text-slate-400 leading-relaxed">
+            <div class="p-4 rounded-lg bg-paper border border-line space-y-2">
+              <h3 class="font-semibold text-ink text-sm">Evidence, then promotion</h3>
+              <p class="text-xs text-ink-3 leading-relaxed">
                 An optimization changes one mechanism at a time against a trusted oracle, and candidates that lose
                 focused correctness or measured performance are rejected. Successful optimizations become the default
                 path, without extra switches, and production paths retain quality.
               </p>
             </div>
-            <div class="p-4 rounded-lg bg-[#242526] border border-[#3e4042] space-y-2">
-              <h3 class="font-bold text-white text-xs font-mono uppercase">Submitting changes</h3>
-              <p class="text-xs text-slate-400 leading-relaxed">
+            <div class="p-4 rounded-lg bg-paper border border-line space-y-2">
+              <h3 class="font-semibold text-ink text-sm">Submitting changes</h3>
+              <p class="text-xs text-ink-3 leading-relaxed">
                 Conventional Commits with a single-line message; pull request titles follow the release policy, and the
-                squash merge keeps the title on <code class="text-slate-300">main</code>. Version and changelog updates
-                are left to the release workflow. Prefer <code class="text-slate-300">jj</code> when available, otherwise
+                squash merge keeps the title on <code class="text-ink-2">main</code>. Version and changelog updates
+                are left to the release workflow. Prefer <code class="text-ink-2">jj</code> when available, otherwise
                 Git.
               </p>
             </div>
@@ -860,11 +860,11 @@ const commands = [
         </section>
 
         <!-- Profiling -->
-        <section id="profiling" class="space-y-4 border-b border-[#3e4042]/50 pb-8">
-          <h2 class="text-2xl font-bold text-white tracking-tight">Profiling and benchmarking</h2>
-          <p class="text-sm text-slate-300 leading-relaxed">
-            Measure with <code class="text-[#25c2a0] font-mono">result/bin/gufo</code> from a
-            <code class="text-[#25c2a0] font-mono">nix build</code>, or a <code class="text-[#25c2a0] font-mono">release</code>
+        <section id="profiling" class="space-y-4 border-b border-line pb-8">
+          <h2 class="text-3xl text-ink">Profiling and benchmarking</h2>
+          <p class="text-[15px] text-ink-2 leading-relaxed">
+            Measure with <code class="text-ink font-mono">result/bin/gufo</code> from a
+            <code class="text-ink font-mono">nix build</code>, or a <code class="text-ink font-mono">release</code>
             build, keeping compiler and dependency versions fixed across compared runs.
           </p>
 
@@ -878,42 +878,42 @@ const commands = [
               ['tools/serving/gufo-serving-bench.py', 'HTTP serving measurements with synchronized requests: TTFT, inter-token latency, aggregate concurrency throughput.'],
               ['gufo-kernel-bench', 'Exercises production HIP entry points without loading a model; built with the gpu-test preset.'],
             ].map(([tool, body]) => (
-              <div class="p-3.5 rounded-lg bg-[#242526] border border-[#3e4042] flex flex-col sm:flex-row sm:items-baseline gap-2">
-                <code class="text-[#25c2a0] text-xs font-mono whitespace-nowrap">{tool}</code>
-                <span class="text-xs text-slate-400 leading-relaxed">{body}</span>
+              <div class="p-3.5 rounded-lg bg-paper border border-line flex flex-col sm:flex-row sm:items-baseline gap-2">
+                <code class="text-ink text-xs font-mono whitespace-nowrap">{tool}</code>
+                <span class="text-xs text-ink-3 leading-relaxed">{body}</span>
               </div>
             ))}
           </div>
 
-          <p class="text-xs text-slate-400 leading-relaxed">
+          <p class="text-xs text-ink-3 leading-relaxed">
             Reference runtimes are explicitly selected Nix packages excluded from Gufo and the normal development shell:
-            <code class="text-slate-300">.#llama-cpp-reference</code>,
-            <code class="text-slate-300">.#llama-cpp-mtp-reference</code> and
-            <code class="text-slate-300">.#ds4-reference</code>. Retained numbers belong in
-            <code class="text-slate-300">docs/models/&lt;model&gt;/BENCHMARKS.md</code>; raw samples, profiler traces and
-            tuning databases stay in the ignored <code class="text-slate-300">artifacts/</code> tree.
+            <code class="text-ink-2">.#llama-cpp-reference</code>,
+            <code class="text-ink-2">.#llama-cpp-mtp-reference</code> and
+            <code class="text-ink-2">.#ds4-reference</code>. Retained numbers belong in
+            <code class="text-ink-2">docs/models/&lt;model&gt;/BENCHMARKS.md</code>; raw samples, profiler traces and
+            tuning databases stay in the ignored <code class="text-ink-2">artifacts/</code> tree.
           </p>
         </section>
 
         <!-- Toolboxes -->
-        <section id="toolboxes" class="space-y-4 border-b border-[#3e4042]/50 pb-8">
-          <h2 class="text-2xl font-bold text-white tracking-tight">OCI images</h2>
-          <p class="text-sm text-slate-300 leading-relaxed">
+        <section id="toolboxes" class="space-y-4 border-b border-line pb-8">
+          <h2 class="text-3xl text-ink">OCI images</h2>
+          <p class="text-[15px] text-ink-2 leading-relaxed">
             The companion
-            <a href="https://github.com/gufo-org/toolboxes" target="_blank" rel="noopener noreferrer" class="text-[#25c2a0] font-bold hover:underline">gufo-org/toolboxes</a>
+            <a href="https://github.com/gufo-org/toolboxes" target="_blank" rel="noopener noreferrer" class="text-ink font-semibold hover:underline">gufo-org/toolboxes</a>
             repository publishes reproducible Nix-built images for Docker and Podman. They run as a dedicated non-root
             user and contain no sudo or PAM stack.
           </p>
 
           <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
             {[
-              ['gufo-runtime', 'Inference, benchmarks and HTTP serving.', 'text-emerald-400'],
-              ['gufo-dev', 'Interactive development environment with the HIP compiler, profilers and build tooling.', 'text-cyan-400'],
+              ['gufo-runtime', 'Inference, benchmarks and HTTP serving.', 'text-emerald-700'],
+              ['gufo-dev', 'Interactive development environment with the HIP compiler, profilers and build tooling.', 'text-cyan-700'],
             ].map(([name, body, color]) => (
-              <div class="p-4 rounded-lg bg-[#242526] border border-[#3e4042] space-y-2">
-                <h3 class="font-bold text-white text-xs font-mono uppercase">{name}</h3>
-                <p class="text-xs text-slate-400 leading-relaxed">{body}</p>
-                <div class={`bg-[#1b1b1d] p-2 rounded text-[11px] font-mono break-all ${color}`}>
+              <div class="p-4 rounded-lg bg-paper border border-line space-y-2">
+                <h3 class="font-semibold text-ink text-sm">{name}</h3>
+                <p class="text-xs text-ink-3 leading-relaxed">{body}</p>
+                <div class={`bg-ivory p-2 rounded text-[11px] font-mono break-all ${color}`}>
                   ghcr.io/gufo-org/toolboxes/{name}:latest
                 </div>
               </div>
@@ -922,7 +922,7 @@ const commands = [
 
           <div class="docusaurus-code">
             <div class="docusaurus-code-header"><span>Run Gufo with GPU access</span><span>sh</span></div>
-            <div class="p-4 text-xs font-mono text-[#25c2a0] space-y-1 break-all">
+            <div class="p-4 text-xs font-mono text-ink space-y-1 break-all">
               <div>podman run --rm -it --userns=keep-id:uid=1000,gid=1000 \</div>
               <div>&nbsp;&nbsp;--device /dev/kfd --device /dev/dri --group-add keep-groups \</div>
               <div>&nbsp;&nbsp;--ulimit memlock=-1 \</div>
@@ -933,31 +933,31 @@ const commands = [
 
         <!-- Nix serve helper -->
         <section id="nix-serve" class="space-y-4">
-          <h2 class="text-2xl font-bold text-white tracking-tight">Nix serve helper</h2>
-          <p class="text-sm text-slate-300 leading-relaxed">
-            For host deployments, <code class="text-[#25c2a0] font-mono">.devops/nix/mk-serve.nix</code> builds a
-            <code class="text-[#25c2a0] font-mono">gufo serve</code> invocation from named attributes instead of a hand
+          <h2 class="text-3xl text-ink">Nix serve helper</h2>
+          <p class="text-[15px] text-ink-2 leading-relaxed">
+            For host deployments, <code class="text-ink font-mono">.devops/nix/mk-serve.nix</code> builds a
+            <code class="text-ink font-mono">gufo serve</code> invocation from named attributes instead of a hand
             written command line, and a repository check verifies the command it produces.
           </p>
 
           <div class="docusaurus-code">
             <div class="docusaurus-code-header"><span>mk-serve attributes</span><span>nix</span></div>
-            <div class="p-4 text-xs font-mono text-slate-200 space-y-1 overflow-x-auto">
+            <div class="p-4 text-xs font-mono text-ink space-y-1 overflow-x-auto">
               <div>&#123;</div>
-              <div>&nbsp;&nbsp;modality = <span class="text-[#25c2a0]">"llm"</span>;&nbsp;<span class="text-slate-500"># llm, image, video, tts, asr</span></div>
-              <div>&nbsp;&nbsp;model = <span class="text-[#25c2a0]">"/var/models/qwen3.8-27b.gguf"</span>;</div>
-              <div>&nbsp;&nbsp;servedModelName = <span class="text-[#25c2a0]">"qwen"</span>;</div>
+              <div>&nbsp;&nbsp;modality = <span class="text-ink">"llm"</span>;&nbsp;<span class="text-ink-4"># llm, image, video, tts, asr</span></div>
+              <div>&nbsp;&nbsp;model = <span class="text-ink">"/var/models/qwen3.8-27b.gguf"</span>;</div>
+              <div>&nbsp;&nbsp;servedModelName = <span class="text-ink">"qwen"</span>;</div>
               <div>&nbsp;&nbsp;context = 32768;</div>
               <div>&nbsp;&nbsp;sessions = 2;</div>
-              <div>&nbsp;&nbsp;speculative = <span class="text-[#25c2a0]">"dflash2"</span>;</div>
-              <div>&nbsp;&nbsp;dflashModel = <span class="text-[#25c2a0]">"/var/models/dflash2.gguf"</span>;</div>
+              <div>&nbsp;&nbsp;speculative = <span class="text-ink">"dflash2"</span>;</div>
+              <div>&nbsp;&nbsp;dflashModel = <span class="text-ink">"/var/models/dflash2.gguf"</span>;</div>
               <div>&#125;</div>
             </div>
           </div>
 
-          <p class="text-xs text-slate-400 leading-relaxed">
+          <p class="text-xs text-ink-3 leading-relaxed">
             The same attribute names cover sampling, reasoning, disk cache and server limits. TTS deployments add a
-            <code class="text-slate-300">voices</code> attribute where each entry is a reference WAV, or a set with its
+            <code class="text-ink-2">voices</code> attribute where each entry is a reference WAV, or a set with its
             transcript and an optional default language for that voice.
           </p>
         </section>
