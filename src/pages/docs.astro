@@ -18,7 +18,7 @@ const nav = [
     items: [
       { id: 'cli', label: 'CLI commands' },
       { id: 'models', label: 'Model guides' },
-      { id: 'api', label: 'OpenAI-compatible API' },
+      { id: 'api', label: 'API' },
       { id: 'clients', label: 'Clients and UIs' },
     ],
   },
@@ -26,8 +26,8 @@ const nav = [
     group: 'How it works',
     items: [
       { id: 'speculative', label: 'Speculative decoding' },
-      { id: 'serving', label: 'Concurrent serving' },
-      { id: 'queues', label: 'Compute queue budget' },
+      { id: 'serving', label: 'Serving and caching' },
+      { id: 'queues', label: 'GPU queue limit' },
     ],
   },
   {
@@ -50,8 +50,8 @@ const nav = [
 const dependencies = [
   ['ROCm HIP compiler/runtime, hipBLAS, hipBLASLt, rocBLAS', 'GPU execution and matrix multiplication'],
   ['hipCUB, rocPRIM, rocWMMA headers', 'Compiled GPU kernels'],
-  ['ICU, libcurl, OpenSSL, libpng, libjpeg', 'Tokenization, HTTPS, hashing and images'],
-  ['FFmpeg and ffprobe', 'Video/audio output; invoked as separate executables'],
+  ['ICU, libcurl, OpenSSL, libpng, libjpeg', 'Tokenizers, HTTPS, hashing and images'],
+  ['FFmpeg and ffprobe', 'Video and audio output, called as separate programs'],
 ];
 
 const presets = [
@@ -62,7 +62,7 @@ const presets = [
 ];
 
 const options = [
-  ['ENGINE_ENABLE_HIP', 'ON', 'Build the gfx1151 HIP backend; only gfx1151 is accepted'],
+  ['ENGINE_ENABLE_HIP', 'ON', 'Build the HIP backend (gfx1151 only)'],
   ['BUILD_TESTING', 'OFF', 'Build correctness tests'],
   ['GUFO_BUILD_TOOLS', 'OFF', 'Build kernel benchmarks and tuning executables'],
   ['GUFO_ENABLE_WARNINGS', 'ON', 'Compiler warnings'],
@@ -71,15 +71,16 @@ const options = [
 
 const endpoints = [
   ['POST', '/v1/chat/completions', 'Main chat API: streaming, images, tools'],
-  ['POST', '/v1/responses', 'Text and image input, structured output, optional SSE'],
-  ['POST', '/v1/completions', 'Optional legacy text completion adapter'],
-  ['GET', '/v1/models', 'Loaded model aliases and capabilities'],
-  ['POST', '/v1/audio/transcriptions', 'When an STT implementation is loaded'],
-  ['POST', '/v1/audio/speech', 'When a TTS implementation is loaded'],
-  ['POST', '/v1/images/generations', 'When Qwen-Image-2.1 serving is configured'],
-  ['POST', '/v1/images/edits', 'When Qwen-Image-2.1 serving is configured'],
-  ['POST', '/v1/videos', 'When a validated MiniMax H3 checkpoint is configured'],
-  ['GET', '/health · /ready · /metrics', 'Liveness, readiness, Prometheus metrics (text serving)'],
+  ['POST', '/v1/responses', 'Text, images, function tools, structured output, optional streaming'],
+  ['POST', '/v1/messages', 'Anthropic Messages: text, thinking and tools, optional streaming'],
+  ['POST', '/v1/completions', 'Legacy text completions'],
+  ['GET', '/v1/models', 'Loaded models and what they support'],
+  ['POST', '/v1/audio/transcriptions', 'With gufo serve asr'],
+  ['POST', '/v1/audio/speech', 'With gufo serve tts'],
+  ['POST', '/v1/images/generations', 'With gufo serve image'],
+  ['POST', '/v1/images/edits', 'With gufo serve image'],
+  ['POST', '/v1/videos', 'With gufo serve video and a MiniMax H3 checkpoint'],
+  ['GET', '/health · /ready · /metrics', 'Health checks and Prometheus metrics'],
 ];
 
 const speculative = [
@@ -88,32 +89,33 @@ const speculative = [
     model: 'Qwen3.8 27B',
     flag: '--speculative dflash2 --dflash-model PATH',
     body:
-      'Adaptive block-length policy by default; --draft-tokens caps proposals and --draft-policy fixed is a comparison mode. The Q4_K_M draft serves both the Q4 and Q8 targets.',
+      'Picks how many tokens to draft on the fly. --draft-tokens sets a cap. The same Q4_K_M draft works with both the Q4 and Q8 models.',
   },
   {
     mode: 'MTP',
     model: 'Qwen3.8 Flash-Next',
     flag: '--speculative mtp --mtp-model PATH',
     body:
-      'Shared-Q8_0 predictor sidecar with adaptive drafting of one to seven tokens. Sampled requests use deterministic acceptance and cost control so seeded replay reproduces.',
+      'Uses the small Q8_0 predictor that ships with the model and drafts one to seven tokens at a time. Seeded sampled requests replay the same way every time.',
   },
   {
     mode: 'DSpark',
     model: 'DeepSeek V4 Flash',
     flag: '--dspark-model PATH',
     body:
-      'Verifies proposals against the target, commits only accepted prefixes, and keeps sampling and controller state private per request. The support model is optional.',
+      'Keeps only the drafted tokens the main model agrees with. Each request has its own sampling state. The support model is optional.',
   },
 ];
 
 const commands = [
-  ['gufo serve', 'Starts the OpenAI-compatible server for the modality you name: llm, tts, asr, image or video.'],
-  ['gufo chat', 'Maintains an interactive conversation, loading the runtime directly or connecting to a running server.'],
-  ['gufo prompt', 'Executes one request and exits. Useful for scripted and piped generation.'],
-  ['gufo bench', 'Measures model execution directly, greedy by default.'],
-  ['gufo transcribe', 'Runs native Qwen3-ASR-1.7B speech recognition from the terminal.'],
-  ['gufo video', 'Runs MiniMax H3 generation.'],
-  ['gufo diagnose', 'Non-interactive system and hardware diagnostics: drivers, groups, permissions.'],
+  ['gufo serve', 'Starts the server. Pick what to serve: llm, tts, asr, image or video.'],
+  ['gufo chat', 'Chat in the terminal, either loading the model itself or talking to a running server.'],
+  ['gufo prompt', 'Runs one request and exits. Handy in scripts and pipes.'],
+  ['gufo eval', 'Grades the pinned DeepSeek V4 Flash capability questions against a running server.'],
+  ['gufo bench', 'Measures model speed directly, greedy by default.'],
+  ['gufo transcribe', 'Transcribes audio with Qwen3-ASR from the terminal.'],
+  ['gufo video', 'Generates video with MiniMax H3.'],
+  ['gufo diagnose', 'Checks drivers, groups and permissions, and tells you what is wrong.'],
 ];
 ---
 
@@ -161,10 +163,10 @@ const commands = [
         ))}
 
         <div class="p-3 bg-paper rounded border border-line text-xs space-y-1.5">
-          <div class="text-ink font-semibold font-mono">Canonical docs</div>
+          <div class="text-ink font-semibold">About this page</div>
           <p class="text-ink-3 leading-relaxed">
-            This page summarizes the repository's own documents. Flags are intentionally not enumerated here. Use
-            <code class="text-ink">--help</code> so nothing drifts from the implementation.
+            This page summarizes the docs in the repository. It doesn't list every flag; run
+            <code class="text-ink">--help</code> for those.
           </p>
         </div>
       </aside>
@@ -183,8 +185,7 @@ const commands = [
         <section id="quickstart" class="space-y-4 border-b border-line pb-8 scroll-mt-20">
           <h1 class="text-4xl sm:text-5xl text-ink">Quickstart</h1>
           <p class="text-[15px] text-ink-2 leading-relaxed">
-            The fastest path is the published runtime image. Download weights, start the server, then call it with any
-            OpenAI-compatible client.
+            The quickest way in is the prebuilt image. Download the weights, start the server, and send it a request.
           </p>
 
           <div class="code-block">
@@ -231,12 +232,11 @@ podman run --rm \
             </div>
             <p class="text-[15px] text-ink-2 leading-relaxed">
               Rootless Podman needs <code class="text-ink font-mono">crun</code> for
-              <code class="text-ink font-mono">--group-add keep-groups</code>. Your host user must have read/write
-              access to <code class="text-ink">/dev/kfd</code> and <code class="text-ink">/dev/dri/renderD*</code>,
-              usually through the <code class="text-ink">render</code> and <code class="text-ink">video</code>
-              groups; log out and back in after changing membership. Container groups named
-              <code class="text-ink">video</code>/<code class="text-ink">render</code> do not preserve host
-              supplementary groups. If ROCm reports no device, check <code class="text-ink">id</code>,
+              <code class="text-ink font-mono">--group-add keep-groups</code>. Your user needs read and write access to
+              <code class="text-ink">/dev/kfd</code> and <code class="text-ink">/dev/dri/renderD*</code>, usually by
+              joining the <code class="text-ink">render</code> and <code class="text-ink">video</code> groups. Log out
+              and back in after changing groups. Groups with the same names inside the container don't count. If ROCm
+              finds no device, check <code class="text-ink">id</code>,
               <code class="text-ink">ls -l /dev/kfd /dev/dri/renderD*</code> and
               <code class="text-ink">podman info --format '&#123;&#123;.Host.OCIRuntime.Name&#125;&#125;'</code>.
             </p>
@@ -251,17 +251,15 @@ podman run --rm \
             </div>
             <div class="text-[15px] text-ink-2 leading-relaxed space-y-2">
               <p>
-                On Fedora or another SELinux-enforcing host, GPU enumeration can succeed while SELinux blocks mapping
-                <code class="text-ink">/dev/kfd</code>, which ROCr reports as a misleading “Memory critical” error.
-                Check the host audit log:
+                On Fedora and other SELinux hosts, the GPU can show up while SELinux still blocks
+                <code class="text-ink">/dev/kfd</code>. ROCm then reports a misleading “Memory critical” error. Check the
+                host's audit log:
               </p>
-              <div class="bg-ivory p-2 rounded font-mono text-[11px] text-ink">
-                sudo ausearch -m avc -ts recent | grep -E '/dev/kfd|hsa_device_t'
-              </div>
+              <pre class="code-block">sudo ausearch -m avc -ts recent | grep -E '/dev/kfd|hsa_device_t'</pre>
               <p>
-                If it shows a denied <code class="text-ink">map</code>, the documented fix is
-                <code class="text-ink">sudo setsebool -P container_use_devices true</code>. It affects every
-                container on that host, so review the policy scope before enabling it.
+                If it shows a denied <code class="text-ink">map</code>, run
+                <code class="text-ink">sudo setsebool -P container_use_devices true</code>. This applies to every
+                container on the host, so make sure that's what you want.
               </p>
             </div>
           </div>
@@ -271,10 +269,9 @@ podman run --rm \
         <section id="platform" class="space-y-4 border-b border-line pb-8 scroll-mt-20">
           <h2 class="text-3xl text-ink">Supported platform</h2>
           <p class="text-[15px] text-ink-2 leading-relaxed">
-            Linux x86-64 on AMD Strix Halo (<code class="text-ink font-mono">gfx1151</code>) is the supported
-            production target: Ryzen AI MAX+ 395 systems with Radeon 8060S and up to 128 GiB of unified memory. The HIP
-            backend accepts that architecture only. Tests, profilers, tuning executables and Python reference runners are
-            not installed with the production package.
+            Gufo supports Linux x86-64 on AMD Strix Halo (<code class="text-ink font-mono">gfx1151</code>): Ryzen AI
+            MAX+ 395 systems with Radeon 8060S and up to 128 GiB of unified memory. The HIP backend won't build for any
+            other GPU.
           </p>
 
           <div class="grid grid-cols-1 md:grid-cols-2 gap-4 text-xs">
@@ -299,13 +296,13 @@ podman run --rm \
               <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
               </svg>
-              <span>Probes, not spec sheets</span>
+              <span>Measured, not quoted</span>
             </div>
             <p class="text-[15px] text-ink-2 leading-relaxed">
-              Runtime probes determine the available compute units, memory, firmware and power mode. Performance claims
-              come from measured hardware ceilings produced by <code class="text-ink">tools/bench/gfx1151_peak.hip</code>,
-              not from published peak specifications. Smaller memory configurations still work and keep the speed
-              benefits for models that fit; Windows, macOS and non-AMD accelerators are out of scope.
+              Gufo checks the compute units, memory, firmware and power mode at runtime. Performance targets come from
+              ceilings we measured with <code class="text-ink">tools/bench/gfx1151_peak.hip</code>, not from spec sheets.
+              Machines with less memory work for the models that fit. Windows, macOS and other GPUs aren't supported
+              here, though there is a community <a href="https://github.com/pixmaate/gufo" target="_blank" rel="noopener noreferrer" class="text-ink underline decoration-line-strong hover:decoration-ink">Windows port</a>.
             </p>
           </div>
         </section>
@@ -314,7 +311,7 @@ podman run --rm \
         <section id="build" class="space-y-4 border-b border-line pb-8 scroll-mt-20">
           <h2 class="text-3xl text-ink">Build from source</h2>
           <p class="text-[15px] text-ink-2 leading-relaxed">
-            CMake owns one production configuration for both Nix and ordinary Linux builds. No wrapper script is needed.
+            The same CMake setup builds with Nix or on any regular Linux distribution.
           </p>
 
           <div class="code-block">
@@ -339,15 +336,14 @@ nix develop</code></pre>
               <span>Stage new files before building</span>
             </div>
             <p class="text-[15px] text-ink-2 leading-relaxed">
-              Flakes only see tracked files, so run <code class="text-ink font-mono">git add</code> on new paths
-              before <code class="text-ink font-mono">nix build</code>. Stage only the paths your task owns.
+              Nix flakes only see files Git knows about, so <code class="text-ink font-mono">git add</code> new files
+              before running <code class="text-ink font-mono">nix build</code>.
             </p>
           </div>
 
           <h3 class="text-sm font-semibold text-ink pt-2">Without Nix</h3>
           <p class="text-[15px] text-ink-2 leading-relaxed">
-            Install a C++20 compiler, CMake 3.21+, Ninja, pkg-config and the development packages below. Attention and
-            audio convolution kernels compile directly from HIP.
+            You need a C++20 compiler, CMake 3.21+, Ninja, pkg-config and these development packages:
           </p>
 
           <div class="border border-line rounded-lg overflow-hidden">
@@ -383,12 +379,11 @@ cmake --build --preset release --parallel 4
           </div>
 
           <p class="text-xs text-ink-3 leading-relaxed">
-            Configuring fails at <code class="text-ink-2">find_package(hipblas)</code> when those ROCm packages are
-            missing; other distributions name them <code class="text-ink-2">-devel</code>. For nonstandard
-            installations pass <code class="text-ink-2">-DCMAKE_PREFIX_PATH="/opt/rocm"</code>, and if compiler
-            discovery picks a system Clang also pass
+            If configuring stops at <code class="text-ink-2">find_package(hipblas)</code>, the ROCm packages are missing
+            (other distributions call them <code class="text-ink-2">-devel</code>). If ROCm lives somewhere unusual, pass
+            <code class="text-ink-2">-DCMAKE_PREFIX_PATH="/opt/rocm"</code>, and if CMake picks the system Clang, pass
             <code class="text-ink-2">-DCMAKE_HIP_COMPILER=/opt/rocm/llvm/bin/clang++</code>. Install with
-            <code class="text-ink-2">cmake --install build/release</code>; model weights are acquired separately.
+            <code class="text-ink-2">cmake --install build/release</code>. Weights are downloaded separately.
           </p>
         </section>
 
@@ -396,10 +391,10 @@ cmake --build --preset release --parallel 4
         <section id="cli" class="space-y-4 border-b border-line pb-8 scroll-mt-20">
           <h2 class="text-3xl text-ink">CLI commands</h2>
           <p class="text-[15px] text-ink-2 leading-relaxed">
-            Terminal generation and HTTP serving share model runtimes, tokenizers and sampling; the HTTP scheduler adds
-            concurrent request management and persistent prompt caching. Every command supports
-            <code class="text-ink font-mono">--help</code> and <code class="text-ink font-mono">--version</code>,
-            and unknown options or invalid combinations return an error instead of being ignored.
+            Everything is a subcommand of the one <code class="text-ink font-mono">gufo</code> binary. The terminal
+            commands and the server use the same models and sampling; the server adds request scheduling and prompt
+            caching. Every command has <code class="text-ink font-mono">--help</code>, and unknown or conflicting
+            options are an error, never silently ignored.
           </p>
 
           <div class="space-y-2">
@@ -416,15 +411,12 @@ cmake --build --preset release --parallel 4
               <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
               </svg>
-              <span>Flags live in --help, not here</span>
+              <span>For flags, use --help</span>
             </div>
             <p class="text-[15px] text-ink-2 leading-relaxed">
-              The repository deliberately does not document the feature-to-flag mapping, so it cannot drift from the
-              implementation. Run <code class="text-ink font-mono">gufo serve --help</code> or
-              <code class="text-ink font-mono">gufo serve llm --help</code> for the current options. Broadly, the
-              LLM server exposes model identity, context and memory sizing, the full sampling set, reasoning controls, an
-              optional on-disk prompt cache, speculative decoding, and per-client limits for queueing, timeouts and
-              output size.
+              Flags change often, so they aren't listed here. Run <code class="text-ink font-mono">gufo serve --help</code>
+              or <code class="text-ink font-mono">gufo serve llm --help</code>. The LLM server covers context and memory
+              size, sampling, reasoning, the disk cache, speculative decoding and per-client limits.
             </p>
           </div>
 
@@ -440,9 +432,9 @@ gufo serve asr --model models/Qwen3-ASR-1.7B --context 1024</code></pre>
           </div>
 
           <p class="text-xs text-ink-3 leading-relaxed">
-            Each process loads one checkpoint; llama-swap can route several services under one API URL.
-            <code class="text-ink-2">--context</code> reserves the model's token capacity, and ASR applies that
-            capacity per audio chunk, so long recordings do not need one enormous context.
+            Each process serves one model. To put several behind one URL, use llama-swap. For ASR,
+            <code class="text-ink-2">--context</code> applies per audio chunk, so long recordings don't need a huge
+            context.
           </p>
         </section>
 
@@ -450,8 +442,8 @@ gufo serve asr --model models/Qwen3-ASR-1.7B --context 1024</code></pre>
         <section id="models" class="space-y-4 border-b border-line pb-8 scroll-mt-20">
           <h2 class="text-3xl text-ink">Model guides</h2>
           <p class="text-[15px] text-ink-2 leading-relaxed">
-            Weights are downloaded separately and are not part of the runtime package. Each model guide lists the
-            required files, supported modes and complete benchmark settings.
+            Weights aren't bundled; download them separately. Each model's guide in the repository lists the exact files
+            and benchmark settings.
           </p>
 
           <div class="border border-line rounded-lg overflow-hidden">
@@ -479,40 +471,38 @@ gufo serve asr --model models/Qwen3-ASR-1.7B --context 1024</code></pre>
 
           <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div class="p-4 rounded-lg bg-paper border border-line space-y-2">
-              <h3 class="font-semibold text-ink text-sm">Model-owned packages</h3>
+              <h3 class="font-semibold text-ink text-sm">One folder per model</h3>
               <p class="text-xs text-ink-3 leading-relaxed">
-                Each family lives in <code class="text-ink-2">src/models/&lt;model&gt;</code> as its own static
-                library with its own config, loader, engine, kernels and CPU reference. Kernels are not reused across
-                models, which bounds the blast radius of a change. Tests sit in
-                <code class="text-ink-2">tests/models/&lt;model&gt;</code>.
+                Each model is its own library in <code class="text-ink-2">src/models/&lt;model&gt;</code>, with its own
+                loader, kernels and CPU reference. Kernels aren't shared, so changing one model can't break another.
+                Tests live in <code class="text-ink-2">tests/models/&lt;model&gt;</code>.
               </p>
             </div>
             <div class="p-4 rounded-lg bg-paper border border-line space-y-2">
-              <h3 class="font-semibold text-ink text-sm">Four documents per model</h3>
+              <h3 class="font-semibold text-ink text-sm">Four docs per model</h3>
               <p class="text-xs text-ink-3 leading-relaxed">
-                <code class="text-ink-2">README.md</code> for usage and modes,
-                <code class="text-ink-2">BENCHMARKS.md</code> for retained measurements with scope and date,
-                <code class="text-ink-2">QUALITY.md</code> for measured quality and unresolved gaps, and
-                <code class="text-ink-2">EXPERIMENTS.md</code> for retained and rejected decisions.
+                <code class="text-ink-2">README.md</code> for how to use it,
+                <code class="text-ink-2">BENCHMARKS.md</code> for dated measurements,
+                <code class="text-ink-2">QUALITY.md</code> for quality checks and known gaps, and
+                <code class="text-ink-2">EXPERIMENTS.md</code> for what we tried and kept or dropped.
               </p>
             </div>
           </div>
 
           <p class="text-xs text-ink-3 leading-relaxed">
-            Qwen-Image-2.1 weights use the non-commercial Qwen Research License and MiniMax H3 requires an
-            operator-supplied checkpoint under its own community license; both are separate from Gufo's MIT license, and
-            neither is downloaded during build, installation or server startup.
+            Licenses differ from Gufo's MIT license: Qwen-Image-2.1 weights are under the non-commercial Qwen Research
+            License, and MiniMax H3 needs a checkpoint you supply under its community license. Gufo never downloads
+            either one for you.
           </p>
         </section>
 
         <!-- API -->
         <section id="api" class="space-y-4 border-b border-line pb-8 scroll-mt-20">
-          <h2 class="text-3xl text-ink">OpenAI-compatible API</h2>
+          <h2 class="text-3xl text-ink">API</h2>
           <p class="text-[15px] text-ink-2 leading-relaxed">
-            Chat Completions is the main API, with streaming, images and tools. Responses supports text and image input
-            with optional streaming, and Anthropic Messages exposes a synchronous text subset. Compatibility is a
-            versioned contract: supported fields behave as documented and unsupported fields return explicit errors
-            instead of being ignored.
+            The server speaks the OpenAI Chat Completions and Responses APIs, plus Anthropic Messages. All three handle
+            tools and streaming; Chat Completions and Responses also take images. Fields Gufo doesn't support return an
+            error instead of being quietly ignored. The full contract is in <code class="text-ink font-mono">docs/SERVER.md</code>.
           </p>
 
           <div class="border border-line rounded-lg overflow-hidden">
@@ -537,9 +527,8 @@ gufo serve asr --model models/Qwen3-ASR-1.7B --context 1024</code></pre>
           </div>
 
           <p class="text-xs text-ink-3 leading-relaxed">
-            <code class="text-ink-2">/v1/embeddings</code> is not implemented and returns 501. JSON parsing rejects
-            duplicate keys, invalid numbers and nesting beyond 128 containers. Diagnostic telemetry carries status, token
-            counts, timing and cancellation state only, never prompt text, model paths or token IDs.
+            <code class="text-ink-2">/v1/embeddings</code> isn't implemented and returns 501. Logs and metrics never
+            include prompt text unless you turn on <code class="text-ink-2">--trace</code>.
           </p>
 
           <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
@@ -578,11 +567,9 @@ gufo serve asr --model models/Qwen3-ASR-1.7B --context 1024</code></pre>
           </div>
 
           <p class="text-xs text-ink-3 leading-relaxed">
-            Text serving defaults match llama.cpp: <code class="text-ink-2">--context 0</code> takes the model's
-            native context from metadata and <code class="text-ink-2">--max-tokens -1</code> generates until EOS or
-            the context is exhausted. Reasoning tokens count toward a response limit, and a response can never exceed the
-            remaining context. Exhaustion reports <code class="text-ink-2">length</code> or
-            <code class="text-ink-2">incomplete</code> without discarding earlier conversation tokens.
+            Defaults match llama.cpp: the model's full context, and generation runs until the model stops or the context
+            fills up. <code class="text-ink-2">--context</code> and <code class="text-ink-2">--max-tokens</code> change
+            that. Reasoning tokens count toward the response limit.
           </p>
         </section>
 
@@ -590,7 +577,7 @@ gufo serve asr --model models/Qwen3-ASR-1.7B --context 1024</code></pre>
         <section id="clients" class="space-y-4 border-b border-line pb-8 scroll-mt-20">
           <h2 class="text-3xl text-ink">Clients and UIs</h2>
           <p class="text-[15px] text-ink-2 leading-relaxed">
-            For Open WebUI, VS Code and OpenAI SDK clients, set the API base URL to
+            Open WebUI, VS Code, Codex and the OpenAI SDKs all work: set the base URL to
             <code class="text-ink font-mono">http://localhost:8080/v1</code>.
           </p>
 
@@ -614,19 +601,17 @@ stream = client.responses.create(
               <h3 class="font-semibold text-ink text-sm">Open WebUI and other frontends</h3>
               <div class="p-4 rounded-lg bg-paper border border-line text-[15px] text-ink-2 leading-relaxed space-y-2">
                 <p>
-                  Point the frontend's OpenAI-compatible endpoint at <code class="text-ink">http://&lt;host&gt;:8080/v1</code>.
-                  Serve with <code class="text-ink">--host 0.0.0.0</code> when running inside a container, or the
-                  published port will not answer.
+                  Point the frontend at <code class="text-ink">http://&lt;host&gt;:8080/v1</code>. Inside a container,
+                  serve with <code class="text-ink">--host 0.0.0.0</code> or the published port won't answer.
                 </p>
                 <p>
-                  Set <code class="text-ink">--api-key</code> to require
-                  <code class="text-ink">Authorization: Bearer &lt;key&gt;</code> on every request, including health
-                  checks. Browser CORS preflight stays unauthenticated.
+                  <code class="text-ink">--api-key</code> makes every request, health checks included, need
+                  <code class="text-ink">Authorization: Bearer &lt;key&gt;</code>.
                 </p>
                 <p>
-                  <code class="text-ink">--served-model-name</code> chooses the name reported in
-                  <code class="text-ink">/v1/models</code>, which is what a client's <code class="text-ink">model</code>
-                  field should say. It is cosmetic and does not change which weights are loaded.
+                  <code class="text-ink">--served-model-name</code> sets the name clients see in
+                  <code class="text-ink">/v1/models</code> and send as <code class="text-ink">model</code>. It's only a
+                  label.
                 </p>
               </div>
             </div>
@@ -637,9 +622,10 @@ stream = client.responses.create(
         <section id="speculative" class="space-y-4 border-b border-line pb-8 scroll-mt-20">
           <h2 class="text-3xl text-ink">Speculative decoding</h2>
           <p class="text-[15px] text-ink-2 leading-relaxed">
-            A draft model proposes tokens for the target model to verify. Greedy decoding must reproduce the target's
-            tokens; sampled decoding must preserve the target's distribution, though it need not match an autoregressive
-            run's sequence for the same seed. Speed depends on acceptance and verification cost.
+            A small draft model guesses the next few tokens and the main model checks them in one pass. With greedy
+            decoding you get exactly the same text as without drafting. With sampling the odds are the same, but a given
+            seed won't produce the same text as a normal run. How much faster it gets depends on how many guesses are
+            right.
           </p>
 
           <div class="space-y-3">
@@ -659,66 +645,59 @@ stream = client.responses.create(
           </div>
 
           <p class="text-xs text-ink-3 leading-relaxed">
-            HTTP serving supports <code class="text-ink-2">dflash2</code>, <code class="text-ink-2">dspark</code>
-            and Flash-Next <code class="text-ink-2">mtp</code>. All three require a minimum draft length of one.
-            Per-model measured gains are on the <a href="/benchmarks" class="text-ink font-semibold hover:underline">benchmarks page</a>.
+            Measured speedups for each model are on the <a href="/benchmarks" class="text-ink font-semibold hover:underline">benchmarks page</a>.
           </p>
         </section>
 
         <!-- Concurrent serving -->
         <section id="serving" class="space-y-4 border-b border-line pb-8 scroll-mt-20">
-          <h2 class="text-3xl text-ink">Concurrent serving and caching</h2>
-          <a href="/cache" class="block p-4 rounded-lg border border-line-strong bg-paper text-sm text-ink hover:bg-paper transition-colors">Explore the cache interactively → <span class="text-ink-3">Follow live sessions, checkpoint restores, shared KV and disk persistence.</span></a>
+          <h2 class="text-3xl text-ink">Serving and caching</h2>
+          <a href="/cache" class="block p-4 rounded-lg border border-line-strong bg-paper text-sm text-ink hover:bg-paper transition-colors">See how the new cache will work → <span class="text-ink-3">An interactive walkthrough of the cache redesign.</span></a>
           <p class="text-[15px] text-ink-2 leading-relaxed">
-            HTTP requests share one immutable model containing the mapped weights and tokenizer. Each request leases a
-            preallocated executor with independent KV, recurrent, graph, activation and logit state, from a bounded pool
-            sized by <code class="text-ink font-mono">--sessions N</code>. The scheduler batches ready requests
-            when the model runner supports their execution mode, and socket closure propagates cancellation into it.
+            All requests share one copy of the weights. Each running request gets its own session with its own KV cache
+            and state, from a pool you size with <code class="text-ink font-mono">--sessions N</code>. Requests that
+            can run together are batched, and closing the connection cancels the request.
           </p>
 
           <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
             <div class="p-4 rounded-lg bg-paper border border-line space-y-2">
               <h3 class="font-semibold text-ink text-sm">Prompt caching</h3>
               <p class="text-xs text-ink-3 leading-relaxed">
-                Computed prompt state is reused across requests, and optionally across restarts with
-                <code class="text-ink-2">--cache-disk</code>, bounded by explicit byte budgets for the cache and its
-                write staging area.
+                Processed prompts are reused by later requests, and with <code class="text-ink-2">--cache-disk</code>
+                they survive restarts. You set how much RAM and disk the cache may use.
               </p>
             </div>
             <div class="p-4 rounded-lg bg-paper border border-line space-y-2">
               <h3 class="font-semibold text-ink text-sm">Client limits</h3>
               <p class="text-xs text-ink-3 leading-relaxed">
-                Pending-request caps overall and per client, request timeouts, maximum output bytes, and buffered-output
-                budgets per request and in total, so one slow client cannot exhaust memory.
+                Limits on queued requests per client, timeouts and buffered output, so one slow client can't eat all the
+                memory.
               </p>
             </div>
             <div class="p-4 rounded-lg bg-paper border border-line space-y-2">
               <h3 class="font-semibold text-ink text-sm">Reasoning controls</h3>
               <p class="text-xs text-ink-3 leading-relaxed">
-                Thinking on, off or model default, with effort from <code class="text-ink-2">minimal</code> to
-                <code class="text-ink-2">max</code> and a policy for preserving earlier turns' reasoning. Conflicting
-                controls return an error rather than a guess.
+                Turn thinking on or off and set the effort from <code class="text-ink-2">minimal</code> to
+                <code class="text-ink-2">max</code>. Conflicting settings are an error, not a guess.
               </p>
             </div>
           </div>
 
           <p class="text-xs text-ink-3 leading-relaxed">
-            Sampling follows each model's officially recommended defaults. Explicit request values override explicit
-            server options; null request values inherit where supported, and explicit zeros are preserved. Use
-            <code class="text-ink-2">--temperature 0</code> or <code class="text-ink-2">"temperature": 0</code>
-            for greedy output.
+            Sampling uses each model's recommended defaults. Values in a request override the server's flags. For greedy
+            output, use <code class="text-ink-2">--temperature 0</code> or <code class="text-ink-2">"temperature": 0</code>.
           </p>
         </section>
 
         <!-- Queue budget -->
         <section id="queues" class="space-y-4 border-b border-line pb-8 scroll-mt-20">
-          <h2 class="text-3xl text-ink">Hardware compute queue budget</h2>
+          <h2 class="text-3xl text-ink">GPU queue limit</h2>
           <p class="text-[15px] text-ink-2 leading-relaxed">
-            The <code class="text-ink font-mono">gfx1151</code> command processor keeps eight compute queues mapped
-            at once, counted across every process on the device. Past that total the firmware scheduler time-slices them
-            even when they are empty: the GPU then reports a busy engine at its top shader clock and draws about 26 W
-            above idle for as long as the processes live. Queues are claimed on a process's first HIP dispatch and never
-            released, so four HIP processes is the ceiling on one device.
+            The <code class="text-ink font-mono">gfx1151</code> GPU can keep eight compute queues active at once, across
+            all processes. Go past that and the firmware starts switching between queues even when they're idle: the GPU
+            looks busy, runs at full clock and draws about 26 W more than idle until those processes exit. A process
+            claims its queues on its first GPU call and never gives them back, so plan on at most four HIP processes per
+            machine.
           </p>
 
           <div class="border border-line rounded-lg overflow-hidden">
@@ -740,10 +719,10 @@ stream = client.responses.create(
           </div>
 
           <p class="text-xs text-ink-3 leading-relaxed">
-            Each server reads the queues already in use from the kernel driver, exports its cap before loading a model
-            and logs a <code class="text-ink-2">queue_budget</code> event. The cap is only lowered to fit free slots,
-            never raised to fill them, so throughput does not depend on server start order. Text and audio caps are
-            measured to cost no throughput. An operator-set value is honoured and still reported if it will not fit.
+            Each server checks how many queues are already taken, lowers its own limit to fit and logs a
+            <code class="text-ink-2">queue_budget</code> event. It never raises the limit, so the order you start
+            servers in doesn't change their speed. The lower limits for text and audio cost nothing measurable. If you
+            set the value yourself, Gufo keeps it and warns if it doesn't fit.
           </p>
         </section>
 
@@ -773,10 +752,9 @@ stream = client.responses.create(
           </div>
 
           <p class="text-xs text-ink-3 leading-relaxed">
-            The <code class="text-ink-2">pr</code> build preset configures against
-            <code class="text-ink-2">cpu-test</code> and runs the hosted contract target. Test presets are
+            The <code class="text-ink-2">pr</code> build preset runs the same CPU checks as CI. Test presets are
             <code class="text-ink-2">cpu-test</code>, <code class="text-ink-2">cpu-sanitizer</code>,
-            <code class="text-ink-2">gpu-fast</code> (excludes slow and external-model tests),
+            <code class="text-ink-2">gpu-fast</code> (skips slow tests and ones that need model files),
             <code class="text-ink-2">gpu-full</code>, <code class="text-ink-2">deepseek-gpu</code> and
             <code class="text-ink-2">qwen-gpu-kernel-oracle</code>.
           </p>
@@ -807,8 +785,8 @@ stream = client.responses.create(
         <section id="workflow" class="space-y-4 border-b border-line pb-8 scroll-mt-20">
           <h2 class="text-3xl text-ink">Development loop</h2>
           <p class="text-[15px] text-ink-2 leading-relaxed">
-            Run the smallest check that covers the change. Formatting and the Python repository checks need no GPU and no
-            Gufo build; build only the affected target while iterating.
+            Run the smallest check that covers your change, and build only the target you're working on. Formatting and
+            repository checks don't need a GPU.
           </p>
 
           <div class="code-block">
@@ -826,37 +804,31 @@ nix build .#checks.x86_64-linux.docs</code></pre>
           </div>
 
           <p class="text-xs text-ink-3 leading-relaxed">
-            Hosted CI runs <code class="text-ink-2">nix build .#checks.x86_64-linux.pr</code> on Ubuntu with a
-            25-minute limit: formatting, documentation, dependency inventory, server-command checks and the CPU contract
-            suite. It does not build ROCm, download weights or run model oracles, so run the GPU checks covering your
-            change locally. Do not run full model sweeps, video generation or duplicate suites for routine edits. A
-            skip caused by a missing model or device is not a quality pass.
+            CI runs <code class="text-ink-2">nix build .#checks.x86_64-linux.pr</code> on Ubuntu: formatting, docs and
+            the CPU tests. It has no GPU and no weights, so run the GPU tests for your change locally. A test skipped
+            because a model or device is missing doesn't count as passing.
           </p>
 
           <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div class="p-4 rounded-lg bg-paper border border-line space-y-2">
               <h3 class="font-semibold text-ink text-sm">Conventions</h3>
               <p class="text-xs text-ink-3 leading-relaxed">
-                Google style C++20, two-space indent, 80 columns, sorted includes. clang-tidy runs bugprone, cert,
-                clang-analyzer, cppcoreguidelines, misc and performance checks over <code class="text-ink-2">src/</code>
-                with warnings as errors. One canonical long option and backend name per behavior; no aliases.
+                Google-style C++20, 80 columns. clang-tidy runs over <code class="text-ink-2">src/</code> with warnings as
+                errors. Each option has one name, with no aliases.
               </p>
             </div>
             <div class="p-4 rounded-lg bg-paper border border-line space-y-2">
-              <h3 class="font-semibold text-ink text-sm">Evidence, then promotion</h3>
+              <h3 class="font-semibold text-ink text-sm">Optimizations</h3>
               <p class="text-xs text-ink-3 leading-relaxed">
-                An optimization changes one mechanism at a time against a trusted oracle, and candidates that lose
-                focused correctness or measured performance are rejected. Successful optimizations become the default
-                path, without extra switches, and production paths retain quality.
+                Change one thing at a time and check it against a trusted reference. If it's slower or less accurate, it's
+                dropped. If it wins, it becomes the default with no flag.
               </p>
             </div>
             <div class="p-4 rounded-lg bg-paper border border-line space-y-2">
               <h3 class="font-semibold text-ink text-sm">Submitting changes</h3>
               <p class="text-xs text-ink-3 leading-relaxed">
-                Conventional Commits with a single-line message; pull request titles follow the release policy, and the
-                squash merge keeps the title on <code class="text-ink-2">main</code>. Version and changelog updates
-                are left to the release workflow. Prefer <code class="text-ink-2">jj</code> when available, otherwise
-                Git.
+                Use Conventional Commits with one-line messages. PRs are squash-merged with their title, and the release
+                workflow handles versions and the changelog.
               </p>
             </div>
           </div>
@@ -866,20 +838,20 @@ nix build .#checks.x86_64-linux.docs</code></pre>
         <section id="profiling" class="space-y-4 border-b border-line pb-8 scroll-mt-20">
           <h2 class="text-3xl text-ink">Profiling and benchmarking</h2>
           <p class="text-[15px] text-ink-2 leading-relaxed">
-            Measure with <code class="text-ink font-mono">result/bin/gufo</code> from a
-            <code class="text-ink font-mono">nix build</code>, or a <code class="text-ink font-mono">release</code>
-            build, keeping compiler and dependency versions fixed across compared runs.
+            Benchmark the binary from <code class="text-ink font-mono">nix build</code> or a
+            <code class="text-ink font-mono">release</code> build, and keep compiler and library versions the same
+            between runs you compare.
           </p>
 
           <div class="space-y-2">
             {[
-              ['tools/bench/gfx1151_peak.hip', 'Measured hardware ceilings for the target GPU.'],
+              ['tools/bench/gfx1151_peak.hip', 'Measures what the GPU can actually do.'],
               ['tools/bench/build.sh', 'Builds standalone HIP experiments.'],
-              ['tools/prof/prof.py', 'Pipeline and wall-time profiles, with per-model stage selection.'],
-              ['tools/prof/isa_mix.py', 'Instruction mix analysis.'],
-              ['tools/bench/model-bench.py', "Renders a model's BENCHMARKS.md tables and charts over HTTP, for Gufo and its reference project."],
-              ['tools/serving/gufo-serving-bench.py', 'HTTP serving measurements with synchronized requests: TTFT, inter-token latency, aggregate concurrency throughput.'],
-              ['gufo-kernel-bench', 'Exercises production HIP entry points without loading a model; built with the gpu-test preset.'],
+              ['tools/prof/prof.py', 'Profiles where the time goes, stage by stage.'],
+              ['tools/prof/isa_mix.py', 'Shows which GPU instructions a kernel uses.'],
+              ['tools/bench/model-bench.py', "Runs the benchmarks over HTTP and writes a model's BENCHMARKS.md tables and charts."],
+              ['tools/serving/gufo-serving-bench.py', 'Measures the server under load: time to first token, latency between tokens, total throughput.'],
+              ['gufo-kernel-bench', 'Benchmarks the GPU kernels without loading a model. Built with the gpu-test preset.'],
             ].map(([tool, body]) => (
               <div class="p-3.5 rounded-lg bg-paper border border-line flex flex-col sm:flex-row sm:items-baseline gap-2">
                 <code class="text-ink text-xs font-mono whitespace-nowrap">{tool}</code>
@@ -889,12 +861,12 @@ nix build .#checks.x86_64-linux.docs</code></pre>
           </div>
 
           <p class="text-xs text-ink-3 leading-relaxed">
-            Reference runtimes are explicitly selected Nix packages excluded from Gufo and the normal development shell:
+            The engines we compare against are separate Nix packages:
             <code class="text-ink-2">.#llama-cpp-reference</code>,
             <code class="text-ink-2">.#llama-cpp-mtp-reference</code> and
-            <code class="text-ink-2">.#ds4-reference</code>. Retained numbers belong in
-            <code class="text-ink-2">docs/models/&lt;model&gt;/BENCHMARKS.md</code>; raw samples, profiler traces and
-            tuning databases stay in the ignored <code class="text-ink-2">artifacts/</code> tree.
+            <code class="text-ink-2">.#ds4-reference</code>. Final numbers go in
+            <code class="text-ink-2">docs/models/&lt;model&gt;/BENCHMARKS.md</code>; raw data and traces stay in the
+            ignored <code class="text-ink-2">artifacts/</code> folder.
           </p>
         </section>
 
@@ -904,14 +876,14 @@ nix build .#checks.x86_64-linux.docs</code></pre>
           <p class="text-[15px] text-ink-2 leading-relaxed">
             The companion
             <a href="https://github.com/gufo-org/toolboxes" target="_blank" rel="noopener noreferrer" class="text-ink font-semibold hover:underline">gufo-org/toolboxes</a>
-            repository publishes reproducible Nix-built images for Docker and Podman. They run as a dedicated non-root
-            user and contain no sudo or PAM stack.
+            repository publishes Docker and Podman images built with Nix. They run as a normal non-root user, with no sudo
+            inside.
           </p>
 
           <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
             {[
-              ['gufo-runtime', 'Inference, benchmarks and HTTP serving.', 'text-emerald-700'],
-              ['gufo-dev', 'Interactive development environment with the HIP compiler, profilers and build tooling.', 'text-cyan-700'],
+              ['gufo-runtime', 'Runs models, benchmarks and the server.', 'text-ink'],
+              ['gufo-dev', 'For working on Gufo: HIP compiler, profilers and build tools.', 'text-ink'],
             ].map(([name, body, color]) => (
               <div class="p-4 rounded-lg bg-paper border border-line space-y-2">
                 <h3 class="font-semibold text-ink text-sm">{name}</h3>
@@ -936,9 +908,9 @@ nix build .#checks.x86_64-linux.docs</code></pre>
         <section id="nix-serve" class="space-y-4">
           <h2 class="text-3xl text-ink">Nix serve helper</h2>
           <p class="text-[15px] text-ink-2 leading-relaxed">
-            For host deployments, <code class="text-ink font-mono">.devops/nix/mk-serve.nix</code> builds a
-            <code class="text-ink font-mono">gufo serve</code> invocation from named attributes instead of a hand
-            written command line, and a repository check verifies the command it produces.
+            If you deploy with Nix, <code class="text-ink font-mono">.devops/nix/mk-serve.nix</code> turns a set of
+            attributes into a <code class="text-ink font-mono">gufo serve</code> command, so you don't have to write it
+            by hand.
           </p>
 
           <div class="code-block">
@@ -955,9 +927,9 @@ nix build .#checks.x86_64-linux.docs</code></pre>
           </div>
 
           <p class="text-xs text-ink-3 leading-relaxed">
-            The same attribute names cover sampling, reasoning, disk cache and server limits. TTS deployments add a
-            <code class="text-ink-2">voices</code> attribute where each entry is a reference WAV, or a set with its
-            transcript and an optional default language for that voice.
+            The same attributes cover sampling, reasoning, the disk cache and server limits. For TTS, add
+            <code class="text-ink-2">voices</code>: each entry is a reference WAV, optionally with its transcript and a
+            default language.
           </p>
         </section>
       </main>

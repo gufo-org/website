@@ -20,7 +20,7 @@ const chartPayload = benchmarks.map((m) => ({
       <span>/</span>
       <span class="text-ink">Benchmarks</span>
       <span>/</span>
-      <span class="text-ink font-semibold">Retained measurements</span>
+      <span class="text-ink font-semibold">Measurements</span>
     </div>
 
     <!-- Header -->
@@ -29,38 +29,38 @@ const chartPayload = benchmarks.map((m) => ({
         Benchmarks on AMD Strix Halo
       </h1>
       <p class="text-sm text-ink-2 max-w-4xl leading-relaxed">
-        Every figure below is transcribed from <code class="text-ink">docs/models/&lt;model&gt;/BENCHMARKS.md</code> in
-        the Gufo repository. Measurements come from <code class="text-ink">nix build</code> binaries on one
-        <code class="text-ink font-mono">gfx1151</code> machine with 128 GB of unified memory. Pending cells stay
-        <b class="text-ink">TODO</b> and comparisons a reference engine cannot run stay <b class="text-ink">N/A</b>,
-        rather than being estimated.
+        Every number here comes from <code class="text-ink">docs/models/&lt;model&gt;/BENCHMARKS.md</code> in the Gufo
+        repository, measured with release builds on one <code class="text-ink font-mono">gfx1151</code> machine with
+        128 GB of memory. Anything not measured yet says <b class="text-ink">TODO</b>, and comparisons the other
+        engine can't run say <b class="text-ink">N/A</b>. Nothing is estimated.
       </p>
       <details class="text-sm text-ink-3 border-y border-line">
         <summary class="cursor-pointer py-3 text-ink-2 font-semibold select-none">
-          How these numbers are measured
+          How we measure
         </summary>
         <div class="pb-5 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 leading-relaxed">
           <div>
             <div class="text-ink-3 font-mono mb-1">Reading the columns</div>
             <code class="text-ink-2">pp</code> is prompt processing, <code class="text-ink-2">tg</code> is token
-            generation, and depth is the cached prefix in tokens. Text results are HTTP, greedy, thinking off.
+            generation, and depth is how many tokens are already cached. Text runs go over HTTP, greedy, with thinking
+            off.
           </div>
           <div>
             <div class="text-ink-3 font-mono mb-1">Concurrency</div>
-            Rows sum individual request decode rates and exclude prefill and scheduling, so they are not whole-request
+            We add up each request's decode speed. Prefill and queueing aren't included, so this isn't end-to-end
             throughput.
           </div>
           <div>
-            <div class="text-ink-3 font-mono mb-1">Comparable runs</div>
-            Same source revision, model artifact, quantization, prompt and generation lengths, depth, concurrency, GPU
-            route, driver and ROCm version, warmup policy.
+            <div class="text-ink-3 font-mono mb-1">Fair comparisons</div>
+            Compared runs share the source revision, weights, prompt and output length, depth, concurrency, driver,
+            ROCm version and warmup.
           </div>
           <div>
-            <div class="text-ink-3 font-mono mb-1">Reference engines</div>
-            Separate Nix packages, excluded from Gufo and the normal dev shell:
+            <div class="text-ink-3 font-mono mb-1">Other engines</div>
+            Built as separate Nix packages:
             <code class="text-ink">.#llama-cpp-reference</code>,
             <code class="text-ink">.#llama-cpp-mtp-reference</code>,
-            <code class="text-ink">.#ds4-reference</code>. Headline numbers come from unprofiled runs.
+            <code class="text-ink">.#ds4-reference</code>. Headline numbers come from runs without the profiler.
           </div>
         </div>
       </details>
@@ -218,7 +218,7 @@ const chartPayload = benchmarks.map((m) => ({
                 <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                 </svg>
-                <span>Reading these numbers</span>
+                <span>Notes</span>
               </div>
               <ul class="space-y-1.5 text-xs text-ink-2">
                 {m.notes.map((note) => (

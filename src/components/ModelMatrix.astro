@@ -10,7 +10,7 @@ import { catalogue } from '../data/models';
         <th class="py-3 pr-6 font-normal">Task</th>
         <th class="py-3 pr-6 font-normal">Weights</th>
         <th class="py-3 pr-6 font-normal">Modes</th>
-        <th class="py-3 font-normal">Retained measurement</th>
+        <th class="py-3 font-normal">Best result</th>
       </tr>
     </thead>
     <tbody class="divide-y divide-line text-ink-2">
@@ -28,7 +28,6 @@ import { catalogue } from '../data/models';
 </div>
 
 <p class="text-sm text-ink-3 mt-4 leading-relaxed max-w-3xl">
-  Peak measured workloads. Text <code>pp</code> is autoregressive; <code>tg</code> uses the named speculative mode.
-  Aggregated rates sum individual request decode rates across concurrent requests. Each model guide lists the required
-  files and complete benchmark settings.
+  Best measured results. Prefill (<code>pp</code>) runs without speculation; decode (<code>tg</code>) uses the
+  model's draft mode, and its peak comes from repetitive output. The 8-user number adds up each request's decode speed.
 </p>

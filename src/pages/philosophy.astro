@@ -7,67 +7,63 @@ const pillars = [
   {
     id: 'community',
     number: '01',
-    title: 'Built with the Strix Halo community',
-    subtitle: 'One stop shop for Strix Halo local AI enthusiasts',
+    title: 'Built with the community',
+    subtitle: 'Contributions are welcome',
     content: [
-      'Contributions are welcome. Gufo needs the help of the Strix Halo community to keep improving, and the project is run so that an outside change can be measured and reviewed the same way an internal one is.',
-      'The goal is batteries included: text, audio, image and video models in one executable with one OpenAI-compatible server, rather than a text engine plus a pile of separate Python stacks for everything else.',
-      'The repository carries what a contributor needs to verify a change: per-model benchmark tables with their scope and date, per-model quality reports with their unresolved gaps, and a short record of retained and rejected experiments.',
+      'Gufo needs the Strix Halo community to keep getting better. Outside changes go through the same measurements and review as ours.',
+      'The goal is one place for local AI on this machine: text, audio, image and video models behind one server, instead of a text engine plus a separate Python stack for everything else.',
+      'Every model ships with its benchmarks, a quality report and a log of what we tried, so you can check a change yourself.',
     ],
   },
   {
     id: 'single-target',
     number: '02',
-    title: 'Build and optimize for one machine',
-    subtitle: 'Strix Halo with 128 GiB of unified memory is the design point',
+    title: 'One machine',
+    subtitle: 'Strix Halo with 128 GiB of memory is the design point',
     content: [
-      'Engines that target CUDA, Metal, oneAPI and generic CPU at once pay for it in leaky abstractions, indirect dispatch and memory layouts chosen by the lowest common denominator. Gufo takes the opposite trade: Linux x86-64 on AMD Strix Halo is the only planned production target, and the HIP backend accepts gfx1151 alone.',
-      'Smaller memory configurations still work and preserve the speed benefits for models that fit; the optimization work simply assumes the 128 GiB machine when choosing what to support.',
-      'Unified LPDDR5X memory shared by CPU and GPU is what makes a 27B dense model, an 80.76 GiB mixture-of-experts graph and the audio models usable on the same desktop-class system.',
+      'Engines that run on CUDA, Metal and CPU at the same time pay for it with extra layers and compromises. Gufo only targets Linux on Strix Halo, and the HIP backend refuses any GPU other than gfx1151.',
+      'Machines with less memory still work for the models that fit. The 128 GiB of unified memory is what lets a 27B dense model, an 80 GiB mixture-of-experts model and the audio models share one desktop.',
     ],
   },
   {
     id: 'curation',
     number: '03',
-    title: 'Support only the best models for their size',
-    subtitle: 'Less code to maintain, more focused optimization and testing',
+    title: 'Fewer models, done well',
+    subtitle: 'The best model for each size, not every model',
     content: [
-      'Gufo supports the best available models that run on this hardware, not every model that exists. Fewer families means less code to maintain and more optimization and testing effort per family.',
-      'Each model family owns its execution pipeline under src/models/, building as its own static library with its own config, loader, engine, kernels and CPU reference. Kernels are deliberately not reused across models, which limits the blast radius of any change.',
-      'Model code, tests, tools and numerical contracts stay with their model, and so do their four maintained documents: usage, benchmarks, quality and experiments.',
+      'We support the best models that fit on this hardware. Fewer models means less code to maintain and more time to optimize and test each one.',
+      "Each model lives in its own folder with its own loader, kernels, tests and CPU reference. Kernels aren't shared between models, so a change to one can't break another.",
     ],
   },
   {
     id: 'quality',
     number: '04',
-    title: 'Preserve quality when optimizing',
-    subtitle: 'Each model records independent numerical checks and unresolved gaps',
+    title: 'Speed never costs quality',
+    subtitle: 'Every model has a quality report',
     content: [
-      'A quality report distinguishes agreement with an independent model implementation from consistency between Gufo execution modes. Greedy speculative decoding should reproduce autoregressive output; sampled speculation can use different random draws, and seeded replay is checked within one execution configuration.',
-      'Comparison is matched-token and per position: tokenize once, feed teacher and candidate the same predetermined history, and compare full next-token distributions before appending the next token. Free-running text cannot isolate numerical error after the first differing choice.',
-      'Numbers that are not measured yet stay TODO, and comparisons a reference engine cannot run stay N/A with a reason. A numerical mismatch or a device failure is not a passing result, and a skip caused by a missing model is not a quality pass.',
+      "The report compares Gufo with an independent implementation, position by position on the same input tokens, and lists the gaps we haven't closed yet.",
+      "Greedy speculative decoding has to match normal decoding exactly. Numbers we haven't measured stay marked TODO, and a skipped test never counts as a pass.",
     ],
   },
   {
     id: 'measurement',
     number: '05',
-    title: 'Measure the whole workload, then promote',
-    subtitle: 'A faster kernel that loses end-to-end time is a rejected candidate',
+    title: 'Measure the whole workload',
+    subtitle: 'A faster kernel that makes requests slower gets rejected',
     content: [
-      'The optimization loop is fixed: define the numerical and mutable-state contract, measure the complete workload, classify the dominant phase as bandwidth, compute, launch, synchronization or scheduling limited, build a focused reproducer with a trusted oracle, then change one mechanism at a time.',
-      'Comparable runs share source revision, model artifact, quantization, prompt and generation lengths, depth, concurrency, GPU route, driver and ROCm version, and warmup policy. Headline latency comes from an unprofiled run, because tracing changes timing.',
-      'A faster isolated kernel is not a win if packing, synchronization or state management erase the gain. Successful optimizations become the default path, without extra switches to select them.',
+      'We measure the complete request, find what actually limits it, then change one thing at a time against a trusted reference.',
+      'Runs are only compared when everything else matches: source revision, weights, prompt, context depth, concurrency, driver and ROCm version. Headline numbers come from runs without the profiler attached.',
+      "When an optimization wins, it becomes the default. There's no flag to turn it on.",
     ],
   },
   {
     id: 'operations',
     number: '06',
-    title: 'Concurrency and reproducibility are features',
-    subtitle: 'Concurrent requests, cancellation and caching are first-class workloads',
+    title: 'Real workloads, reproducible builds',
+    subtitle: 'Several users and long conversations are the normal case',
     content: [
-      'Concurrent requests, cancellation and conversation caching are treated as first-class workloads rather than afterthoughts, and they are benchmarked as such: concurrency tables sum individual request decode rates and keep prefill and queue time in separate latency diagnostics.',
-      'Production dependencies stay small and development tools stay separate. Tests, profilers, tuning executables and Python reference runners are not installed with the production package, and Python is never required to serve a request.',
-      'CMake owns the build for both Nix and ordinary Linux; Nix pins the complete toolchain so comparisons are reproducible. For users, the companion toolboxes project ships images that run as a dedicated non-root user with no sudo or PAM stack.',
+      'Concurrent requests, cancellation and conversation caching get benchmarked like everything else.',
+      'The production build stays small: no tests, profilers or Python, and Python is never needed to serve a request. Nix pins the whole toolchain so results can be reproduced, and the container images run as a normal user.',
     ],
   },
 ];
@@ -80,13 +76,13 @@ const pillars = [
     <article class="max-w-3xl mx-auto px-4 sm:px-6 pt-16 sm:pt-24 pb-24">
       <header class="pb-12 border-b border-line">
         <p class="eyebrow mb-5">Philosophy</p>
-        <h1 class="text-4xl sm:text-6xl text-ink leading-[1.08]">Why Gufo does less, on purpose</h1>
+        <h1 class="text-4xl sm:text-6xl text-ink leading-[1.08]">Small on purpose</h1>
         <p class="mt-8 font-serif text-xl text-ink-2 leading-relaxed">
-          Gufo narrows its scope to one machine and a curated model set. Measurement and quality rules decide what gets
-          promoted into the default path.
+          Gufo supports one machine and a short list of models. That focus is what makes it fast, and the rules below
+          keep it honest.
         </p>
         <p class="mt-6 text-sm text-ink-3">
-          Restated from the repository's <code>README.md</code>, <code>docs/PERFORMANCE.md</code> and
+          Based on the repository's <code>README.md</code>, <code>docs/PERFORMANCE.md</code> and
           <code>docs/BENCHMARKS.md</code>.
         </p>
       </header>
@@ -118,11 +114,11 @@ const pillars = [
       <section class="mt-16 pt-10 border-t border-line">
         <h2 class="text-2xl text-ink">In short</h2>
         <ul class="mt-6 space-y-3 text-[15px] text-ink-2 leading-relaxed">
-          <li><span class="text-ink font-medium">One platform.</span> Linux x86-64 on AMD Strix Halo (<code>gfx1151</code>).</li>
-          <li><span class="text-ink font-medium">Curated models.</span> Only the best weights for their size; each model owns its compute graph.</li>
-          <li><span class="text-ink font-medium">Measured claims.</span> Retained numbers carry their scope and date; pending work stays TODO.</li>
-          <li><span class="text-ink font-medium">Quality first.</span> Optimization never trades away a model's numerical contract.</li>
-          <li><span class="text-ink font-medium">Reproducible.</span> Nix pins the toolchain, CMake owns the build, containers run non-root.</li>
+          <li><span class="text-ink font-medium">One platform:</span> Linux on AMD Strix Halo (<code>gfx1151</code>).</li>
+          <li><span class="text-ink font-medium">Few models:</span> the best one for each size, each with its own code.</li>
+          <li><span class="text-ink font-medium">Real numbers:</span> every benchmark has a date and settings; missing ones say TODO.</li>
+          <li><span class="text-ink font-medium">Quality first:</span> an optimization that fails a model's numerical checks doesn't ship.</li>
+          <li><span class="text-ink font-medium">Reproducible:</span> Nix pins the toolchain and the images run as a normal user.</li>
         </ul>
       </section>
     </article>

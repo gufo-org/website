@@ -74,7 +74,7 @@ export const benchmarks: BenchModel[] = [
     reference: 'llama.cpp b11069',
     measured: 'September 23, 2026 · Gufo 628ed18e · HTTP, greedy, thinking off',
     summary:
-      'Same Q4_K_XL / Q8_K_XL targets on both engines, both using the Q4_K_M DFlash2 draft; Gufo runs its adaptive controller. Depth is the cached prefix in tokens, approximately pp2048 / tg128.',
+      'Both engines run the same Q4_K_XL and Q8_K_XL weights with the same Q4_K_M DFlash2 draft. Depth is how many tokens are already cached; each run is roughly pp2048 / tg128.',
     highlights: [
       { label: 'Prefill, Q4, depth 0', value: '656.33 tok/s', note: 'llama.cpp 357.54 tok/s · +83.6%' },
       { label: 'Prefill, Q4, depth 131,072', value: '287.12 tok/s', note: 'llama.cpp 135.95 tok/s · +111.2%' },
@@ -408,9 +408,9 @@ export const benchmarks: BenchModel[] = [
       },
     ],
     notes: [
-      'Greedy speculation must reproduce autoregressive output; llama.cpp differs in some controls, recorded in the model quality report.',
-      'Concurrency rates sum individual request decode rates and exclude prefill and scheduling time.',
-      'Targets and drafts need not have matching precision: the Q4_K_M DFlash2 draft serves both targets.',
+      'With greedy decoding, DFlash2 output matches plain decoding. llama.cpp differs in a few settings; the quality report has the details.',
+      'Multi-user numbers add up each request’s decode speed and leave out prefill and queueing.',
+      'The draft doesn’t need to match the main model’s precision: one Q4_K_M draft serves both.',
     ],
     reproduce: [
       './result/bin/gufo serve llm --model models/qwen3.8-27b/Qwen3.8-27B-UD-Q4_K_XL.gguf \\',
@@ -427,16 +427,16 @@ export const benchmarks: BenchModel[] = [
     sourceDir: 'src/models/qwen38_flash_next',
     docPath: 'docs/models/qwen3.8-flash-next/BENCHMARKS.md',
     reference: 'llama.cpp b11069 (AR) and 6fcaa16f (MTP)',
-    measured: 'Gufo single-user tg September 27, 2026 (f797b5b); pp and other results September 22–23',
+    measured: 'Gufo pp, tg, concurrency and memory October 8–9, 2026; loading and reference results September 22–23',
     summary:
-      'Unsloth UD-Q4_K_XL target with the shared-Q8_0 MTP sidecar; Gufo uses adaptive MTP. HTTP, greedy, thinking off. Context capacities differ between engines, so read the measurement details before quoting depth-for-depth.',
+      'Unsloth UD-Q4_K_XL weights with the Q8_0 MTP predictor. HTTP, greedy, thinking off. The two engines use different context sizes, so check the measurement notes before comparing depth by depth.',
     highlights: [
-      { label: 'Prefill, depth 0', value: '1,628.52 tok/s', note: 'llama.cpp 489.59 tok/s · +232.6%' },
-      { label: 'Prefill, depth 131,072', value: '1,292.02 tok/s', note: 'llama.cpp 144.78 tok/s · +792.4%' },
-      { label: 'Decode AR, depth 0', value: '25.87 tok/s', note: 'llama.cpp 22.20 tok/s · +16.5%' },
-      { label: 'Decode AR, depth 131,072', value: '22.89 tok/s', note: 'llama.cpp 7.98 tok/s · +186.8%' },
-      { label: 'Decode MTP, repetitive, depth 0', value: '59.30 tok/s', note: 'llama.cpp 48.12 tok/s · +23.2%' },
-      { label: 'Eight users, MTP, repetitive', value: '157.22 tok/s', note: 'llama.cpp 58.13 tok/s · +170.5%' },
+      { label: 'Prefill, depth 0', value: '1,700.52 tok/s', note: 'llama.cpp 489.59 tok/s · +247.3%' },
+      { label: 'Prefill, depth 131,072', value: '1,478.66 tok/s', note: 'llama.cpp 144.78 tok/s · +921.3%' },
+      { label: 'Decode AR, depth 0', value: '25.95 tok/s', note: 'llama.cpp 22.20 tok/s · +16.9%' },
+      { label: 'Decode AR, depth 131,072', value: '24.92 tok/s', note: 'llama.cpp 7.98 tok/s · +212.3%' },
+      { label: 'Decode MTP, repetitive, depth 0', value: '60.39 tok/s', note: 'llama.cpp 48.12 tok/s · +25.5%' },
+      { label: 'Eight users, MTP, repetitive', value: '162.98 tok/s', note: 'llama.cpp 58.13 tok/s · +180.4%' },
     ],
     views: [
       {
@@ -452,7 +452,7 @@ export const benchmarks: BenchModel[] = [
             xTitle: DEPTH_AXIS,
             yTitle: 'Prefill (tok/s)',
             series: [
-              { label: 'Gufo', data: [1628.52, 1523.39, 1499.13, 1477.98, 1457.16, 1421.93, 1304.01, 1292.02], color: GUFO },
+              { label: 'Gufo', data: [1700.52, 1618.6, 1611.53, 1602.99, 1597.41, 1585.98, 1509.1, 1478.66], color: GUFO },
               { label: 'llama.cpp', data: [489.59, 455.24, 428.85, 400.21, 375.89, 301.31, 221.94, 144.78], color: REF, dashed: true },
             ],
           },
@@ -464,7 +464,7 @@ export const benchmarks: BenchModel[] = [
             xTitle: DEPTH_AXIS,
             yTitle: 'Decode (tok/s)',
             series: [
-              { label: 'Gufo', data: [25.87, 25.84, 25.84, 25.8, 25.79, 25.69, 25.41, 22.89], color: GUFO },
+              { label: 'Gufo', data: [25.95, 25.84, 25.96, 25.94, 25.9, 25.78, 25.4, 24.92], color: GUFO },
               { label: 'llama.cpp', data: [22.2, 21.21, 20.4, 19.64, 18.95, 16.54, 11.62, 7.98], color: REF, dashed: true },
             ],
           },
@@ -474,14 +474,14 @@ export const benchmarks: BenchModel[] = [
           note: 'Approximately pp2048 / tg128; depth is the cached prefix in tokens.',
           columns: ['Depth', 'Gufo pp', 'llama.cpp pp', 'Gain', 'Gufo tg', 'llama.cpp tg', 'Gain'],
           rows: [
-            ['0', '1628.52', '489.59', '+232.6%', '25.87', '22.20', '+16.5%'],
-            ['4,096', '1523.39', '455.24', '+234.6%', '25.84', '21.21', '+21.8%'],
-            ['8,192', '1499.13', '428.85', '+249.6%', '25.84', '20.40', '+26.7%'],
-            ['12,288', '1477.98', '400.21', '+269.3%', '25.80', '19.64', '+31.4%'],
-            ['16,384', '1457.16', '375.89', '+287.7%', '25.79', '18.95', '+36.1%'],
-            ['32,768', '1421.93', '301.31', '+371.9%', '25.69', '16.54', '+55.3%'],
-            ['65,536', '1304.01', '221.94', '+487.6%', '25.41', '11.62', '+118.7%'],
-            ['131,072', '1292.02', '144.78', '+792.4%', '22.89', '7.98', '+186.8%'],
+            ['0', '1700.52', '489.59', '+247.3%', '25.95', '22.20', '+16.9%'],
+            ['4,096', '1618.60', '455.24', '+255.5%', '25.84', '21.21', '+21.8%'],
+            ['8,192', '1611.53', '428.85', '+275.8%', '25.96', '20.40', '+27.3%'],
+            ['12,288', '1602.99', '400.21', '+300.5%', '25.94', '19.64', '+32.1%'],
+            ['16,384', '1597.41', '375.89', '+325.0%', '25.90', '18.95', '+36.7%'],
+            ['32,768', '1585.98', '301.31', '+426.4%', '25.78', '16.54', '+55.9%'],
+            ['65,536', '1509.10', '221.94', '+580.0%', '25.40', '11.62', '+118.6%'],
+            ['131,072', '1478.66', '144.78', '+921.3%', '24.92', '7.98', '+212.3%'],
           ],
         },
       },
@@ -497,7 +497,7 @@ export const benchmarks: BenchModel[] = [
             labels: ['AR', 'MTP mixed', 'MTP repetitive'],
             yTitle: 'Decode (tok/s)',
             series: [
-              { label: 'Gufo', data: [25.87, 32.2, 59.3], color: GUFO },
+              { label: 'Gufo', data: [25.95, 31.32, 60.39], color: GUFO },
               { label: 'llama.cpp', data: [22.2, 31.73, 48.12], color: REF },
             ],
           },
@@ -509,7 +509,7 @@ export const benchmarks: BenchModel[] = [
             xTitle: DEPTH_AXIS,
             yTitle: 'Decode (tok/s)',
             series: [
-              { label: 'Gufo', data: [59.3, 46.74, 50.26, 44.81, 53.53, 44.96, 46.12, 45.01], color: GREEN },
+              { label: 'Gufo', data: [60.39, 57.66, 49.28, 42.15, 50.58, 44.54, 44.45, 44.26], color: GREEN },
               { label: 'llama.cpp', data: [48.12, 45.71, 44.31, 43.53, 43.66, 39.28, 27.75, 20.96], color: REF, dashed: true },
             ],
           },
@@ -527,14 +527,14 @@ export const benchmarks: BenchModel[] = [
             'llama.cpp tg repetitive',
           ],
           rows: [
-            ['0', '1602.82', '468.76', '32.20', '31.73', '59.30', '48.12'],
-            ['4,096', '1506.32', '423.79', '32.50', '34.48', '46.74', '45.71'],
-            ['8,192', '1492.95', '394.98', '36.08', '32.20', '50.26', '44.31'],
-            ['12,288', '1488.03', '365.91', '34.26', '32.32', '44.81', '43.53'],
-            ['16,384', '1471.81', '341.98', '35.41', '32.07', '53.53', '43.66'],
-            ['32,768', '1449.56', '277.61', '31.03', '25.41', '44.96', '39.28'],
-            ['65,536', '1316.70', '208.04', '32.63', '19.65', '46.12', '27.75'],
-            ['131,072', '1335.91', '135.42', '34.20', '14.63', '45.01', '20.96'],
+            ['0', '1642.85', '468.76', '31.32', '31.73', '60.39', '48.12'],
+            ['4,096', '1575.60', '423.79', '32.48', '34.48', '57.66', '45.71'],
+            ['8,192', '1573.54', '394.98', '32.38', '32.20', '49.28', '44.31'],
+            ['12,288', '1559.07', '365.91', '34.68', '32.32', '42.15', '43.53'],
+            ['16,384', '1547.52', '341.98', '35.09', '32.07', '50.58', '43.66'],
+            ['32,768', '1541.35', '277.61', '34.20', '25.41', '44.54', '39.28'],
+            ['65,536', '1466.98', '208.04', '33.49', '19.65', '44.45', '27.75'],
+            ['131,072', '1436.89', '135.42', '33.07', '14.63', '44.26', '20.96'],
           ],
         },
       },
@@ -551,9 +551,9 @@ export const benchmarks: BenchModel[] = [
             xTitle: 'Concurrent users',
             yTitle: 'Decode (tok/s)',
             series: [
-              { label: 'Gufo AR', data: [25.85, 45.7, 76.29, 95.66, 108.67], color: GUFO },
+              { label: 'Gufo AR', data: [25.84, 45.77, 76.33, 95.75, 108.68], color: GUFO },
               { label: 'llama.cpp AR', data: [22.34, 37.08, 54.82, 65.34, 68.79], color: REF },
-              { label: 'Gufo MTP repetitive', data: [59.2, 93.16, 127.91, 142.14, 157.22], color: GREEN },
+              { label: 'Gufo MTP repetitive', data: [60.1, 84.52, 131.1, 145.38, 162.98], color: GREEN },
               { label: 'llama.cpp MTP repetitive', data: [46.93, 52.57, 48.23, 48.51, 58.13], color: GOLD },
             ],
           },
@@ -571,11 +571,11 @@ export const benchmarks: BenchModel[] = [
             'llama.cpp MTP repetitive',
           ],
           rows: [
-            ['1', '25.85', '22.34', '32.09', '31.77', '59.20', '46.93'],
-            ['2', '45.70', '37.08', '51.68', '42.79', '93.16', '52.57'],
-            ['4', '76.29', '54.82', '75.92', '48.78', '127.91', '48.23'],
-            ['6', '95.66', '65.34', '89.18', '52.59', '142.14', '48.51'],
-            ['8', '108.67', '68.79', '106.47', '61.92', '157.22', '58.13'],
+            ['1', '25.84', '22.34', '31.28', '31.77', '60.10', '46.93'],
+            ['2', '45.77', '37.08', '52.22', '42.79', '84.52', '52.57'],
+            ['4', '76.33', '54.82', '76.16', '48.78', '131.10', '48.23'],
+            ['6', '95.75', '65.34', '96.01', '52.59', '145.38', '48.51'],
+            ['8', '108.68', '68.79', '107.77', '61.92', '162.98', '58.13'],
           ],
         },
       },
@@ -602,16 +602,16 @@ export const benchmarks: BenchModel[] = [
           columns: ['Measurement', 'Gufo', 'llama.cpp', 'Gain'],
           rows: [
             ['Ready (s)', '15.45', '117.83', '+662.7%'],
-            ['Peak memory, pp2048 + tg128 (GiB)', '85.55', '84.84', '-0.8%'],
-            ['Peak memory, 16K prefix, pp4096 + tg128 (GiB)', '86.27', '85.31', '-1.1%'],
+            ['Peak memory, pp2048 + tg128 (GiB)', '85.56', '84.84', '-0.8%'],
+            ['Peak memory, 16K prefix, pp4096 + tg128 (GiB)', '86.71', '85.31', '-1.6%'],
           ],
         },
       },
     ],
     notes: [
-      'Concurrency uses the unchanged short-context attention path.',
-      'llama.cpp re-evaluates its four-token checkpoint tail in the concurrency runs.',
-      'Adaptive MTP is the default; --draft-tokens caps proposals between one and seven.',
+      'The multi-user runs use the normal short-context attention path.',
+      'In the multi-user runs, llama.cpp recomputes the last four tokens of each checkpoint.',
+      'MTP picks its draft length on the fly; --draft-tokens caps it between one and seven.',
     ],
     reproduce: [
       './result/bin/gufo serve llm --model "$FIRST_SHARD" --speculative mtp --mtp-model "$MTP"',
@@ -629,7 +629,7 @@ export const benchmarks: BenchModel[] = [
     reference: 'antirez/ds4 0aaea5a2 (ROCm)',
     measured: '2026-09-23–24 · one warmed sample per point · greedy, thinking off',
     summary:
-      'The 80.76 GiB target with its DSpark support sidecar. The pinned reference server disables DSpark when batching and its matched C1 DSpark control changes greedy output, so those comparisons stay N/A rather than being estimated.',
+      'The 80.76 GiB model with its DSpark support file. The reference server turns DSpark off when batching, and its single-user DSpark run changes greedy output, so those comparisons are N/A instead of guessed.',
     highlights: [
       { label: 'Prefill, depth 0', value: '484.62 tok/s', note: 'antirez/ds4 248.41 tok/s · +95.1%' },
       { label: 'Decode AR, depth 0', value: '16.28 tok/s', note: 'antirez/ds4 14.83 tok/s · +9.8%' },
@@ -793,9 +793,9 @@ export const benchmarks: BenchModel[] = [
       },
     ],
     notes: [
-      'Gufo DSpark is not faster than AR in the largest cohorts measured here.',
-      'The reference HTTP payload omits pp and tg durations; the driver reads the pinned server stage timers from its log and checks them against HTTP token counts.',
-      'Target-model parity remains open: do not read AR/DSpark agreement as a quality claim.',
+      'With the most users measured here, DSpark is no faster than plain decoding.',
+      'The reference server doesn’t report pp and tg times over HTTP, so they come from its log, checked against the token counts.',
+      'Quality against the original model is still open. AR and DSpark agreeing is not a quality claim.',
     ],
     reproduce: [
       './result/bin/gufo serve llm --model "$TARGET" --dspark-model "$DSPARK" --context 32768 --sessions 1',
@@ -813,7 +813,7 @@ export const benchmarks: BenchModel[] = [
     reference: null,
     measured: '2026-09-20 · Nix production build 8e4ba46f9dd0 · seed 42, resident models',
     summary:
-      'Fixed-work checks over the same 37-word paragraph for all three variants: 64 codec frames, 5.12 seconds of audio. Buffered latency is the median of three requests after one warmup. RTF is request time over generated audio duration, so lower is better.',
+      'All three variants read the same 37-word paragraph, giving 5.12 seconds of audio. Latency is the median of three requests after a warmup. RTF is time spent divided by audio length, so lower is better.',
     highlights: [
       { label: 'CustomVoice buffered WAV', value: '2.018 s', note: 'RTF 0.394 for 5.12 s of audio' },
       { label: 'First PCM audio', value: '0.201 s', note: 'First chunk carries four codec frames, 320 ms' },
@@ -948,9 +948,9 @@ export const benchmarks: BenchModel[] = [
       },
     ],
     notes: [
-      'WAV, PCM, SSE and WebSocket return identical PCM bytes, and seeded waveforms repeat exactly.',
-      'Projection traffic remains the main bottleneck; Base additionally spends 16.7% in library prefill and waveform operations.',
-      'Base uses a cached 15.05-second reference clip; its latency is not directly comparable to text-only CustomVoice and VoiceDesign.',
+      'WAV, PCM, SSE and WebSocket return the same audio, and a fixed seed gives the same waveform every time.',
+      'Memory traffic in the projections is still the main bottleneck. Base also spends 16.7% of its time in prefill and waveform work.',
+      'Base clones a cached 15-second voice clip, so its latency isn’t directly comparable with CustomVoice and VoiceDesign.',
     ],
     reproduce: [
       './result/bin/gufo serve tts --model models/Qwen3-TTS-12Hz-1.7B-Base --context 4096 \\',
@@ -969,7 +969,7 @@ export const benchmarks: BenchModel[] = [
     reference: null,
     measured: '2026-09-21 · Nix production binary ce73ab914d06 · one warmup, three timed requests',
     summary:
-      'A 15.05125-second English recording producing 49 greedy output tokens that match the official reference. Timings include audio decoding, features, encoder and text generation; model loading is excluded.',
+      'A 15-second English recording, transcribed to 49 tokens that match the official implementation. Timings cover the whole request except model loading.',
     highlights: [
       { label: 'Median request', value: '985.67 ms', note: 'RTF 0.0655 on a 15.05 s recording' },
       { label: 'Audio seconds per wall second', value: '15.27', note: 'Transcription runs 15× faster than the recording' },
@@ -1025,9 +1025,9 @@ export const benchmarks: BenchModel[] = [
       },
     ],
     notes: [
-      'Native convolutions remove MIOpen and improve the encoder by 8.2% in the matched control; complete-request latency stays about 0.99 s because text generation dominates, so no substantial whole-model gain is claimed.',
-      'The profiled request has 13,253 dispatches and a 1,308.67 ms kernel span; the measured unprofiled request is 985.67 ms.',
-      'Long-form corpus accuracy and current concurrent throughput remain TODO.',
+      'Our own convolution kernels replaced MIOpen and made the encoder 8.2% faster. The whole request still takes about 0.99 s because text generation dominates.',
+      'Under the profiler the request runs 13,253 kernels over 1.31 s; without it, it takes 0.99 s.',
+      'Accuracy on long recordings and multi-user throughput are still TODO.',
     ],
     reproduce: [
       'nix develop -c python3 src/models/qwen3_asr/tools/benchmark.py \\',
@@ -1045,7 +1045,7 @@ export const benchmarks: BenchModel[] = [
     reference: null,
     measured: '2026-09-21 cold-file-cache control · production nix build binary',
     summary:
-      'The qualified 40-step generation and edit matrix is still TODO. What exists is a short development control used for kernel iteration: warm C1, 1024×1024, two steps, seed 42. A two-step smoke check is not model quality or normal generation performance.',
+      'Real 40-step generation and editing timings are still TODO. For now there is only a two-step 1024×1024 run we use while working on kernels. It says nothing about image quality or normal generation speed.',
     highlights: [
       { label: 'Metadata readiness', value: '0.27 s', note: 'Cold file cache' },
       { label: 'First 256×256 two-step generation', value: '8.83 s', note: 'Includes loading active components' },
@@ -1071,7 +1071,7 @@ export const benchmarks: BenchModel[] = [
         ],
         table: {
           title: 'Short development control',
-          note: 'Warm C1, 1024×1024, two steps, seed 42. For kernel iteration only, not generation quality or normal performance.',
+          note: 'Warm, one user, 1024×1024, two steps, seed 42. Only for kernel work; not a measure of quality or normal speed.',
           columns: ['Prompt', 'Denoising', 'VAE', 'HTTP total'],
           rows: [['0.089 s', '4.865 s', '0.826 s', '5.838 s']],
         },
@@ -1119,8 +1119,8 @@ export const benchmarks: BenchModel[] = [
       },
     ],
     notes: [
-      'Concurrent requests are isolated and queued; concurrent GPU batching is not implemented.',
-      'PNG uses low compression with adaptive filters and preserves every RGBA pixel; the control response is about 1.00 MB.',
+      'Concurrent requests wait in a queue; they aren’t batched on the GPU yet.',
+      'Images come back as lossless PNG, about 1 MB each.',
       'Weights use the non-commercial Qwen Research License, separate from Gufo’s MIT license.',
     ],
     reproduce: [
@@ -1138,7 +1138,7 @@ export const benchmarks: BenchModel[] = [
     reference: null,
     measured: '2026-09-21 · Nix release on gfx1151 · ROCm 7.2.3, BF16',
     summary:
-      'The qualified end-to-end timing matrix is TODO. Component traces and extrapolations are not complete-generation measurements: one denoiser evaluation takes 91.00 s, and the exact preset needs 49 of them followed by video and audio decoding.',
+      'End-to-end timings are still TODO. What we have are component measurements: one denoiser step takes 91 s, and the exact preset needs 49 of them plus video and audio decoding.',
     highlights: [
       { label: 'One denoiser evaluation', value: '91.00 s', note: '50 transformer blocks at 1344×768×124, not a complete video' },
       { label: 'Evaluations for the exact preset', value: '49', note: 'Then video and audio decoding; total latency TODO' },
@@ -1224,9 +1224,9 @@ export const benchmarks: BenchModel[] = [
       },
     ],
     notes: [
-      'Attention remains the largest cost, followed by projections; the GPU is continuously busy during the transformer blocks.',
-      'No complete-video speedup is established, and throughput or queue-latency numbers are TODO.',
-      'Routine iteration uses one block or forward, or selected frames, with independent quality gates rather than full videos.',
+      'Attention is the biggest cost, then the projections. The GPU stays fully busy through the transformer blocks.',
+      'There is no measured speedup for a whole video yet, and throughput numbers are TODO.',
+      'Day-to-day work tests single blocks or a few frames instead of generating full videos.',
     ],
     reproduce: [
       'nix develop -c python3 tools/gufo/h3_profile.py  # full generation needs --allow-full-generation',

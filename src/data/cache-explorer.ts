@@ -1,4 +1,7 @@
+// Research archive pinned at the revision the walkthrough was built from; the RFC and cards track main.
 export const CACHE_SOURCE = 'https://github.com/gufo-org/gufo/blob/5e401f9b/docs/cache-redesign';
+export const CACHE_RFC = 'https://github.com/gufo-org/gufo/blob/main/docs/cache-redesign/RFC.md';
+export const CACHE_CARDS = 'https://github.com/gufo-org/gufo/blob/main/docs/cache-redesign/cards/README.md';
 export const CHUNK_TOKENS = 2048;
 
 export const cacheModels = {

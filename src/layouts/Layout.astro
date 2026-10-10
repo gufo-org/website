@@ -4,7 +4,7 @@ interface Props {
   description?: string;
 }
 
-const { title, description = "Gufo, the Strix Halo inference engine: local text, audio, image and video inference for AMD gfx1151" } = Astro.props;
+const { title, description = "Gufo runs text, image, audio and video models locally on AMD Strix Halo." } = Astro.props;
 // Absolute URLs need `site` in astro.config.mjs; without it the tags fall back to root-relative paths.
 const absolute = (path: string) => (Astro.site ? new URL(path, Astro.site).href : path);
 const ogImage = absolute('/og.png');

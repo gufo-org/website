@@ -6,24 +6,24 @@ import ModelMatrix from '../components/ModelMatrix.astro';
 
 const principles = [
   {
-    title: 'One target, optimized vertically',
+    title: 'Built for one machine',
     body:
-      'Linux x86-64 on Ryzen AI MAX+ 395 with Radeon 8060S (gfx1151) is the only production target. Wave32 HIP kernels are compiled for that GPU and nothing else, so there is no lowest-common-denominator abstraction to pay for.',
+      'Gufo only targets Linux on Strix Halo. The HIP kernels are written for the gfx1151 GPU and nothing else, so there is no portability layer slowing things down.',
   },
   {
-    title: 'Batteries included',
+    title: 'Everything in one binary',
     body:
-      'Seven models ship in one executable: dense and MoE text with images, speech recognition, speech synthesis and voice cloning, image generation and editing, and text to audiovisual output.',
+      'Seven models in one executable: chat with images, speech to text, text to speech with voice cloning, image generation and editing, and video with sound.',
   },
   {
-    title: 'Speculative decoding that keeps output',
+    title: 'Faster decoding, same output',
     body:
-      'DFlash2 for Qwen3.8 27B, MTP for Flash-Next and DSpark for DeepSeek V4 Flash. Greedy speculation must reproduce autoregressive output; sampled speculation preserves the target distribution.',
+      'Each text model has a draft mode: DFlash2 for Qwen3.8 27B, MTP for Flash-Next and DSpark for DeepSeek V4 Flash. With greedy decoding the output is identical to running without it.',
   },
   {
-    title: 'Concurrency as a first-class workload',
+    title: 'Made for several users',
     body:
-      'A bounded session pool, request batching, cancellation propagated from socket closure, and RAM plus optional on-disk conversation caching. Concurrent throughput is measured, not assumed.',
+      'Requests are batched and cancelled when the client disconnects. Conversations are cached in RAM, or on disk if you want, so the next turn starts quickly.',
   },
 ];
 
@@ -38,12 +38,12 @@ const stats = [
 const images = [
   {
     name: 'gufo-runtime',
-    body: 'Production image for inference, benchmarks and the HTTP server.',
+    body: 'Runs models and the server.',
     command: 'podman pull ghcr.io/gufo-org/toolboxes/gufo-runtime:latest',
   },
   {
     name: 'gufo-dev',
-    body: 'Development image with the HIP compiler, profilers and build tooling.',
+    body: 'For hacking on Gufo: HIP compiler, profilers and build tools.',
     command: 'podman pull ghcr.io/gufo-org/toolboxes/gufo-dev:latest',
   },
 ];
@@ -60,8 +60,8 @@ const images = [
         The Strix Halo inference engine
       </h1>
       <p class="mt-8 text-lg sm:text-xl text-ink-2 leading-relaxed max-w-2xl">
-        Gufo runs text, images, audio and video on Ryzen AI MAX+ 395 systems with Radeon 8060S and up to 128 GiB of
-        unified memory. One C++20 executable, one OpenAI-compatible server.
+        Gufo runs text, image, audio and video models locally on AMD Strix Halo. It's a single C++ binary with an
+        OpenAI-compatible server, tuned for one machine and nothing else.
       </p>
       <div class="mt-10 flex flex-wrap items-center gap-3">
         <a href="/docs" class="inline-flex items-center h-11 px-5 rounded-full bg-forest text-ivory text-sm hover:bg-forest-dark transition-colors">
@@ -97,8 +97,15 @@ const images = [
               <p class="mt-3 text-[15px] text-ink-2 leading-relaxed">{p.body}</p>
             </div>
           ))}
+          <p class="sm:col-span-2 text-[15px] text-ink-2 leading-relaxed">
+            Contributions are welcome. Two community forks are worth a look: a
+            <a href="https://github.com/pixmaate/gufo" target="_blank" rel="noopener noreferrer" class="text-ink underline decoration-line-strong hover:decoration-ink">Windows port</a>
+            and
+            <a href="https://github.com/neuhaus/gufo" target="_blank" rel="noopener noreferrer" class="text-ink underline decoration-line-strong hover:decoration-ink">Gufo RDMA</a>
+            for two Strix Halos linked together.
+          </p>
           <a href="/philosophy" class="text-sm text-ink underline decoration-line-strong hover:decoration-ink">
-            Read the project philosophy
+            How we decide what goes in
           </a>
         </div>
       </div>
@@ -111,17 +118,17 @@ const images = [
           <p class="eyebrow mb-3">02 / Quickstart</p>
           <h2 class="text-3xl text-ink">Serve in two commands</h2>
           <p class="mt-5 text-[15px] text-ink-2 leading-relaxed">
-            Download weights, then run the runtime image with GPU device access. The server speaks the OpenAI API on
-            port 8080, so Open WebUI, VS Code or any OpenAI SDK client can point at
+            Download the weights, then start the runtime image with access to the GPU. The server listens on port 8080
+            and speaks the OpenAI API, so Open WebUI, Codex or any OpenAI SDK can use
             <code class="text-ink">localhost:8080/v1</code>.
           </p>
           <p class="mt-4 text-sm text-ink-3 leading-relaxed">
-            Rootless Podman needs <code>crun</code> for <code>--group-add keep-groups</code>, and your user needs access
-            to <code>/dev/kfd</code> and <code>/dev/dri/renderD*</code>, usually via the <code>render</code> and
-            <code>video</code> groups.
+            Rootless Podman needs <code>crun</code> for <code>--group-add keep-groups</code>. Your user also needs access
+            to <code>/dev/kfd</code> and <code>/dev/dri/renderD*</code>, which usually means joining the
+            <code>render</code> and <code>video</code> groups.
           </p>
           <a href="/docs#quickstart" class="inline-block mt-6 text-sm text-ink underline decoration-line-strong hover:decoration-ink">
-            Full quickstart and source builds
+            Full quickstart, or build from source
           </a>
         </div>
 
@@ -151,8 +158,7 @@ podman run --rm --userns=keep-id:uid=1000,gid=1000 \
             <p class="eyebrow mb-3">03 / Models</p>
             <h2 class="text-3xl text-ink">Supported models</h2>
             <p class="mt-3 text-[15px] text-ink-2 max-w-2xl leading-relaxed">
-              Native implementations under <code>src/models/</code>, each owning its kernels, tests and numerical
-              contracts.
+              Each model has its own implementation, kernels and tests under <code>src/models/</code>.
             </p>
           </div>
           <a href="/benchmarks" class="text-sm text-ink underline decoration-line-strong hover:decoration-ink shrink-0">
@@ -171,8 +177,8 @@ podman run --rm --userns=keep-id:uid=1000,gid=1000 \
           <p class="eyebrow mb-3">04 / Containers</p>
           <h2 class="text-3xl text-ink">Docker and Podman images</h2>
           <p class="mt-5 text-[15px] text-ink-2 leading-relaxed">
-            Reproducible Nix-built images for running and developing Gufo. They run as a dedicated non-root user with no
-            sudo or PAM stack.
+            Prebuilt images, built with Nix so they're reproducible. They run as a normal non-root user, with no sudo
+            inside.
           </p>
           <a href="/docs#toolboxes" class="inline-block mt-6 text-sm text-ink underline decoration-line-strong hover:decoration-ink">
             Container run guide
