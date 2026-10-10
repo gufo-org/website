@@ -1,0 +1,275 @@
+---
+// A compact, embeddable view of one cache-explorer story for blog posts.
+// It reads the same scenarios as /cache but renders its own figure: every
+// step is rendered here on the server, and a small script only switches
+// between them, so several figures can share a page and the first step
+// still shows without JavaScript.
+import { cacheScenarios, cacheModels, storageBytes, CHUNK_TOKENS, type ModelId, type Checkpoint } from '../../data/cache-explorer';
+
+interface Props {
+  /** Scenario id from src/data/cache-explorer.ts, e.g. "edit" or "fork". */
+  scenario: string;
+  /** Pin the figure to a single step (1-based). */
+  step?: number;
+  /** Show a range of steps, e.g. "1-4" (1-based, inclusive). Defaults to all. */
+  steps?: string;
+  model?: ModelId;
+  figure?: number | string;
+  caption?: string;
+}
+
+const { scenario: scenarioId, step, steps, model = 'flash', figure, caption } = Astro.props;
+const scenario = cacheScenarios.find((s) => s.id === scenarioId);
+if (!scenario) throw new Error(`CacheFigure: unknown scenario "${scenarioId}"`);
+
+const total = scenario.steps.length;
+const [from, to] = step !== undefined ? [step, step] : steps ? steps.split('-').map(Number) : [1, total];
+if (!(from >= 1 && to <= total && from <= to)) throw new Error(`CacheFigure: steps ${from}-${to} are outside 1-${total} for "${scenarioId}"`);
+const shown = scenario.steps.slice(from - 1, to).map((s, i) => ({ ...s, index: from - 1 + i }));
+
+const number = (value: number) => Math.round(value).toLocaleString('en-US');
+const bytes = (value: number) => (value >= 2 ** 30 ? `${(value / 2 ** 30).toFixed(2)} GiB` : `${(value / 2 ** 20).toFixed(0)} MiB`);
+
+// One horizontal scale for every step, so bars don't jump while stepping.
+const longest = Math.max(...shown.flatMap((s) => [s.prompt, ...s.state.checkpoints.map((c) => c.position), ...s.state.sessions.map((x) => x.position)]));
+const scale = Math.ceil(longest / CHUNK_TOKENS) * CHUNK_TOKENS;
+const pct = (tokens: number) => `${(tokens / scale) * 100}%`;
+// Axis labels on chunk boundaries, thinned out to at most about seven.
+const every = Math.ceil((scale / CHUNK_TOKENS + 1) / 7);
+const ticks = Array.from({ length: scale / CHUNK_TOKENS + 1 }, (_, i) => i * CHUNK_TOKENS).filter((t, i, all) => i % every === 0 || i === all.length - 1);
+
+// Each computation lineage gets a colour, in order of first appearance.
+const palette = ['#3f7a4f', '#4f86b8', '#c27a2c', '#3d8a8a', '#8a6a4a', '#6f8a2f', '#9a5c8a', '#5f6f8f'];
+const lineages = [...new Set(shown.flatMap((s) => s.state.checkpoints.flatMap((c) => c.chunks.map((k) => k.lineage))))];
+const colour = (lineage: string) => palette[lineages.indexOf(lineage) % palette.length];
+
+const panels = shown.map((s) => {
+  const { state } = s;
+  const before = s.index > 0 ? scenario.steps[s.previous ?? s.index - 1].state.checkpoints : undefined;
+  const oldCheckpoints = new Set(before?.map((c) => c.id));
+  const oldChunks = new Set(before?.flatMap((c) => c.chunks.map((k) => k.id)));
+  const live = state.source.startsWith('Live');
+  const restoredFrom = !live && state.reused > 0 ? state.checkpoints.find((c) => c.id === state.route?.checkpoint || c.position === state.reused)?.id : undefined;
+  const refs = new Map<string, number>();
+  state.checkpoints.forEach((c) => c.chunks.forEach((k) => refs.set(k.id, (refs.get(k.id) ?? 0) + 1)));
+  const matched = Math.max(state.reused, s.common);
+  return {
+    ...s,
+    restoredFrom,
+    isNew: (c: Checkpoint) => before !== undefined && !oldCheckpoints.has(c.id),
+    chunkIsNew: (id: string) => before !== undefined && !oldChunks.has(id),
+    refs,
+    request: { reused: state.reused, recomputed: Math.max(0, Math.min(s.common, s.prompt) - state.reused), fresh: Math.max(0, s.prompt - matched) },
+    stored: storageBytes(state.checkpoints, model),
+    unshared: state.checkpoints.reduce((n, c) => n + storageBytes([c], model), 0),
+    sessions: state.sessions.filter((x) => x.name !== 'Free' && x.position > 0),
+  };
+});
+const pinned = panels.length === 1;
+---
+
+<figure class="cf" data-cache-figure tabindex={pinned ? undefined : 0} aria-label={`${scenario.name}: cache figure`}>
+  <header class="cf-head">
+    <p class="cf-eyebrow"><span class="cf-dot"></span>{figure !== undefined && <>Fig. {figure} · </>}Cache explorer · {scenario.name}</p>
+    <span class="cf-model">{cacheModels[model].name}</span>
+  </header>
+
+  {panels.map((p, i) => (
+    <div class="cf-panel" data-cf-panel hidden={i !== 0} aria-label={`Step ${p.index + 1} of ${total}`}>
+      <p class="cf-step">Step {p.index + 1} of {total}</p>
+      <h4 class="cf-title">{p.title}</h4>
+      <p class="cf-explain">{p.explanation}</p>
+
+      <div class="cf-chart" style={`--chunk: ${pct(CHUNK_TOKENS)}`}>
+        <div class="cf-row">
+          <span class="cf-label">Request<small>{number(p.prompt)} tokens</small></span>
+          <div class="cf-track">
+            {p.request.reused > 0 && <i class="cf-seg cf-seg-reused" style={`left: 0; width: ${pct(p.request.reused)}`} title={`${number(p.request.reused)} tokens reused`}></i>}
+            {p.request.recomputed > 0 && <i class="cf-seg cf-seg-recomputed" style={`left: ${pct(p.request.reused)}; width: ${pct(p.request.recomputed)}`} title={`${number(p.request.recomputed)} matching tokens recomputed`}></i>}
+            {p.request.fresh > 0 && <i class="cf-seg cf-seg-new" style={`left: ${pct(p.prompt - p.request.fresh)}; width: ${pct(p.request.fresh)}`} title={`${number(p.request.fresh)} new tokens`}></i>}
+          </div>
+        </div>
+
+        {p.state.checkpoints.map((c) => (
+          <div class:list={['cf-row', { 'is-source': c.id === p.restoredFrom, 'is-new': p.isNew(c), 'is-disk-only': !c.ram }]}>
+            <span class="cf-label">
+              {c.id}
+              <small>
+                {c.id === p.restoredFrom ? 'restored' : p.isNew(c) ? 'new' : c.ram ? 'in RAM' : 'disk only'}
+                {c.disk !== 'none' && ` · disk ${c.disk}`}
+              </small>
+            </span>
+            <div class="cf-track">
+              {c.chunks.map((k) => (
+                <i
+                  class:list={['cf-chunk', { 'is-tail': k.tail, 'is-added': p.chunkIsNew(k.id) }]}
+                  style={`left: ${pct(k.start)}; width: ${pct(k.end - k.start)}; --c: ${colour(k.lineage)}`}
+                  title={`${k.tail ? 'Private tail' : `Chunk ${k.id}`} · tokens ${number(k.start)}–${number(k.end)} · computed by ${k.lineage}${(p.refs.get(k.id) ?? 0) > 1 ? ` · shared by ${p.refs.get(k.id)} checkpoints` : ''}`}
+                ></i>
+              ))}
+              <i class="cf-fixed" style={`left: ${pct(c.position)}`} title={`Fixed state at token ${number(c.position)}`}></i>
+            </div>
+          </div>
+        ))}
+
+        {p.sessions.map((x) => (
+          <div class="cf-row cf-row-live">
+            <span class="cf-label">{x.name}<small>live session</small></span>
+            <div class="cf-track"><i class="cf-live" style={`width: ${pct(x.position)}`}></i></div>
+          </div>
+        ))}
+
+        <div class="cf-row cf-axis" aria-hidden="true">
+          <span class="cf-label"></span>
+          <div class="cf-track">
+            {ticks.map((t) => <span style={`left: ${pct(t)}`}>{t === 0 ? '0' : `${t / 1024}k`}</span>)}
+          </div>
+        </div>
+      </div>
+
+      <dl class="cf-stats">
+        <div><dt>Route</dt><dd>{p.state.source}</dd></div>
+        <div><dt>Reused</dt><dd>{number(p.request.reused)}</dd></div>
+        <div><dt>Prefill</dt><dd>{number(p.prompt - p.request.reused)}</dd></div>
+        <div><dt>Checkpoints in RAM</dt><dd>{bytes(p.stored)}{p.unshared > p.stored && <small> vs {bytes(p.unshared)} unshared</small>}</dd></div>
+      </dl>
+      <p class="cf-note">{p.state.note}</p>
+    </div>
+  ))}
+
+  <div class="cf-legend">
+    <span><i class="cf-swatch cf-seg-reused"></i>Reused</span>
+    <span><i class="cf-swatch cf-seg-recomputed"></i>Matches, recomputed</span>
+    <span><i class="cf-swatch cf-seg-new"></i>New tokens</span>
+    <span><i class="cf-swatch cf-swatch-fixed"></i>Fixed state</span>
+    <span><i class="cf-swatch cf-swatch-tail"></i>Private tail</span>
+    <span class="cf-legend-lineages">Computed by {lineages.map((l) => <b style={`--c: ${colour(l)}`}>{l}</b>)}</span>
+  </div>
+
+  <footer class="cf-foot">
+    {!pinned && (
+      <div class="cf-controls">
+        <button type="button" data-cf-prev aria-label="Previous step" disabled>←</button>
+        <span class="cf-dots">{panels.map((_, i) => <button type="button" data-cf-dot aria-label={`Show step ${panels[i].index + 1}`} aria-current={i === 0 ? 'step' : undefined}></button>)}</span>
+        <button type="button" data-cf-next aria-label="Next step">→</button>
+      </div>
+    )}
+    <figcaption>{caption ?? scenario.lesson}</figcaption>
+    <a class="cf-link" href="/cache">Open the full walkthrough →</a>
+  </footer>
+</figure>
+
+<script>
+  document.querySelectorAll<HTMLElement>('[data-cache-figure]').forEach((figure) => {
+    const panels = [...figure.querySelectorAll<HTMLElement>('[data-cf-panel]')];
+    const dots = [...figure.querySelectorAll<HTMLButtonElement>('[data-cf-dot]')];
+    const prev = figure.querySelector<HTMLButtonElement>('[data-cf-prev]');
+    const next = figure.querySelector<HTMLButtonElement>('[data-cf-next]');
+    if (panels.length < 2 || !prev || !next) return;
+    let current = 0;
+    const show = (index: number) => {
+      current = Math.max(0, Math.min(panels.length - 1, index));
+      panels.forEach((panel, i) => (panel.hidden = i !== current));
+      dots.forEach((dot, i) => (i === current ? dot.setAttribute('aria-current', 'step') : dot.removeAttribute('aria-current')));
+      prev.disabled = current === 0;
+      next.disabled = current === panels.length - 1;
+    };
+    prev.addEventListener('click', () => show(current - 1));
+    next.addEventListener('click', () => show(current + 1));
+    dots.forEach((dot, i) => dot.addEventListener('click', () => show(i)));
+    figure.addEventListener('keydown', (event) => {
+      if (event.key === 'ArrowLeft') show(current - 1);
+      else if (event.key === 'ArrowRight') show(current + 1);
+      else return;
+      event.preventDefault();
+    });
+  });
+</script>
+
+<style>
+  .cf {
+    --diff: #b8336a;
+    --fixed: #8a76c4;
+    margin: 2.5rem 0;
+    padding: 20px;
+    background: var(--color-paper);
+    border: 1px solid var(--color-line-strong);
+    border-radius: 10px;
+    font-family: var(--font-sans);
+  }
+  .cf:focus-visible { outline: 2px solid var(--color-forest); outline-offset: 3px; }
+  .cf-head { display: flex; justify-content: space-between; align-items: center; gap: 12px; flex-wrap: wrap; margin-bottom: 18px; }
+  .cf-eyebrow { display: flex; align-items: center; gap: 8px; font: 12px var(--font-mono); color: var(--color-ink-3); }
+  .cf-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--color-forest); }
+  .cf-model { font-size: 11px; color: var(--color-ink-3); border: 1px solid var(--color-line-strong); border-radius: 20px; padding: 3px 9px; }
+
+  .cf-step { font: 11px var(--font-mono); letter-spacing: 0.08em; text-transform: uppercase; color: var(--color-forest); }
+  .cf-title { margin: 4px 0 6px; font-size: 17px; font-weight: 650; color: var(--color-ink); }
+  .cf-explain { font-size: 14px; line-height: 1.65; color: var(--color-ink-2); max-width: 62ch; }
+
+  .cf-chart { margin: 18px 0 14px; display: grid; gap: 7px; }
+  .cf-row { display: grid; grid-template-columns: 8.5rem 1fr; align-items: center; gap: 12px; }
+  .cf-label { font: 12px var(--font-mono); color: var(--color-ink-2); line-height: 1.25; overflow-wrap: anywhere; }
+  .cf-label small { display: block; font: 11px var(--font-sans); color: var(--color-ink-4); }
+  .cf-track {
+    position: relative;
+    height: 20px;
+    border-radius: 4px;
+    background: var(--color-ivory) linear-gradient(90deg, var(--color-line) 1px, transparent 1px) 0 0 / var(--chunk) 100%;
+    border: 1px solid var(--color-line);
+  }
+  .cf-track > i { position: absolute; top: 2px; bottom: 2px; border-radius: 3px; }
+
+  .cf-seg-reused { background: #3f7a4f; }
+  .cf-seg-recomputed { background: repeating-linear-gradient(135deg, #d98a2b 0 4px, #f0c890 4px 7px); }
+  .cf-seg-new { background: #b3b8ab; }
+
+  .cf-chunk { background: var(--c); margin-right: 1px; }
+  .cf-chunk.is-tail { background: repeating-linear-gradient(135deg, var(--c) 0 3px, color-mix(in srgb, var(--c) 40%, white) 3px 6px); }
+  .cf-chunk.is-added { box-shadow: 0 0 0 2px var(--diff); }
+  .cf-track > .cf-fixed { top: -3px; bottom: -3px; width: 4px; margin-left: -2px; border-radius: 2px; background: var(--fixed); }
+  .is-disk-only .cf-chunk { opacity: 0.4; }
+  .is-source .cf-label { color: var(--color-forest); font-weight: 600; }
+  .is-source .cf-track { border-color: var(--color-forest); box-shadow: 0 0 0 1px var(--color-forest); }
+  .is-new .cf-label small { color: var(--diff); }
+
+  .cf-row-live .cf-track { background: transparent; border-color: transparent; }
+  .cf-track > .cf-live { top: 9px; bottom: auto; height: 2px; left: 0; background: var(--color-ink-3); }
+  .cf-track > .cf-live::after { content: ''; position: absolute; right: -4px; top: -3px; width: 8px; height: 8px; border-radius: 50%; background: var(--color-ink-3); }
+
+  .cf-axis .cf-track { height: 14px; background: none; border: 0; }
+  .cf-axis .cf-track span { position: absolute; transform: translateX(-50%); font: 10px var(--font-mono); color: var(--color-ink-4); }
+
+  .cf-stats { display: grid; grid-template-columns: repeat(4, auto); gap: 16px; padding: 12px 0; border-top: 1px solid var(--color-line); border-bottom: 1px solid var(--color-line); }
+  .cf-stats dt { font: 10px var(--font-mono); text-transform: uppercase; letter-spacing: 0.06em; color: var(--color-ink-4); }
+  .cf-stats dd { font-size: 13px; color: var(--color-ink); margin-top: 2px; }
+  .cf-stats small { color: var(--color-ink-4); }
+  .cf-note { margin-top: 10px; font-size: 13px; line-height: 1.6; color: var(--color-ink-3); }
+
+  .cf-legend { display: flex; flex-wrap: wrap; gap: 6px 16px; margin-top: 14px; font-size: 11px; color: var(--color-ink-3); }
+  .cf-legend span { display: inline-flex; align-items: center; gap: 6px; }
+  .cf-swatch { width: 14px; height: 8px; border-radius: 2px; display: inline-block; }
+  .cf-swatch-fixed { width: 4px; height: 12px; background: var(--fixed); }
+  .cf-swatch-tail { background: repeating-linear-gradient(135deg, var(--color-ink-3) 0 3px, var(--color-line) 3px 6px); }
+  .cf-legend-lineages b { display: inline-grid; place-items: center; min-width: 16px; height: 16px; padding: 0 3px; border-radius: 3px; background: var(--c); color: white; font: 600 10px var(--font-mono); }
+
+  .cf-foot { display: grid; grid-template-columns: auto 1fr auto; align-items: center; gap: 16px; margin-top: 16px; padding-top: 14px; border-top: 1px solid var(--color-line); }
+  .cf-controls { display: flex; align-items: center; gap: 8px; }
+  .cf-controls > button { width: 30px; height: 30px; border: 1px solid var(--color-line-strong); border-radius: 6px; background: var(--color-ivory); color: var(--color-ink); cursor: pointer; }
+  .cf-controls > button:hover:not(:disabled) { border-color: var(--color-forest); }
+  .cf-controls > button:disabled { opacity: 0.4; cursor: default; }
+  .cf-dots { display: flex; gap: 5px; }
+  .cf-dots button { width: 8px; height: 8px; padding: 0; border-radius: 50%; background: var(--color-line-strong); cursor: pointer; }
+  .cf-dots button[aria-current] { background: var(--color-forest); }
+  .cf figcaption { font-family: var(--font-serif); font-style: italic; font-size: 14px; line-height: 1.5; color: var(--color-ink-2); }
+  .cf-link { font-size: 13px; color: var(--color-forest); white-space: nowrap; }
+  .cf-link:hover { text-decoration: underline; }
+
+  @media (max-width: 640px) {
+    .cf { padding: 16px; margin-left: -4px; margin-right: -4px; }
+    .cf-row { grid-template-columns: 1fr; gap: 4px; }
+    .cf-axis .cf-label { display: none; }
+    .cf-stats { grid-template-columns: repeat(2, 1fr); }
+    .cf-foot { grid-template-columns: 1fr; }
+  }
+</style>

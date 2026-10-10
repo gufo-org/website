@@ -1,0 +1,57 @@
+/* Long-form typography for blog posts: serif body, sans UI, mono labels.
+   Rendered Markdown has no classes, so everything hangs off .prose-gufo. */
+.prose-gufo {
+  font-family: var(--font-serif);
+  font-size: 19px;
+  line-height: 1.7;
+  color: var(--color-ink-2);
+}
+.prose-gufo > * + * { margin-top: 1.25em; }
+.prose-gufo h2 {
+  margin-top: 2.4em;
+  font-size: 30px;
+  line-height: 1.2;
+  color: var(--color-ink);
+}
+.prose-gufo h3 {
+  margin-top: 2em;
+  font-family: var(--font-sans);
+  font-size: 17px;
+  font-weight: 650;
+  color: var(--color-ink);
+}
+.prose-gufo h2 + *, .prose-gufo h3 + * { margin-top: 0.6em; }
+.prose-gufo a { color: var(--color-forest); text-decoration: underline; text-decoration-color: color-mix(in srgb, var(--color-forest) 35%, transparent); }
+.prose-gufo a:hover { text-decoration-color: currentColor; }
+.prose-gufo strong { color: var(--color-ink); font-weight: 600; }
+.prose-gufo ul, .prose-gufo ol { padding-left: 1.3em; }
+.prose-gufo ul { list-style: disc; }
+.prose-gufo ol { list-style: decimal; }
+.prose-gufo li + li { margin-top: 0.4em; }
+.prose-gufo li::marker { color: var(--color-ink-4); }
+.prose-gufo blockquote {
+  border-left: 2px solid var(--color-amber);
+  padding-left: 1.1em;
+  font-style: italic;
+  color: var(--color-ink-3);
+}
+.prose-gufo :not(pre) > code {
+  padding: 0.1em 0.35em;
+  border-radius: 4px;
+  background: var(--color-paper);
+  color: var(--color-ink);
+  font-size: 0.8em;
+}
+.prose-gufo pre {
+  padding: 14px 18px;
+  border: 1px solid var(--color-line);
+  border-radius: 8px;
+  background: var(--color-paper) !important;
+  font-size: 13.5px;
+  line-height: 1.65;
+  overflow-x: auto;
+}
+.prose-gufo hr { border: 0; border-top: 1px solid var(--color-line); margin: 2.5em 0; }
+.prose-gufo table { width: 100%; font-family: var(--font-sans); font-size: 14px; border-collapse: collapse; }
+.prose-gufo th, .prose-gufo td { text-align: left; padding: 8px 10px; border-bottom: 1px solid var(--color-line); }
+.prose-gufo th { font-weight: 600; color: var(--color-ink); }
