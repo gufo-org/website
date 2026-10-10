@@ -17,7 +17,11 @@ const isActive = (href: string) =>
   currentPath === href || (href !== '/' && currentPath.startsWith(href.split('#')[0]));
 ---
 
-<nav class="sticky top-0 z-50 bg-ivory/90 backdrop-blur border-b border-line text-sm">
+<nav class="sticky top-0 z-50 border-b border-line text-sm">
+  <!-- The blur sits on its own layer: a backdrop-filter on the nav itself would make it the
+       containing block for the fixed scrim and panel below, shrinking them to the nav bar. -->
+  <div class="absolute inset-0 -z-10 bg-ivory/90 backdrop-blur" aria-hidden="true"></div>
+
   <!-- Drawer state. Sibling of the overlay and panel so `peer-checked` can reach them. -->
   <input type="checkbox" id="nav-drawer" class="peer sr-only" aria-label="Open navigation menu" />
 
@@ -80,9 +84,9 @@ const isActive = (href: string) =>
     aria-hidden="true"
   ></label>
 
-  <!-- Side panel -->
+  <!-- Side panel. Hidden while closed so its links stay out of the tab order. -->
   <aside
-    class="md:hidden fixed top-0 right-0 z-50 h-dvh w-72 max-w-[85vw] bg-ivory border-l border-line translate-x-full peer-checked:translate-x-0 transition-transform duration-200 ease-out flex flex-col"
+    class="md:hidden fixed top-0 right-0 z-50 h-dvh w-72 max-w-[85vw] bg-ivory border-l border-line translate-x-full invisible peer-checked:translate-x-0 peer-checked:visible transition-[translate,visibility] duration-200 ease-out flex flex-col"
   >
     <div class="flex items-center justify-between h-16 px-4 border-b border-line shrink-0">
       <span class="font-serif text-lg text-ink">Gufo</span>
