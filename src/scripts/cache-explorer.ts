@@ -449,6 +449,26 @@ function renderStory(direction?: 'next' | 'prev') {
   renderTree();
   renderCards(direction);
   renderInspector();
+  if (started) syncLocation();
+}
+
+// Deep links: /cache?story=edit&step=2&model=qwen opens that story at that step.
+// The address follows along once the reader starts exploring, so it can be shared.
+let started = false;
+function syncLocation() {
+  const params = new URLSearchParams({ story: scenario().id, step: String(stepIndex + 1) });
+  if (model !== 'flash') params.set('model', model);
+  history.replaceState(history.state, '', `${location.pathname}?${params}${location.hash}`);
+}
+function readLocation() {
+  const params = new URLSearchParams(location.search);
+  const linked = cacheScenarios.findIndex(s => s.id === params.get('story'));
+  if (linked >= 0) {
+    scenarioIndex = linked;
+    stepIndex = Math.max(0, Math.min(scenario().steps.length - 1, (Number(params.get('step')) || 1) - 1));
+  }
+  const linkedModel = params.get('model');
+  if (linkedModel && linkedModel in cacheModels) modelSelect.value = linkedModel;
 }
 
 function renderCapacity() {
@@ -539,8 +559,10 @@ modelSelect.addEventListener('change', () => { model = modelSelect.value as Mode
 [depth, count, budget].forEach(input => input.addEventListener('input', renderCapacity));
 window.addEventListener('pagehide', stop);
 document.addEventListener('visibilitychange', () => { if (document.hidden) stop(); });
+readLocation();
 // Follow the select, which a browser may restore from an earlier visit.
 model = modelSelect.value as ModelId;
 renderStory();
 renderReadout();
 renderCapacity();
+started = true;

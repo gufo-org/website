@@ -66,6 +66,8 @@ const panels = shown.map((s) => {
   };
 });
 const pinned = panels.length === 1;
+// Opens /cache on the same story and step; the script updates it as the reader steps through.
+const explorerLink = (index: number) => `/cache?${new URLSearchParams({ story: scenario.id, step: String(index + 1), ...(model !== 'flash' && { model }) })}#walkthrough-heading`;
 ---
 
 <figure class="cf" data-cache-figure tabindex={pinned ? undefined : 0} aria-label={`${scenario.name}: cache figure`}>
@@ -75,7 +77,7 @@ const pinned = panels.length === 1;
   </header>
 
   {panels.map((p, i) => (
-    <div class="cf-panel" data-cf-panel hidden={i !== 0} aria-label={`Step ${p.index + 1} of ${total}`}>
+    <div class="cf-panel" data-cf-panel data-link={explorerLink(p.index)} hidden={i !== 0} aria-label={`Step ${p.index + 1} of ${total}`}>
       <p class="cf-step">Step {p.index + 1} of {total}</p>
       <h4 class="cf-title">{p.title}</h4>
       <p class="cf-explain">{p.explanation}</p>
@@ -155,7 +157,7 @@ const pinned = panels.length === 1;
       </div>
     )}
     <figcaption>{caption ?? scenario.lesson}</figcaption>
-    <a class="cf-link" href="/cache">Open the full walkthrough →</a>
+    <a class="cf-link" data-cf-link href={explorerLink(panels[0].index)}>Open this step in the explorer →</a>
   </footer>
 </figure>
 
@@ -165,11 +167,13 @@ const pinned = panels.length === 1;
     const dots = [...figure.querySelectorAll<HTMLButtonElement>('[data-cf-dot]')];
     const prev = figure.querySelector<HTMLButtonElement>('[data-cf-prev]');
     const next = figure.querySelector<HTMLButtonElement>('[data-cf-next]');
+    const link = figure.querySelector<HTMLAnchorElement>('[data-cf-link]');
     if (panels.length < 2 || !prev || !next) return;
     let current = 0;
     const show = (index: number) => {
       current = Math.max(0, Math.min(panels.length - 1, index));
       panels.forEach((panel, i) => (panel.hidden = i !== current));
+      if (link) link.href = panels[current].dataset.link!;
       dots.forEach((dot, i) => (i === current ? dot.setAttribute('aria-current', 'step') : dot.removeAttribute('aria-current')));
       prev.disabled = current === 0;
       next.disabled = current === panels.length - 1;
