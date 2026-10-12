@@ -1,7 +1,7 @@
 import { defineCollection, z } from 'astro:content';
 import { glob } from 'astro/loaders';
 
-// Posts are plain Markdown, or MDX when they embed components such as <CacheFigure>.
+// Posts are plain Markdown, or MDX when they embed components.
 const blog = defineCollection({
   loader: glob({ pattern: '**/*.{md,mdx}', base: './src/content/blog' }),
   schema: z.object({
