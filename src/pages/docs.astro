@@ -16,7 +16,10 @@ const nav = groups.map(({ group, slugs }) => ({
 }));
 ---
 
-<Layout title="Documentation · Gufo">
+<Layout
+  title="Documentation · Gufo"
+  description="Run Gufo on AMD Strix Halo: quickstart with Podman, the OpenAI-compatible API, and building from source with or without Nix."
+>
   <Navbar currentPath="/docs" />
 
   <div class="w-full max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
@@ -73,6 +76,7 @@ const nav = groups.map(({ group, slugs }) => ({
           <span>/</span>
           <span class="text-ink">Documentation</span>
         </div>
+        <h1 class="text-4xl sm:text-5xl text-ink mb-8">Documentation</h1>
         <div class="prose-gufo [&_table]:block [&_table]:overflow-x-auto [&_h2]:scroll-mt-24 [&_h3]:scroll-mt-24">
           <Content />
         </div>

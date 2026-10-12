@@ -15,6 +15,8 @@ const principles = [
 const quickstart = `# Download a target and its DFlash2 draft
 hf download unsloth/Qwen3.8-27B-GGUF Qwen3.8-27B-UD-Q8_K_XL.gguf \\
   --local-dir models/Qwen3.8-27B-GGUF
+hf download z-lab/Qwen3.8-27B-DFlash2-GGUF Qwen3.8-27B-DFlash2-Q4_K_M.gguf \\
+  --local-dir models/Qwen3.8-27B-DFlash2-GGUF
 
 # Serve it with speculative decoding
 podman run --rm --userns=keep-id:uid=1000,gid=1000 \\
@@ -23,7 +25,8 @@ podman run --rm --userns=keep-id:uid=1000,gid=1000 \\
   ghcr.io/gufo-org/toolboxes/gufo-runtime:latest \\
   gufo serve --host 0.0.0.0 --port 8080 llm \\
   --model /models/Qwen3.8-27B-GGUF/Qwen3.8-27B-UD-Q8_K_XL.gguf \\
-  --speculative dflash2 --dflash-model /models/…-DFlash2-Q4_K_M.gguf`;
+  --speculative dflash2 \\
+  --dflash-model /models/Qwen3.8-27B-DFlash2-GGUF/Qwen3.8-27B-DFlash2-Q4_K_M.gguf`;
 ---
 
 <Layout title="Gufo: the Strix Halo inference engine">
@@ -79,7 +82,7 @@ podman run --rm --userns=keep-id:uid=1000,gid=1000 \\
       <div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-20 grid grid-cols-1 lg:grid-cols-3 gap-10 [&>*]:min-w-0">
         <div>
           <p class="eyebrow mb-3">02 / Quickstart</p>
-          <h2 class="text-3xl text-ink">Serve in two commands</h2>
+          <h2 class="text-3xl text-ink">Serve in two steps</h2>
           <p class="mt-5 text-[15px] text-ink-2 leading-relaxed">
             Download the weights, then start the runtime image with access to the GPU. The server listens on port 8080
             and speaks the OpenAI API, so Open WebUI, Codex or any OpenAI SDK can use

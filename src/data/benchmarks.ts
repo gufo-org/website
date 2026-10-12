@@ -56,7 +56,7 @@ const GUFO = '#e8891c';
 const REF = '#6a9bcc';
 const ACCENT = '#2f5d3a';
 const GOLD = '#c2a14d';
-const GREEN = '#8a76c4';
+const PURPLE = '#8a76c4';
 
 const DEPTHS = ['0', '4,096', '8,192', '12,288', '16,384', '32,768', '65,536', '131,072'];
 const DEPTH_AXIS = 'Cached prefix depth (tokens)';
@@ -153,7 +153,7 @@ export const benchmarks: BenchModel[] = [
             xTitle: DEPTH_AXIS,
             yTitle: 'Decode (tok/s)',
             series: [
-              { label: 'Gufo', data: [60.39, 57.66, 49.28, 42.15, 50.58, 44.54, 44.45, 44.26], color: GREEN },
+              { label: 'Gufo', data: [60.39, 57.66, 49.28, 42.15, 50.58, 44.54, 44.45, 44.26], color: PURPLE },
               { label: 'llama.cpp', data: [48.12, 45.71, 44.31, 43.53, 43.66, 39.28, 27.75, 20.96], color: REF, dashed: true },
             ],
           },
@@ -197,7 +197,7 @@ export const benchmarks: BenchModel[] = [
             series: [
               { label: 'Gufo AR', data: [25.84, 45.77, 76.33, 95.75, 108.68], color: GUFO },
               { label: 'llama.cpp AR', data: [22.34, 37.08, 54.82, 65.34, 68.79], color: REF },
-              { label: 'Gufo MTP repetitive', data: [60.1, 84.52, 131.1, 145.38, 162.98], color: GREEN },
+              { label: 'Gufo MTP repetitive', data: [60.1, 84.52, 131.1, 145.38, 162.98], color: PURPLE },
               { label: 'llama.cpp MTP repetitive', data: [46.93, 52.57, 48.23, 48.51, 58.13], color: GOLD },
             ],
           },
@@ -395,7 +395,7 @@ export const benchmarks: BenchModel[] = [
             xTitle: DEPTH_AXIS,
             yTitle: 'Decode (tok/s)',
             series: [
-              { label: 'Gufo', data: [63.12, 52.24, 61.55, 53.18, 49.67, 47.76, 29.44, 26.83], color: GREEN },
+              { label: 'Gufo', data: [63.12, 52.24, 61.55, 53.18, 49.67, 47.76, 29.44, 26.83], color: PURPLE },
               { label: 'llama.cpp', data: [35.86, 34.47, 34.73, 34.19, 33.75, 31.75, 26.33, 22.93], color: REF, dashed: true },
             ],
           },
@@ -448,7 +448,7 @@ export const benchmarks: BenchModel[] = [
             xTitle: DEPTH_AXIS,
             yTitle: 'Decode (tok/s)',
             series: [
-              { label: 'Gufo', data: [46.84, 40.51, 41.53, 40.45, 39.39, 35.87, 25.45, 23.41], color: GREEN },
+              { label: 'Gufo', data: [46.84, 40.51, 41.53, 40.45, 39.39, 35.87, 25.45, 23.41], color: PURPLE },
               { label: 'llama.cpp', data: [23.83, 23.59, 23.21, 22.1, 22.56, 21.16, 19.03, 17.23], color: REF, dashed: true },
             ],
           },
@@ -492,7 +492,7 @@ export const benchmarks: BenchModel[] = [
             series: [
               { label: 'Gufo AR', data: [12.42, 23.84, 44.23, 60.99, 74.46], color: GUFO },
               { label: 'llama.cpp AR', data: [12.2, 22.58, 38.94, 47.45, 50.14], color: REF },
-              { label: 'Gufo DFlash2 repetitive', data: [70.56, 105.51, 110.49, 113.52, 123.0], color: GREEN },
+              { label: 'Gufo DFlash2 repetitive', data: [70.56, 105.51, 110.49, 113.52, 123.0], color: PURPLE },
               { label: 'llama.cpp DFlash2 repetitive', data: [37.56, 51.65, 93.38, 97.52, 113.56], color: GOLD },
             ],
           },
@@ -533,7 +533,7 @@ export const benchmarks: BenchModel[] = [
             series: [
               { label: 'Gufo AR', data: [7.22, 14.45, 27.81, 39.96, 51.62], color: GUFO },
               { label: 'llama.cpp AR', data: [7.24, 13.71, 25.32, 34.64, 41.57], color: REF },
-              { label: 'Gufo DFlash2 repetitive', data: [51.23, 86.58, 102.98, 109.42, 118.07], color: GREEN },
+              { label: 'Gufo DFlash2 repetitive', data: [51.23, 86.58, 102.98, 109.42, 118.07], color: PURPLE },
               { label: 'llama.cpp DFlash2 repetitive', data: [24.09, 41.6, 58.92, 72.4, 86.25], color: GOLD },
             ],
           },
@@ -690,7 +690,7 @@ export const benchmarks: BenchModel[] = [
             series: [
               { label: 'AR', data: [16.28, 15.97, 15.82, 15.64, 15.5, 14.87, 13.95, 12.04], color: GUFO },
               { label: 'DSpark mixed', data: [18.25, 16.01, 16.48, 15.79, 15.52, 14.98, 14.05, 11.95], color: ACCENT },
-              { label: 'DSpark repetitive', data: [26.62, 25.54, 25.03, 23.87, 23.81, 22.9, 19.76, 15.17], color: GREEN },
+              { label: 'DSpark repetitive', data: [26.62, 25.54, 25.03, 23.87, 23.81, 22.9, 19.76, 15.17], color: PURPLE },
             ],
           },
         ],
@@ -725,7 +725,7 @@ export const benchmarks: BenchModel[] = [
             series: [
               { label: 'Gufo AR', data: [16.27, 26.88, 41.09, 49.21, 55.47], color: GUFO },
               { label: 'antirez/ds4 AR', data: [14.81, 14.81, 14.89, 15.01, 14.99], color: REF },
-              { label: 'Gufo DSpark repetitive', data: [26.59, 41.97, 47.04, 42.04, 52.77], color: GREEN },
+              { label: 'Gufo DSpark repetitive', data: [26.59, 41.97, 47.04, 42.04, 52.77], color: PURPLE },
             ],
           },
         ],

@@ -26,7 +26,7 @@ export const catalogue: CatalogueModel[] = [
     weights: 'GGUF UD-Q4_K_XL / UD-Q8_K_XL',
     footprint: '16.35 GiB (Q4) · 29.30 GiB (Q8)',
     modes: 'AR, DFlash2',
-    headline: '656.33 tok/s pp · up to 70.56 tok/s tg · 123.00 tok/s summed over 8 users',
+    headline: '656.33 tok/s pp · up to 63.12 tok/s tg · 123.00 tok/s summed over 8 users',
     status: 'measured',
   },
   {
@@ -50,7 +50,7 @@ export const catalogue: CatalogueModel[] = [
     weights: 'Flash 0731 mixed IQ2/Q2/Q8 GGUF + DSpark sidecar',
     footprint: '80.76 GiB weights, 93.09 GiB peak at C1',
     modes: 'AR, DSpark',
-    headline: '484.62 tok/s pp · up to 26.62 tok/s tg · 54.74 tok/s summed over 8 users',
+    headline: '484.62 tok/s pp · up to 26.62 tok/s tg · 55.47 tok/s summed over 8 users',
     status: 'measured',
   },
   {

@@ -17,7 +17,7 @@ const words = (post.body ?? '').split(/\s+/).filter(Boolean).length;
 const minutes = Math.max(1, Math.round(words / 230));
 ---
 
-<Layout title={`${title} · Gufo`} description={summary}>
+<Layout title={`${title} · Gufo`} description={summary} type="article" published={date}>
   <Navbar currentPath="/blog" />
   <main class="flex-1">
     <article class="max-w-3xl mx-auto px-4 sm:px-6 pt-12 sm:pt-20 pb-24">

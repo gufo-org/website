@@ -10,17 +10,18 @@ const chartPayload = benchmarks.map((m) => ({
 }));
 ---
 
-<Layout title="Benchmarks · Gufo">
+<Layout
+  title="Benchmarks · Gufo"
+  description="Measured prefill, decode, concurrency, loading and memory results for Gufo on AMD Strix Halo, compared with llama.cpp and antirez/ds4."
+>
   <Navbar currentPath="/benchmarks" />
 
-  <div class="w-full max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-6">
+  <main class="flex-1 w-full max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-6">
     <!-- Breadcrumbs -->
     <div class="flex items-center gap-2 text-xs text-ink-3">
       <a href="/" class="hover:text-ink">Home</a>
       <span>/</span>
       <span class="text-ink">Benchmarks</span>
-      <span>/</span>
-      <span class="text-ink font-semibold">Measurements</span>
     </div>
 
     <!-- Header -->
@@ -32,13 +33,16 @@ const chartPayload = benchmarks.map((m) => ({
 
     <!-- Horizontal model bar -->
     <div class="sticky top-16 z-40 py-2 bg-ivory/95 backdrop-blur border-b border-line">
-      <div class="flex gap-2 overflow-x-auto pb-1" id="model-bar" role="tablist">
+      <div class="flex gap-2 overflow-x-auto pb-1" id="model-bar" role="tablist" aria-label="Model">
         {benchmarks.map((m, idx) => (
           <button
             type="button"
             role="tab"
+            id={`model-tab-${m.id}`}
             data-model-id={m.id}
+            aria-controls={`model-panel-${m.id}`}
             aria-selected={idx === 0 ? 'true' : 'false'}
+            tabindex={idx === 0 ? 0 : -1}
             class={`model-tab shrink-0 px-3.5 py-2 rounded-full text-xs border transition-colors ${
               idx === 0
                 ? 'bg-ink text-ivory border-ink'
@@ -54,7 +58,11 @@ const chartPayload = benchmarks.map((m) => ({
 
     <!-- Model panels -->
     {benchmarks.map((m, idx) => (
-      <div id={`model-panel-${m.id}`} class={`model-panel space-y-6 ${idx === 0 ? 'block' : 'hidden'}`}>
+      <div
+        id={`model-panel-${m.id}`}
+        role="tabpanel"
+        aria-labelledby={`model-tab-${m.id}`}
+        class={`model-panel space-y-6 ${idx === 0 ? 'block' : 'hidden'}`}>
         <!-- Model header -->
         <div class="pt-4 space-y-3">
           <div class="flex flex-col sm:flex-row sm:items-start justify-between gap-3 border-b border-line pb-3">
@@ -84,6 +92,7 @@ const chartPayload = benchmarks.map((m) => ({
                 <button
                   type="button"
                   data-view-id={v.id}
+                  aria-pressed={vIdx === 0 ? 'true' : 'false'}
                   class={`view-btn shrink-0 lg:w-full text-left p-2.5 rounded text-xs transition-colors border lg:mb-1.5 ${
                     vIdx === 0
                       ? 'bg-paper text-ink border-transparent font-semibold'
@@ -101,7 +110,7 @@ const chartPayload = benchmarks.map((m) => ({
             </div>
           </aside>
 
-          <main class="lg:col-span-3 min-w-0 space-y-6">
+          <div class="lg:col-span-3 min-w-0 space-y-6">
             {m.views.map((v, vIdx) => (
               <div
                 id={`view-${m.id}-${v.id}`}
@@ -177,11 +186,11 @@ const chartPayload = benchmarks.map((m) => ({
                 ))}
               </ul>
             </div>
-          </main>
+          </div>
         </div>
       </div>
     ))}
-  </div>
+  </main>
 
   <Footer />
 
@@ -297,6 +306,7 @@ const chartPayload = benchmarks.map((m) => ({
       .forEach((btn) => {
         const isTarget = btn.getAttribute('data-view-id') === viewId;
         btn.classList.toggle('is-active', isTarget);
+        btn.setAttribute('aria-pressed', isTarget ? 'true' : 'false');
         btn.classList.remove(...(isTarget ? IDLE_VIEW : ACTIVE_VIEW));
         btn.classList.add(...(isTarget ? ACTIVE_VIEW : IDLE_VIEW));
       });
@@ -311,9 +321,11 @@ const chartPayload = benchmarks.map((m) => ({
   }
 
   function selectModel(modelId: string) {
+    if (!viewsByModel.has(modelId)) return;
     document.querySelectorAll('#model-bar .model-tab').forEach((tab) => {
       const isTarget = tab.getAttribute('data-model-id') === modelId;
       tab.setAttribute('aria-selected', isTarget ? 'true' : 'false');
+      tab.setAttribute('tabindex', isTarget ? '0' : '-1');
       tab.classList.remove(...(isTarget ? IDLE_MODEL : ACTIVE_MODEL));
       tab.classList.add(...(isTarget ? ACTIVE_MODEL : IDLE_MODEL));
     });
@@ -326,7 +338,12 @@ const chartPayload = benchmarks.map((m) => ({
 
     const viewId = activeViewOf(modelId);
     if (viewId) requestAnimationFrame(() => renderView(modelId, viewId));
+
+    // Keep the selection linkable, e.g. /benchmarks#deepseek-v4-flash.
+    if (location.hash.slice(1) !== modelId) history.replaceState(null, '', `#${modelId}`);
   }
+
+  const modelFromHash = () => decodeURIComponent(location.hash.slice(1));
 
   function init() {
     // Mark the initially visible view of each model as active.
@@ -358,9 +375,35 @@ const chartPayload = benchmarks.map((m) => ({
       }
     });
 
-    const first = payload[0];
-    const firstView = first?.views[0];
-    if (first && firstView) renderView(first.id, firstView.id);
+    // Arrow keys move between model tabs, as in the ARIA tabs pattern.
+    document.getElementById('model-bar')?.addEventListener('keydown', (event) => {
+      const tabs = [...document.querySelectorAll<HTMLElement>('#model-bar .model-tab')];
+      const current = tabs.indexOf(document.activeElement as HTMLElement);
+      if (current === -1) return;
+      const next = {
+        ArrowRight: current + 1,
+        ArrowLeft: current - 1,
+        Home: 0,
+        End: tabs.length - 1,
+      }[event.key];
+      if (next === undefined) return;
+      event.preventDefault();
+      const tab = tabs[(next + tabs.length) % tabs.length];
+      tab.focus();
+      const modelId = tab.getAttribute('data-model-id');
+      if (modelId) selectModel(modelId);
+    });
+
+    // Footer links change only the hash when already on this page.
+    window.addEventListener('hashchange', () => selectModel(modelFromHash()));
+
+    const initial = viewsByModel.has(modelFromHash()) ? modelFromHash() : payload[0]?.id;
+    if (initial && initial !== payload[0]?.id) {
+      selectModel(initial);
+    } else {
+      const firstView = payload[0]?.views[0];
+      if (initial && firstView) renderView(initial, firstView.id);
+    }
   }
 
   if (document.readyState === 'loading') {

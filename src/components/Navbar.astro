@@ -20,8 +20,9 @@ const isActive = (href: string) =>
        containing block for the fixed scrim and panel below, shrinking them to the nav bar. -->
   <div class="absolute inset-0 -z-10 bg-ivory/90 backdrop-blur" aria-hidden="true"></div>
 
-  <!-- Drawer state. Sibling of the overlay and panel so `peer-checked` can reach them. -->
-  <input type="checkbox" id="nav-drawer" class="peer sr-only" aria-label="Open navigation menu" />
+  <!-- Drawer state. Sibling of the overlay and panel so `peer-checked` can reach them. The
+       labels below are the controls, so the checkbox itself stays out of the tab order. -->
+  <input type="checkbox" id="nav-drawer" class="peer sr-only" tabindex="-1" aria-hidden="true" />
 
   <div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
     <div class="flex items-center justify-between h-16 gap-3">
@@ -63,7 +64,8 @@ const isActive = (href: string) =>
           for="nav-drawer"
           role="button"
           tabindex="0"
-          aria-controls="nav-drawer"
+          aria-controls="nav-panel"
+          aria-expanded="false"
           class="md:hidden flex items-center justify-center w-10 h-10 -mr-2 rounded text-ink hover:bg-paper cursor-pointer transition-colors"
         >
           <span class="sr-only">Open menu</span>
@@ -84,6 +86,7 @@ const isActive = (href: string) =>
 
   <!-- Side panel. Hidden while closed so its links stay out of the tab order. -->
   <aside
+    id="nav-panel"
     class="md:hidden fixed top-0 right-0 z-50 h-dvh w-72 max-w-[85vw] bg-ivory border-l border-line translate-x-full invisible peer-checked:translate-x-0 peer-checked:visible transition-[translate,visibility] duration-200 ease-out flex flex-col"
   >
     <div class="flex items-center justify-between h-16 px-4 border-b border-line shrink-0">
@@ -92,6 +95,7 @@ const isActive = (href: string) =>
         for="nav-drawer"
         role="button"
         tabindex="0"
+        aria-controls="nav-panel"
         class="flex items-center justify-center w-10 h-10 -mr-2 rounded text-ink-3 hover:bg-paper cursor-pointer transition-colors"
       >
         <span class="sr-only">Close menu</span>
@@ -131,25 +135,45 @@ const isActive = (href: string) =>
 </nav>
 
 <style>
-  /* Close the drawer when a link inside it is followed. */
+  /* Tap feedback for drawer links. */
   #nav-drawer:checked ~ aside a:active {
     opacity: 0.7;
   }
 </style>
 
 <script>
-  // Progressive enhancement only: the drawer already opens and closes with CSS.
+  // Progressive enhancement: the drawer opens and closes with CSS on click; this adds
+  // keyboard support and keeps aria-expanded in sync.
   const drawer = document.getElementById('nav-drawer') as HTMLInputElement | null;
   if (drawer) {
+    const toggles = document.querySelectorAll<HTMLElement>('label[for="nav-drawer"][role="button"]');
+    const sync = () => {
+      toggles.forEach((toggle) => toggle.setAttribute('aria-expanded', String(drawer.checked)));
+    };
+    drawer.addEventListener('change', sync);
+
+    // Labels don't activate on Enter or Space like real buttons do.
+    toggles.forEach((toggle) => {
+      toggle.addEventListener('keydown', (event) => {
+        if (event.key !== 'Enter' && event.key !== ' ') return;
+        event.preventDefault();
+        drawer.checked = !drawer.checked;
+        sync();
+      });
+    });
+
     // Close after navigating to an in-page anchor, where no page load happens.
     document.querySelectorAll('nav aside a[href*="#"]').forEach((link) => {
       link.addEventListener('click', () => {
         drawer.checked = false;
+        sync();
       });
     });
 
     document.addEventListener('keydown', (event) => {
-      if (event.key === 'Escape') drawer.checked = false;
+      if (event.key !== 'Escape' || !drawer.checked) return;
+      drawer.checked = false;
+      sync();
     });
   }
 </script>

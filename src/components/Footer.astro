@@ -1,5 +1,11 @@
 ---
-const columns = [
+interface FooterLink {
+  name: string;
+  href: string;
+  external?: boolean;
+}
+
+const columns: { title: string; links: FooterLink[] }[] = [
   {
     title: 'Docs',
     links: [
@@ -16,9 +22,9 @@ const columns = [
   {
     title: 'Models',
     links: [
-      { name: 'Qwen3.8 27B', href: '/benchmarks' },
-      { name: 'Qwen3.8 Flash-Next', href: '/benchmarks' },
-      { name: 'DeepSeek V4 Flash', href: '/benchmarks' },
+      { name: 'Qwen3.8 27B', href: '/benchmarks#qwen3.8-27b' },
+      { name: 'Qwen3.8 Flash-Next', href: '/benchmarks#qwen3.8-flash-next' },
+      { name: 'DeepSeek V4 Flash', href: '/benchmarks#deepseek-v4-flash' },
     ],
   },
   {

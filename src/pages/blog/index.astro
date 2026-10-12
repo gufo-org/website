@@ -23,7 +23,7 @@ const date = (d: Date) => d.toLocaleDateString('en-GB', { day: 'numeric', month:
       <ol class="divide-y divide-line">
         {posts.map((post) => (
           <li>
-            <a href={`/blog/${post.id}/`} class="group grid sm:grid-cols-[8rem_1fr] gap-2 sm:gap-6 py-10">
+            <a href={`/blog/${post.id}`} class="group grid sm:grid-cols-[8rem_1fr] gap-2 sm:gap-6 py-10">
               <div class="font-mono text-xs text-ink-4 pt-1.5 space-y-1">
                 <time datetime={post.data.date.toISOString()}>{date(post.data.date)}</time>
                 <p class="text-ink-3">{post.data.kind}</p>
