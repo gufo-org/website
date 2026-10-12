@@ -26,44 +26,8 @@ const chartPayload = benchmarks.map((m) => ({
     <!-- Header -->
     <div class="space-y-3">
       <h1 class="text-4xl sm:text-5xl text-ink">
-        Benchmarks on AMD Strix Halo
+        Benchmarks
       </h1>
-      <p class="text-sm text-ink-2 max-w-4xl leading-relaxed">
-        Every number here comes from <code class="text-ink">docs/models/&lt;model&gt;/BENCHMARKS.md</code> in the Gufo
-        repository, measured with release builds on one <code class="text-ink font-mono">gfx1151</code> machine with
-        128 GB of memory. Anything not measured yet says <b class="text-ink">TODO</b>, and comparisons the other
-        engine can't run say <b class="text-ink">N/A</b>. Nothing is estimated.
-      </p>
-      <details class="text-sm text-ink-3 border-y border-line">
-        <summary class="cursor-pointer py-3 text-ink-2 font-semibold select-none">
-          How we measure
-        </summary>
-        <div class="pb-5 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 leading-relaxed">
-          <div>
-            <div class="text-ink-3 font-mono mb-1">Reading the columns</div>
-            <code class="text-ink-2">pp</code> is prompt processing, <code class="text-ink-2">tg</code> is token
-            generation, and depth is how many tokens are already cached. Text runs go over HTTP, greedy, with thinking
-            off.
-          </div>
-          <div>
-            <div class="text-ink-3 font-mono mb-1">Concurrency</div>
-            We add up each request's decode speed. Prefill and queueing aren't included, so this isn't end-to-end
-            throughput.
-          </div>
-          <div>
-            <div class="text-ink-3 font-mono mb-1">Fair comparisons</div>
-            Compared runs share the source revision, weights, prompt and output length, depth, concurrency, driver,
-            ROCm version and warmup.
-          </div>
-          <div>
-            <div class="text-ink-3 font-mono mb-1">Other engines</div>
-            Built as separate Nix packages:
-            <code class="text-ink">.#llama-cpp-reference</code>,
-            <code class="text-ink">.#llama-cpp-mtp-reference</code>,
-            <code class="text-ink">.#ds4-reference</code>. Headline numbers come from runs without the profiler.
-          </div>
-        </div>
-      </details>
     </div>
 
     <!-- Horizontal model bar -->
@@ -96,11 +60,6 @@ const chartPayload = benchmarks.map((m) => ({
           <div class="flex flex-col sm:flex-row sm:items-start justify-between gap-3 border-b border-line pb-3">
             <div>
               <h2 class="text-3xl text-ink">{m.name}</h2>
-              <p class="text-xs text-ink-3 mt-1">
-                <span class="text-ink-2 font-semibold">{m.type}</span> ·
-                <span class="text-ink"> {m.format}</span> ·
-                <code class="text-ink-3"> {m.sourceDir}</code>
-              </p>
             </div>
             <div class="text-xs text-ink-2 bg-ivory px-2.5 py-1.5 rounded border border-line">
               {m.reference ? (
@@ -112,17 +71,6 @@ const chartPayload = benchmarks.map((m) => ({
           </div>
           <p class="text-[15px] text-ink-2 leading-relaxed">{m.summary}</p>
           <p class="text-[11px] text-ink-3 font-mono">{m.measured}</p>
-        </div>
-
-        <!-- Highlights -->
-        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-x-8 border-t border-line">
-          {m.highlights.map((h) => (
-            <div class="py-5 border-b border-line space-y-1">
-              <div class="text-xs text-ink-3">{h.label}</div>
-              <div class="text-2xl text-ink font-mono tracking-tight">{h.value}</div>
-              <div class="text-sm text-ink-3 leading-relaxed">{h.note}</div>
-            </div>
-          ))}
         </div>
 
         <!-- Benchmark sidebar + centre panel -->
@@ -228,15 +176,6 @@ const chartPayload = benchmarks.map((m) => ({
                   </li>
                 ))}
               </ul>
-            </div>
-
-            <!-- Reproduce -->
-            <div class="code-block">
-              <div class="code-block-header">
-                <span>Reproduce</span>
-                <span>sh</span>
-              </div>
-              <pre><code>{m.reproduce.join('\n')}</code></pre>
             </div>
           </main>
         </div>

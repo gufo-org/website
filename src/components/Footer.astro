@@ -4,19 +4,14 @@ const columns = [
     title: 'Docs',
     links: [
       { name: 'Quickstart', href: '/docs#quickstart' },
-      { name: 'Build from source', href: '/docs#build' },
-      { name: 'CLI commands', href: '/docs#cli' },
-      { name: 'Philosophy', href: '/philosophy' },
+      { name: 'Build from source', href: '/docs#build-from-source' },
     ],
   },
   {
     title: 'How it works',
     links: [
-      { name: 'Speculative decoding', href: '/docs#speculative' },
-      { name: 'Concurrent serving', href: '/docs#serving' },
       { name: 'Cache explorer', href: '/cache' },
-      { name: 'API', href: '/docs#api' },
-      { name: 'GPU queue limit', href: '/docs#queues' },
+      { name: 'API', href: 'https://github.com/gufo-org/gufo/blob/main/docs/SERVER.md', external: true },
     ],
   },
   {
@@ -25,7 +20,6 @@ const columns = [
       { name: 'Qwen3.8 27B', href: '/benchmarks' },
       { name: 'Qwen3.8 Flash-Next', href: '/benchmarks' },
       { name: 'DeepSeek V4 Flash', href: '/benchmarks' },
-      { name: 'Audio, image and video', href: '/docs#models' },
     ],
   },
   {
@@ -33,12 +27,9 @@ const columns = [
     links: [
       { name: 'GitHub', href: 'https://github.com/gufo-org/gufo', external: true },
       { name: 'OCI images', href: 'https://github.com/gufo-org/toolboxes', external: true },
-      { name: 'Nix serve helper', href: '/docs#nix-serve' },
-      { name: 'Profiling and benchmarking', href: '/docs#profiling' },
     ],
   },
-];
----
+];---
 
 <footer class="bg-paper border-t border-line text-ink mt-auto">
   <div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 pt-16 pb-10">

@@ -8,8 +8,6 @@ import { catalogue } from '../data/models';
       <tr class="border-b border-line">
         <th class="py-3 pr-6 font-normal">Model</th>
         <th class="py-3 pr-6 font-normal">Task</th>
-        <th class="py-3 pr-6 font-normal">Weights</th>
-        <th class="py-3 pr-6 font-normal">Modes</th>
         <th class="py-3 font-normal">Best result</th>
       </tr>
     </thead>
@@ -18,8 +16,6 @@ import { catalogue } from '../data/models';
         <tr class="align-top">
           <td class="py-4 pr-6 text-ink font-medium whitespace-nowrap">{m.name}</td>
           <td class="py-4 pr-6">{m.role}</td>
-          <td class="py-4 pr-6 min-w-40">{m.weights}</td>
-          <td class="py-4 pr-6 whitespace-nowrap">{m.modes}</td>
           <td class={`py-4 min-w-48 ${m.status === 'measured' ? 'text-ink' : 'text-ink-4'}`}>{m.headline}</td>
         </tr>
       ))}
