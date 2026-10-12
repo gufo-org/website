@@ -18,6 +18,8 @@ const date = (d: Date) => d.toLocaleDateString('en-GB', { day: 'numeric', month:
         <p class="mt-8 font-serif text-xl text-ink-2 leading-relaxed">How Gufo works and why it works that way.</p>
       </header>
 
+      {posts.length === 0 && <p class="py-10 text-ink-3">Coming soon.</p>}
+
       <ol class="divide-y divide-line">
         {posts.map((post) => (
           <li>
