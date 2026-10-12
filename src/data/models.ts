@@ -38,7 +38,7 @@ export const catalogue: CatalogueModel[] = [
     weights: 'GGUF UD-Q4_K_XL (four shards) + shared-Q8_0 MTP',
     footprint: '85.56 GiB peak, pp2048 + tg128 at C1',
     modes: 'AR, MTP',
-    headline: '1,700.52 tok/s pp · up to 60.39 tok/s tg · 162.98 tok/s summed over 8 users',
+    headline: '1,702.93 tok/s pp · up to 65.25 tok/s tg · 184.74 tok/s summed over 8 users',
     status: 'measured',
   },
   {
