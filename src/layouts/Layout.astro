@@ -5,13 +5,16 @@ interface Props {
   /** Open Graph type; blog posts pass `article` with their publication date. */
   type?: 'website' | 'article';
   published?: Date;
+  /** Keep the page out of search results, e.g. the blog index while it has no posts. */
+  noindex?: boolean;
 }
 
 const {
   title,
-  description = "Gufo runs text, image, audio and video models locally on AMD Strix Halo.",
+  description = "Gufo runs text, vision and speech models locally on AMD Strix Halo, with image and video generation in progress.",
   type = 'website',
   published,
+  noindex = false,
 } = Astro.props;
 // Absolute URLs need `site` in astro.config.mjs; without it the tags fall back to root-relative paths.
 const absolute = (path: string) => (Astro.site ? new URL(path, Astro.site).href : path);
@@ -30,11 +33,12 @@ import '../styles/global.css';
     <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32.png" />
     <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
     <link rel="preload" href="/fonts/instrument-sans-400-700.woff2" as="font" type="font/woff2" crossorigin />
-    <link rel="preload" href="/fonts/source-serif-4-400.woff2" as="font" type="font/woff2" crossorigin />
+    <link rel="preload" href="/fonts/source-serif-4-400-700.woff2" as="font" type="font/woff2" crossorigin />
     <meta name="generator" content={Astro.generator} />
     <meta name="theme-color" content="#f7f8f3" />
     <title>{title}</title>
     <meta name="description" content={description} />
+    {noindex && <meta name="robots" content="noindex" />}
     {Astro.site && <link rel="canonical" href={absolute(pagePath)} />}
 
     <meta property="og:type" content={type} />
@@ -59,8 +63,9 @@ import '../styles/global.css';
 
 <script>
   // Give every code block a copy button. Blocks with a header swap their
-  // language label for it; bare <pre class="code-block"> get a floating one.
-  document.querySelectorAll<HTMLElement>('.code-block').forEach((block) => {
+  // language label for it; bare <pre class="code-block"> and Markdown code
+  // blocks in prose get a floating one.
+  document.querySelectorAll<HTMLElement>('.code-block, .prose-gufo pre').forEach((block) => {
     const pre = block.matches('pre') ? block : block.querySelector('pre');
     if (!pre) return;
 

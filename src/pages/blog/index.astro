@@ -1,14 +1,18 @@
 ---
-import { getCollection } from 'astro:content';
+import { getPosts } from '../../lib/posts';
 import Layout from '../../layouts/Layout.astro';
 import Navbar from '../../components/Navbar.astro';
 import Footer from '../../components/Footer.astro';
 
-const posts = (await getCollection('blog', ({ data }) => !data.draft)).sort((a, b) => b.data.date.valueOf() - a.data.date.valueOf());
+const posts = (await getPosts()).sort((a, b) => b.data.date.valueOf() - a.data.date.valueOf());
 const date = (d: Date) => d.toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' });
 ---
 
-<Layout title="Behind Gufo" description="How Gufo works and why it works that way: engineering posts, measurements and design decisions.">
+<Layout
+  title="Blog · Gufo"
+  description="How Gufo works and why it works that way: engineering posts, measurements and design decisions."
+  noindex={posts.length === 0}
+>
   <Navbar currentPath="/blog" />
   <main class="flex-1">
     <div class="max-w-3xl mx-auto px-4 sm:px-6 pt-16 sm:pt-24 pb-24">
@@ -20,7 +24,7 @@ const date = (d: Date) => d.toLocaleDateString('en-GB', { day: 'numeric', month:
 
       {posts.length === 0 && <p class="py-10 text-ink-3">Coming soon.</p>}
 
-      <ol class="divide-y divide-line">
+      {posts.length > 0 && <ol class="divide-y divide-line">
         {posts.map((post) => (
           <li>
             <a href={`/blog/${post.id}`} class="group grid sm:grid-cols-[8rem_1fr] gap-2 sm:gap-6 py-10">
@@ -40,7 +44,7 @@ const date = (d: Date) => d.toLocaleDateString('en-GB', { day: 'numeric', month:
             </a>
           </li>
         ))}
-      </ol>
+      </ol>}
     </div>
   </main>
   <Footer />

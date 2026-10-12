@@ -4,6 +4,7 @@ import Layout from '../layouts/Layout.astro';
 import Navbar from '../components/Navbar.astro';
 import Footer from '../components/Footer.astro';
 import ModelMatrix from '../components/ModelMatrix.astro';
+import readme from '../content/readme.md?raw';
 
 const principles = [
   { title: 'Fewer models, done well', body: 'The best model for each size, not every model.' },
@@ -12,21 +13,9 @@ const principles = [
   { title: 'Real workloads, reproducible builds', body: 'Several users and long conversations are the normal case.' },
 ];
 
-const quickstart = `# Download a target and its DFlash2 draft
-hf download unsloth/Qwen3.8-27B-GGUF Qwen3.8-27B-UD-Q8_K_XL.gguf \\
-  --local-dir models/Qwen3.8-27B-GGUF
-hf download z-lab/Qwen3.8-27B-DFlash2-GGUF Qwen3.8-27B-DFlash2-Q4_K_M.gguf \\
-  --local-dir models/Qwen3.8-27B-DFlash2-GGUF
-
-# Serve it with speculative decoding
-podman run --rm --userns=keep-id:uid=1000,gid=1000 \\
-  --device /dev/kfd --device /dev/dri --group-add keep-groups \\
-  --ulimit memlock=-1 -p 8080:8080 -v ./models:/models:ro \\
-  ghcr.io/gufo-org/toolboxes/gufo-runtime:latest \\
-  gufo serve --host 0.0.0.0 --port 8080 llm \\
-  --model /models/Qwen3.8-27B-GGUF/Qwen3.8-27B-UD-Q8_K_XL.gguf \\
-  --speculative dflash2 \\
-  --dflash-model /models/Qwen3.8-27B-DFlash2-GGUF/Qwen3.8-27B-DFlash2-Q4_K_M.gguf`;
+// The docs README is the single source for the quickstart; its first shell block is shown here.
+const quickstart = readme.match(/```sh\n([\s\S]*?)\n```/)?.[1] ?? '';
+if (!quickstart) throw new Error('No sh code block found in src/content/readme.md');
 ---
 
 <Layout title="Gufo: the Strix Halo inference engine">
@@ -35,7 +24,7 @@ podman run --rm --userns=keep-id:uid=1000,gid=1000 \\
   <main class="flex-1">
     <!-- Hero -->
     <header class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 pt-20 pb-20 sm:pt-28 sm:pb-24">
-      <h1 class="text-4xl sm:text-5xl lg:text-[3.5rem] text-ink leading-[1.04] lg:whitespace-nowrap">
+      <h1 class="text-4xl sm:text-5xl lg:text-[3.5rem] text-ink leading-[1.04] text-balance xl:whitespace-nowrap">
         The <em class="font-bold">Open Source</em> Strix Halo AI engine
       </h1>
       <div class="mt-10 flex flex-wrap items-center gap-3">

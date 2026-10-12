@@ -1,0 +1,31 @@
+---
+import Layout from '../layouts/Layout.astro';
+import Navbar from '../components/Navbar.astro';
+import Footer from '../components/Footer.astro';
+---
+
+<!-- Built as 404.html, which GitHub Pages serves for any missing path. -->
+<Layout title="Page not found · Gufo" description="This page does not exist." noindex>
+  <Navbar currentPath="/404" />
+
+  <main class="flex-1 w-full max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 pt-20 pb-24 sm:pt-28">
+    <p class="eyebrow mb-5">404</p>
+    <h1 class="text-4xl sm:text-5xl text-ink leading-[1.08]">Page not found</h1>
+    <p class="mt-6 text-[15px] text-ink-2 leading-relaxed max-w-xl">
+      This page does not exist. It may have moved, or the link may be mistyped.
+    </p>
+    <div class="mt-10 flex flex-wrap items-center gap-3">
+      <a href="/" class="inline-flex items-center h-11 px-5 rounded-full bg-forest text-ivory text-sm hover:bg-forest-dark transition-colors">
+        Home
+      </a>
+      <a
+        href="/docs"
+        class="inline-flex items-center h-11 px-5 rounded-full border border-line-strong text-ink text-sm hover:bg-paper transition-colors"
+      >
+        Documentation
+      </a>
+    </div>
+  </main>
+
+  <Footer />
+</Layout>

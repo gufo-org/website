@@ -1,23 +1,27 @@
 ---
+import { getPosts } from '../lib/posts';
+
 interface Props {
   currentPath?: string;
 }
 
 const { currentPath = '/' } = Astro.props;
 
+// The blog joins the navigation once it has a published post.
+const hasPosts = (await getPosts()).length > 0;
 const navItems = [
   { name: 'Docs', href: '/docs' },
   { name: 'Benchmarks', href: '/benchmarks' },
-  { name: 'Blog', href: '/blog' },
+  ...(hasPosts ? [{ name: 'Blog', href: '/blog' }] : []),
 ];
 
 const isActive = (href: string) =>
   currentPath === href || (href !== '/' && currentPath.startsWith(href.split('#')[0]));
 ---
 
-<nav class="sticky top-0 z-50 border-b border-line text-sm">
-  <!-- The blur sits on its own layer: a backdrop-filter on the nav itself would make it the
-       containing block for the fixed scrim and panel below, shrinking them to the nav bar. -->
+<header class="sticky top-0 z-50 border-b border-line text-sm">
+  <!-- The blur sits on its own layer: a backdrop-filter on the header itself would make it the
+       containing block for the fixed scrim and panel below, shrinking them to the bar. -->
   <div class="absolute inset-0 -z-10 bg-ivory/90 backdrop-blur" aria-hidden="true"></div>
 
   <!-- Drawer state. Sibling of the overlay and panel so `peer-checked` can reach them. The
@@ -33,7 +37,7 @@ const isActive = (href: string) =>
           <span class="font-serif text-xl text-ink tracking-tight">Gufo</span>
         </a>
 
-        <div class="hidden md:flex items-center gap-6">
+        <nav aria-label="Main" class="hidden md:flex items-center gap-6">
           {navItems.map((item) => (
             <a
               href={item.href}
@@ -43,7 +47,7 @@ const isActive = (href: string) =>
               {item.name}
             </a>
           ))}
-        </div>
+        </nav>
       </div>
 
       <!-- Right: GitHub, then the menu button on small screens -->
@@ -84,10 +88,14 @@ const isActive = (href: string) =>
     aria-hidden="true"
   ></label>
 
-  <!-- Side panel. Hidden while closed so its links stay out of the tab order. -->
-  <aside
+  <!-- Side panel. Hidden while closed so its links stay out of the tab order. Visibility
+       animates only on close, so the panel is visible, and focusable, as soon as it opens. -->
+  <div
     id="nav-panel"
-    class="md:hidden fixed top-0 right-0 z-50 h-dvh w-72 max-w-[85vw] bg-ivory border-l border-line translate-x-full invisible peer-checked:translate-x-0 peer-checked:visible transition-[translate,visibility] duration-200 ease-out flex flex-col"
+    role="dialog"
+    aria-modal="true"
+    aria-label="Menu"
+    class="md:hidden fixed top-0 right-0 z-50 h-dvh w-72 max-w-[85vw] bg-ivory border-l border-line translate-x-full invisible peer-checked:translate-x-0 peer-checked:visible transition-[translate,visibility] peer-checked:transition-[translate] duration-200 ease-out flex flex-col"
   >
     <div class="flex items-center justify-between h-16 px-4 border-b border-line shrink-0">
       <span class="font-serif text-lg text-ink">Gufo</span>
@@ -105,10 +113,11 @@ const isActive = (href: string) =>
       </label>
     </div>
 
-    <nav class="flex-1 overflow-y-auto p-3 space-y-0.5">
+    <nav aria-label="Main" class="flex-1 overflow-y-auto p-3 space-y-0.5">
       {navItems.map((item) => (
         <a
           href={item.href}
+          aria-current={isActive(item.href) ? 'page' : undefined}
           class={`block px-3 py-3 rounded text-base transition-colors ${
             isActive(item.href) ? 'text-ink bg-paper' : 'text-ink-2 hover:bg-paper'
           }`}
@@ -131,26 +140,56 @@ const isActive = (href: string) =>
         View on GitHub
       </a>
     </div>
-  </aside>
-</nav>
+  </div>
+</header>
 
 <style>
   /* Tap feedback for drawer links. */
-  #nav-drawer:checked ~ aside a:active {
+  #nav-drawer:checked ~ #nav-panel a:active {
     opacity: 0.7;
+  }
+
+  /* Keep the page still behind the open drawer. Scoped to the drawer's breakpoint so
+     widening the window with the drawer open doesn't leave the page locked. */
+  @media (width < 48rem) {
+    :global(html:has(#nav-drawer:checked)) {
+      overflow: hidden;
+    }
   }
 </style>
 
 <script>
   // Progressive enhancement: the drawer opens and closes with CSS on click; this adds
-  // keyboard support and keeps aria-expanded in sync.
+  // keyboard support, keeps aria-expanded in sync and keeps focus inside the open panel.
   const drawer = document.getElementById('nav-drawer') as HTMLInputElement | null;
-  if (drawer) {
+  const panel = document.getElementById('nav-panel');
+  if (drawer && panel) {
     const toggles = document.querySelectorAll<HTMLElement>('label[for="nav-drawer"][role="button"]');
+    const menuButton = [...toggles].find((toggle) => !panel.contains(toggle));
+    const closeButton = [...toggles].find((toggle) => panel.contains(toggle));
+    const focusable = () => [...panel.querySelectorAll<HTMLElement>('a[href], [role="button"][tabindex="0"]')];
+
     const sync = () => {
       toggles.forEach((toggle) => toggle.setAttribute('aria-expanded', String(drawer.checked)));
+      if (drawer.checked) closeButton?.focus();
+      else if (panel.contains(document.activeElement)) menuButton?.focus();
     };
     drawer.addEventListener('change', sync);
+
+    // Tab and Shift+Tab wrap around inside the open panel.
+    panel.addEventListener('keydown', (event) => {
+      if (event.key !== 'Tab' || !drawer.checked) return;
+      const items = focusable();
+      const first = items[0];
+      const last = items[items.length - 1];
+      if (event.shiftKey && document.activeElement === first) {
+        event.preventDefault();
+        last?.focus();
+      } else if (!event.shiftKey && document.activeElement === last) {
+        event.preventDefault();
+        first?.focus();
+      }
+    });
 
     // Labels don't activate on Enter or Space like real buttons do.
     toggles.forEach((toggle) => {
@@ -163,7 +202,7 @@ const isActive = (href: string) =>
     });
 
     // Close after navigating to an in-page anchor, where no page load happens.
-    document.querySelectorAll('nav aside a[href*="#"]').forEach((link) => {
+    panel.querySelectorAll('a[href*="#"]').forEach((link) => {
       link.addEventListener('click', () => {
         drawer.checked = false;
         sync();

@@ -25,7 +25,7 @@ const nav = groups.map(({ group, slugs }) => ({
   <div class="w-full max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
     <div class="grid grid-cols-1 lg:grid-cols-4 gap-8 items-start">
       <!-- On small screens the section list folds into a dropdown above the content -->
-      <details class="lg:hidden border-y border-line text-sm">
+      <details id="toc-mobile" class="lg:hidden border-y border-line text-sm">
         <summary class="cursor-pointer py-3 text-ink-2 select-none">On this page</summary>
         <div class="pb-4 space-y-4">
           {nav.map((section) => (
@@ -122,4 +122,8 @@ const nav = groups.map(({ group, slugs }) => ({
     { passive: true },
   );
   update();
+
+  // Fold the small-screen section list away once a section is picked.
+  const mobileToc = document.getElementById('toc-mobile') as HTMLDetailsElement | null;
+  mobileToc?.querySelectorAll('a').forEach((link) => link.addEventListener('click', () => (mobileToc.open = false)));
 </script>

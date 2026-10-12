@@ -62,7 +62,7 @@ const chartPayload = benchmarks.map((m) => ({
         id={`model-panel-${m.id}`}
         role="tabpanel"
         aria-labelledby={`model-tab-${m.id}`}
-        class={`model-panel space-y-6 ${idx === 0 ? 'block' : 'hidden'}`}>
+        class={`model-panel scroll-mt-32 space-y-6 ${idx === 0 ? 'block' : 'hidden'}`}>
         <!-- Model header -->
         <div class="pt-4 space-y-3">
           <div class="flex flex-col sm:flex-row sm:items-start justify-between gap-3 border-b border-line pb-3">
@@ -394,8 +394,14 @@ const chartPayload = benchmarks.map((m) => ({
       if (modelId) selectModel(modelId);
     });
 
-    // Footer links change only the hash when already on this page.
-    window.addEventListener('hashchange', () => selectModel(modelFromHash()));
+    // Footer links change only the hash when already on this page. No element carries
+    // the model id, so the browser doesn't scroll; bring the panel into view ourselves.
+    window.addEventListener('hashchange', () => {
+      const modelId = modelFromHash();
+      if (!viewsByModel.has(modelId)) return;
+      selectModel(modelId);
+      document.getElementById(`model-panel-${modelId}`)?.scrollIntoView({ block: 'start' });
+    });
 
     const initial = viewsByModel.has(modelFromHash()) ? modelFromHash() : payload[0]?.id;
     if (initial && initial !== payload[0]?.id) {
