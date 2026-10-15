@@ -1,9 +1,7 @@
 ---
-import { readFileSync } from 'node:fs';
-
 // Inlined so the logo paints with the first frame instead of popping in after a request.
 // The 56px source covers the 28px slot on 2x screens and adds about 3 KB to each page.
-const src = `data:image/jpeg;base64,${readFileSync('src/assets/gufo-logo-56.jpg').toString('base64')}`;
+import src from '../assets/gufo-logo-56.jpg?inline';
 ---
 
 <img src={src} alt="" width="28" height="28" class="w-7 h-7 rounded-md object-cover" />
