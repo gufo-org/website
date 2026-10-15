@@ -1,0 +1,142 @@
+---
+// The "fork" story from the cache explorer, in the style of the other blog
+// figures: a parent with a checkpoint at 4,096, a first subagent that
+// recomputes the gap and learns the 6,000-token boundary, and a second
+// subagent that restores it. Inline SVG rendered on the server.
+interface Props {
+  figure?: number | string;
+  caption?: string;
+}
+
+const { figure, caption } = Astro.props;
+
+const parent = 10000;
+const shared = 6000;
+const child = 8192;
+const grid = 4096;
+const number = (t: number) => t.toLocaleString('en-US');
+
+const left = 24;
+const width = 712;
+const x = (t: number) => left + (t / parent) * width;
+
+const colours = { restored: '#3f7a4f', gap: '#c27a2c', task: '#4f86b8' };
+type Segment = { from: number; to: number; c: string; label: string };
+const subagents: { head: string; top: number; segments: Segment[] }[] = [
+  { head: `First subagent · ${number(child)} tokens`, top: 160, segments: [
+    { from: 0, to: grid, c: colours.restored, label: 'restored' },
+    { from: grid, to: shared, c: colours.gap, label: 'gap, computed' },
+    { from: shared, to: child, c: colours.task, label: 'own task' },
+  ] },
+  { head: `Second subagent · ${number(child)} tokens`, top: 284, segments: [
+    { from: 0, to: shared, c: colours.restored, label: 'restored' },
+    { from: shared, to: child, c: colours.task, label: 'own task' },
+  ] },
+];
+const gap = 1.5;
+
+// Checkpoints are frozen private state, drawn like the state blocks in figures 2 to 7.
+const palette = ['#3f7a4f', '#4f86b8', '#c27a2c', '#3d8a8a', '#9a5c8a'];
+const cell = 7;
+const block = (cx: number, top: number, seed: number) =>
+  Array.from({ length: 9 }, (_, k) => ({
+    x: cx - 1.5 * cell + (k % 3) * cell,
+    y: top + Math.floor(k / 3) * cell,
+    fill: palette[(k * 2 + seed) % palette.length],
+  }));
+
+const parentTop = 84;
+const blockTop = 50;
+const learnedTop = subagents[0].top + 58;
+const bottom = subagents[1].top + 52;
+---
+<figure class="fkf">
+  <p class="fkf-eyebrow"><span class="fkf-dot"></span>{figure !== undefined && <>Fig. {figure} · </>}Learning a boundary</p>
+  <div class="fkf-scroll">
+    <svg viewBox={`0 0 760 ${bottom + 8}`} role="img" aria-label={`A parent has ${number(parent)} tokens and a checkpoint at ${number(grid)}. Its subagents share the first ${number(shared)} tokens. The first subagent restores ${number(grid)}, computes the gap to ${number(shared)}, captures a learned checkpoint there and prefills its own task. The second subagent restores the learned checkpoint and prefills only its own task.`}>
+      <defs>
+        <marker id="fkf-arrow" viewBox="0 0 8 8" refX="7" refY="4" markerWidth="7" markerHeight="7" orient="auto">
+          <path d="M0 0 L8 4 L0 8 z" class="fkf-arrowhead" />
+        </marker>
+      </defs>
+
+      <text x={left} y="26" class="fkf-head">Parent · {number(parent)} tokens</text>
+      <line x1={x(shared)} y1="34" x2={x(shared)} y2={subagents[0].top + 32} class="fkf-diverge" />
+      <text x={x(shared) + 6} y="26" class="fkf-diverge-label">subagents diverge at {number(shared)}</text>
+
+      {[grid, parent].map((c, i) => (
+        <g>
+          <text x={c === parent ? x(c) - 12 : x(c)} y={blockTop - 8} class="fkf-cp-label" text-anchor={c === parent ? 'end' : 'middle'}>{number(c)}</text>
+          {block(c === parent ? x(c) - 1.5 * cell : x(c), blockTop, i * 3 + 1).map((s) => <rect x={s.x} y={s.y} width={cell} height={cell} fill={s.fill} class="fkf-state" />)}
+          <line x1={c === parent ? x(c) - 1.5 * cell : x(c)} y1={blockTop + 3 * cell + 1} x2={c === parent ? x(c) - 1.5 * cell : x(c)} y2={parentTop} class="fkf-cp-line" />
+        </g>
+      ))}
+      <rect x={x(0)} y={parentTop} width={width} height="28" rx="6" class="fkf-parent" />
+      <text x={x(shared / 2)} y={parentTop + 18.5} class="fkf-parent-text" text-anchor="middle">system prompt and tools</text>
+      <text x={x((shared + parent) / 2)} y={parentTop + 18.5} class="fkf-parent-text" text-anchor="middle">parent's own history</text>
+
+      <line x1={x(grid)} y1={parentTop + 32} x2={x(grid)} y2={subagents[0].top - 6} class="fkf-restore" marker-end="url(#fkf-arrow)" />
+      <text x={x(grid) - 8} y={(parentTop + subagents[0].top) / 2 + 12} class="fkf-note" text-anchor="end">restore</text>
+
+      {subagents.map((sub) => (
+        <g>
+          <text x={left} y={sub.top - 12} class="fkf-head">{sub.head}</text>
+          {sub.segments.map((s, i) => {
+            const x1 = x(s.from) + (i > 0 ? gap : 0);
+            const x2 = x(s.to) - (sub.segments.length - 1 > i ? gap : 0);
+            const mid = (x(s.from) + x(s.to)) / 2;
+            return (
+              <g style={`--c: ${s.c}`}>
+                <rect x={x1} y={sub.top} width={x2 - x1} height="28" rx="6" class="fkf-seg" />
+                <text x={mid} y={sub.top + 18.5} class="fkf-seg-count" text-anchor="middle">{number(s.to - s.from)}</text>
+                <text x={mid} y={sub.top + 46} class="fkf-seg-label" text-anchor="middle">{s.label}</text>
+              </g>
+            );
+          })}
+        </g>
+      ))}
+
+      {block(x(shared), learnedTop, 4).map((s) => <rect x={s.x} y={s.y} width={cell} height={cell} fill={s.fill} class="fkf-state" />)}
+      <text x={x(shared) + 2 * cell + 2} y={learnedTop + 14} class="fkf-learned">learned checkpoint</text>
+      <line x1={x(shared)} y1={learnedTop + 3 * cell + 2} x2={x(shared)} y2={subagents[1].top - 6} class="fkf-restore" marker-end="url(#fkf-arrow)" />
+      <text x={x(shared) - 8} y={subagents[1].top - 14} class="fkf-note" text-anchor="end">restore</text>
+    </svg>
+  </div>
+  {caption && <figcaption>{caption}</figcaption>}
+</figure>
+
+<style>
+  .fkf {
+    --diff: #b8336a;
+    margin: 2.5rem 0;
+    padding: 20px;
+    background: var(--color-paper);
+    border: 1px solid var(--color-line-strong);
+    border-radius: 10px;
+    font-family: var(--font-sans);
+  }
+  .fkf-eyebrow { display: flex; align-items: center; gap: 8px; font: 12px var(--font-mono); color: var(--color-ink-3); }
+  .fkf-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--color-forest); }
+  .fkf-scroll { margin: 14px 0; overflow-x: auto; }
+  .fkf svg { display: block; width: 100%; min-width: 560px; height: auto; }
+
+  .fkf-head { font: 10.5px var(--font-mono); letter-spacing: 0.06em; text-transform: uppercase; fill: var(--color-ink-4); }
+  .fkf-cp-label { font: 11px var(--font-mono); fill: var(--color-ink-3); }
+  .fkf-note { font: italic 12px var(--font-sans); fill: var(--color-ink-3); }
+  .fkf-learned { font: 600 12px var(--font-sans); fill: var(--color-ink); }
+  .fkf-arrowhead { fill: var(--color-ink-3); }
+
+  .fkf-parent { fill: var(--color-ivory); stroke: var(--color-line-strong); }
+  .fkf-parent-text { font: 12px var(--font-mono); fill: var(--color-ink-4); }
+  .fkf-state { stroke: var(--color-paper); stroke-width: 1; fill-opacity: 0.75; }
+  .fkf-cp-line { stroke: var(--color-ink-3); stroke-width: 1.2; }
+  .fkf-restore { stroke: var(--color-ink-3); stroke-width: 1.4; }
+  .fkf-diverge { stroke: var(--diff); stroke-width: 1.4; stroke-dasharray: 4 3; }
+  .fkf-diverge-label { font: 11px var(--font-mono); fill: var(--diff); }
+
+  .fkf-seg { fill: color-mix(in srgb, var(--c) 14%, white); stroke: var(--c); stroke-width: 1.4; }
+  .fkf-seg-count { font: 13px var(--font-mono); fill: var(--color-ink); }
+  .fkf-seg-label { font: italic 12px var(--font-sans); fill: color-mix(in srgb, var(--c) 75%, black); }
+
+  .fkf figcaption { font-family: var(--font-serif); font-style: italic; font-size: 14px; line-height: 1.5; color: var(--color-ink-2); }
+</style>

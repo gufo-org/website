@@ -1,0 +1,135 @@
+---
+// The "spill" story from the cache explorer, in the style of the other blog
+// figures: two checkpoints borrow A's rows in slot 1; when B takes the slot
+// the rows are preserved once in backing RAM, and evicting the older
+// checkpoint frees only its private state. Inline SVG rendered on the server.
+interface Props {
+  figure?: number | string;
+  caption?: string;
+}
+
+const { figure, caption } = Astro.props;
+
+const chunk = 2048;
+const total = 12288;
+const left = 160;
+const span = 440;
+const x = (t: number) => left + (t / total) * span;
+const ownX = 630;
+const colours = { A: '#3f7a4f', B: '#4f86b8' };
+const names = Array.from({ length: total / chunk }, (_, i) => `C${i + 1}`);
+
+type Row =
+  | { kind: 'chunks'; label: string; y: number; own?: string }
+  | { kind: 'refs'; label: string; y: number; count: number; own: string }
+  | { kind: 'bar'; label: string; y: number; to: number; text: string; own?: string }
+  | { kind: 'evicted'; label: string; y: number; count: number; own: string };
+const stages: { head: string; y: number; rows: Row[] }[] = [
+  { head: 'Before · the checkpoints borrow slot 1', y: 26, rows: [
+    { kind: 'chunks', label: 'slot 1 · A', y: 56, own: 'live rows' },
+    { kind: 'refs', label: 'A@8,192', y: 96, count: 4, own: 'state' },
+    { kind: 'refs', label: 'A@12,288', y: 136, count: 6, own: 'state' },
+  ] },
+  { head: 'B takes slot 1, then A@8,192 is evicted', y: 186, rows: [
+    { kind: 'bar', label: 'slot 1 · B', y: 216, to: 2048, text: "B's rows" },
+    { kind: 'chunks', label: 'backing RAM', y: 256, own: 'copied once' },
+    { kind: 'refs', label: 'A@12,288', y: 296, count: 6, own: 'state' },
+    { kind: 'evicted', label: 'A@8,192', y: 336, count: 4, own: 'state freed' },
+  ] },
+];
+const bottom = 352;
+
+const palette = ['#3f7a4f', '#4f86b8', '#c27a2c', '#3d8a8a', '#9a5c8a'];
+const cell = 7;
+const block = (y: number, seed: number) =>
+  Array.from({ length: 9 }, (_, k) => ({
+    x: ownX + (k % 3) * cell,
+    y: y - 1.5 * cell + Math.floor(k / 3) * cell,
+    fill: palette[(k * 2 + seed) % palette.length],
+  }));
+const box = (i: number) => ({ x1: x(i * chunk) + 2, x2: x((i + 1) * chunk) - 2 });
+---
+<figure class="spf">
+  <p class="spf-eyebrow"><span class="spf-dot"></span>{figure !== undefined && <>Fig. {figure} · </>}Preserving borrowed rows</p>
+  <div class="spf-scroll">
+    <svg viewBox={`0 0 760 ${bottom + 40}`} role="img" aria-label="Before: A's six chunks are live in slot 1, and checkpoints A@8,192 and A@12,288 borrow four and six of them. After B takes slot 1, the six chunks are copied once into backing RAM and A@12,288 still references all of them. Evicting A@8,192 frees only its private state.">
+      {stages.map((stage) => (
+        <g>
+          <text x="24" y={stage.y} class="spf-head">{stage.head}</text>
+          {stage.rows.map((r, n) => (
+            <g style={`--c: ${r.kind === 'bar' ? colours.B : colours.A}`}>
+              <rect x="24" y={r.y - 14} width="112" height="28" rx="6" class={r.kind === 'evicted' ? 'spf-chip is-gone' : 'spf-chip'} />
+              <text x="80" y={r.y + 4.5} class={r.kind === 'evicted' ? 'spf-chip-text is-gone' : 'spf-chip-text'} text-anchor="middle">{r.label}</text>
+
+              {r.kind === 'chunks' && names.map((name, i) => (
+                <g>
+                  <rect x={box(i).x1} y={r.y - 14} width={box(i).x2 - box(i).x1} height="28" rx="6" class="spf-chunk" />
+                  <text x={(box(i).x1 + box(i).x2) / 2} y={r.y + 4.5} class="spf-chunk-text" text-anchor="middle">{name}</text>
+                </g>
+              ))}
+              {r.kind === 'refs' && names.slice(0, r.count).map((name, i) => (
+                <g>
+                  <rect x={box(i).x1} y={r.y - 11} width={box(i).x2 - box(i).x1} height="22" rx="5" class="spf-ref" />
+                  <text x={(box(i).x1 + box(i).x2) / 2} y={r.y + 4} class="spf-ref-text" text-anchor="middle">→ {name}</text>
+                </g>
+              ))}
+              {r.kind === 'bar' && (
+                <g>
+                  <rect x={x(0) + 2} y={r.y - 14} width={x(r.to) - x(0) - 4} height="28" rx="6" class="spf-chunk" />
+                  <text x={(x(0) + x(r.to)) / 2} y={r.y + 4.5} class="spf-chunk-text" text-anchor="middle">{r.text}</text>
+                </g>
+              )}
+              {r.kind === 'evicted' && (
+                <g>
+                  <rect x={box(0).x1} y={r.y - 11} width={box(r.count - 1).x2 - box(0).x1} height="22" rx="5" class="spf-ghost" />
+                  <text x={(box(0).x1 + box(r.count - 1).x2) / 2} y={r.y + 4} class="spf-ghost-text" text-anchor="middle">evicted · its references dropped</text>
+                </g>
+              )}
+
+              {(r.kind === 'refs') && block(r.y, n * 2 + 1).map((s) => <rect x={s.x} y={s.y} width={cell} height={cell} fill={s.fill} class="spf-state" />)}
+              {r.kind === 'evicted' && <rect x={ownX} y={r.y - 1.5 * cell} width={3 * cell} height={3 * cell} rx="2" class="spf-ghost" />}
+              {r.own && <text x={r.kind === 'refs' || r.kind === 'evicted' ? ownX + 3 * cell + 8 : ownX} y={r.y + 4} class={r.kind === 'evicted' ? 'spf-own is-gone' : 'spf-own'}>{r.own}</text>}
+            </g>
+          ))}
+        </g>
+      ))}
+
+      <text x="24" y={bottom + 28} class="spf-note">Every chunk is still referenced by A@12,288, so evicting A@8,192 frees no rows at all.</text>
+    </svg>
+  </div>
+  {caption && <figcaption>{caption}</figcaption>}
+</figure>
+
+<style>
+  .spf {
+    margin: 2.5rem 0;
+    padding: 20px;
+    background: var(--color-paper);
+    border: 1px solid var(--color-line-strong);
+    border-radius: 10px;
+    font-family: var(--font-sans);
+  }
+  .spf-eyebrow { display: flex; align-items: center; gap: 8px; font: 12px var(--font-mono); color: var(--color-ink-3); }
+  .spf-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--color-forest); }
+  .spf-scroll { margin: 14px 0; overflow-x: auto; }
+  .spf svg { display: block; width: 100%; min-width: 560px; height: auto; }
+
+  .spf-head { font: 10.5px var(--font-mono); letter-spacing: 0.06em; text-transform: uppercase; fill: var(--color-ink-4); }
+  .spf-note { font: italic 12px var(--font-sans); fill: var(--color-ink-3); }
+
+  .spf-chip { fill: var(--color-ivory); stroke: var(--color-line-strong); }
+  .spf-chip.is-gone { fill: none; stroke: var(--color-ink-4); stroke-dasharray: 3 3; }
+  .spf-chip-text { font: 12px var(--font-mono); fill: var(--color-ink); }
+  .spf-chip-text.is-gone { fill: var(--color-ink-4); }
+  .spf-chunk { fill: color-mix(in srgb, var(--c) 14%, white); stroke: var(--c); stroke-width: 1.4; }
+  .spf-chunk-text { font: 12px var(--font-mono); fill: var(--color-ink); }
+  .spf-ref { fill: var(--color-ivory); stroke: color-mix(in srgb, var(--c) 55%, white); }
+  .spf-ref-text { font: 11px var(--font-mono); fill: color-mix(in srgb, var(--c) 75%, black); }
+  .spf-ghost { fill: none; stroke: var(--color-ink-4); stroke-dasharray: 3 3; }
+  .spf-ghost-text { font: italic 12px var(--font-sans); fill: var(--color-ink-4); }
+  .spf-state { stroke: var(--color-paper); stroke-width: 1; fill-opacity: 0.75; }
+  .spf-own { font: 11px var(--font-mono); fill: var(--color-ink-3); }
+  .spf-own.is-gone { font-style: italic; fill: var(--color-ink-4); }
+
+  .spf figcaption { font-family: var(--font-serif); font-style: italic; font-size: 14px; line-height: 1.5; color: var(--color-ink-2); }
+</style>

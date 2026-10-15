@@ -55,3 +55,15 @@
 .prose-gufo table { width: 100%; font-family: var(--font-sans); font-size: 14px; border-collapse: collapse; }
 .prose-gufo th, .prose-gufo td { text-align: left; padding: 8px 10px; border-bottom: 1px solid var(--color-line); }
 .prose-gufo th { font-weight: 600; color: var(--color-ink); }
+/* Side notes like the test setup: small sans text in a quiet box, so they don't interrupt the reading. */
+.prose-gufo aside.note {
+  padding: 12px 16px;
+  border: 1px solid var(--color-line);
+  border-radius: 8px;
+  background: var(--color-paper);
+  font-family: var(--font-sans);
+  font-size: 14px;
+  line-height: 1.6;
+  color: var(--color-ink-3);
+}
+.prose-gufo aside.note > * + * { margin-top: 0.6em; }

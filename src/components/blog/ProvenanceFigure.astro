@@ -1,0 +1,155 @@
+---
+// Shared-prefix provenance, in the style of the other blog figures: three
+// conversations with the same 6,000-token system prompt, Flash-Next's real
+// 256-row chunks, and who computed, references or copies each range of rows.
+// Ranges are drawn at readable widths, not to scale. Inline SVG rendered on
+// the server.
+interface Props {
+  figure?: number | string;
+  caption?: string;
+}
+
+const { figure, caption } = Astro.props;
+
+const number = (t: number) => t.toLocaleString('en-US');
+const colours = { 1: '#3f7a4f', 2: '#4f86b8', 3: '#3d8a8a', copy: '#c27a2c' };
+
+// Column boundaries in tokens, and the width each column gets on screen.
+const columns = [
+  { from: 0, to: 4096, w: 200 },
+  { from: 4096, to: 5888, w: 150 },
+  { from: 5888, to: 6000, w: 60 },
+  { from: 6000, to: undefined, w: 100 },
+];
+const start = 170;
+const gap = 2;
+const colX = columns.map((_, i) => start + columns.slice(0, i).reduce((sum, c) => sum + c.w, 0));
+const edge = (i: number) => colX[i] ?? colX[columns.length - 1] + columns[columns.length - 1].w;
+
+type Kind = 'computed' | 'ref' | 'copy';
+interface Segment { cols: [number, number]; kind: Kind; owner: 1 | 2 | 3; text: string }
+const rows: { name: string; c: string; segments: Segment[] }[] = [
+  { name: 'conversation 1', c: colours[1], segments: [
+    { cols: [0, 3], kind: 'computed', owner: 1, text: 'computed cold' },
+    { cols: [3, 4], kind: 'computed', owner: 1, text: 'own' },
+  ] },
+  { name: 'conversation 2', c: colours[2], segments: [
+    { cols: [0, 1], kind: 'ref', owner: 1, text: '→ conversation 1' },
+    { cols: [1, 2], kind: 'computed', owner: 2, text: 'recomputed gap' },
+    { cols: [2, 3], kind: 'computed', owner: 2, text: 'tail' },
+    { cols: [3, 4], kind: 'computed', owner: 2, text: 'own' },
+  ] },
+  { name: 'conversation 3', c: colours[3], segments: [
+    { cols: [0, 1], kind: 'ref', owner: 1, text: '→ conversation 1' },
+    { cols: [1, 2], kind: 'ref', owner: 2, text: '→ conversation 2' },
+    { cols: [2, 3], kind: 'copy', owner: 3, text: 'copy' },
+    { cols: [3, 4], kind: 'computed', owner: 3, text: 'own' },
+  ] },
+];
+const rowY = (i: number) => 72 + i * 78;
+// Checkpoints sit between rows: conversation 1 left one at 4,096, conversation 2 captured one at 6,000.
+const restores = [
+  { col: 1, below: 0, label: 'checkpoint 4,096' },
+  { col: 3, below: 1, label: 'checkpoint 6,000' },
+];
+const palette = ['#3f7a4f', '#4f86b8', '#c27a2c', '#3d8a8a', '#9a5c8a'];
+const cell = 6;
+const block = (cx: number, top: number, seed: number) =>
+  Array.from({ length: 9 }, (_, k) => ({
+    x: cx - 1.5 * cell + (k % 3) * cell,
+    y: top + Math.floor(k / 3) * cell,
+    fill: palette[(k * 2 + seed) % palette.length],
+  }));
+const bottom = rowY(rows.length - 1) + 14;
+---
+<figure class="pvf">
+  <p class="pvf-eyebrow"><span class="pvf-dot"></span>{figure !== undefined && <>Fig. {figure} · </>}Three conversations, one system prompt</p>
+  <div class="pvf-scroll">
+    <svg viewBox={`0 0 760 ${bottom + 58}`} role="img" aria-label="Conversation 1 computes the 6,000-token prompt cold and leaves a checkpoint at 4,096. Conversation 2 restores it, references conversation 1's rows up to 4,096, recomputes the gap to 5,888 and holds the partial chunk to 6,000, where it captures a checkpoint. Conversation 3 restores that checkpoint: it references rows from conversations 1 and 2 and stores its own copy of the partial chunk. After 6,000 each conversation computes its own rows.">
+      <text x="24" y="26" class="pvf-head">Conversation</text>
+      <text x={start} y="26" class="pvf-head">Rows · 256-row chunks · not to scale</text>
+      {[0, 1, 2, 3].map((i) => <text x={edge(i)} y="46" class="pvf-axis" text-anchor={i === 0 ? 'start' : 'middle'}>{number(columns[i].from)}</text>)}
+
+      {rows.map((r, i) => {
+        const y = rowY(i);
+        return (
+          <g>
+            <rect x="24" y={y - 14} width="122" height="28" rx="6" class="pvf-chip" style={`--c: ${r.c}`} />
+            <text x="85" y={y + 4.5} class="pvf-chip-text" text-anchor="middle">{r.name}</text>
+            {r.segments.map((s) => {
+              const x1 = edge(s.cols[0]) + (s.cols[0] > 0 ? gap / 2 : 0);
+              const x2 = edge(s.cols[1]) - gap / 2;
+              const c = s.kind === 'copy' ? colours.copy : colours[s.owner];
+              return (
+                <g style={`--c: ${c}`}>
+                  <rect x={x1} y={y - 14} width={x2 - x1} height="28" rx="6" class={`pvf-seg is-${s.kind}`} />
+                  <text x={(x1 + x2) / 2} y={y + 4.5} class={`pvf-seg-text is-${s.kind}`} text-anchor="middle">{s.text}</text>
+                </g>
+              );
+            })}
+          </g>
+        );
+      })}
+
+      {restores.map((r, i) => {
+        const cx = edge(r.col);
+        const top = rowY(r.below) + 20;
+        return (
+          <g>
+            {block(cx, top, i * 3 + 1).map((s) => <rect x={s.x} y={s.y} width={cell} height={cell} fill={s.fill} class="pvf-state" />)}
+            <line x1={cx} y1={top + 3 * cell + 2} x2={cx} y2={rowY(r.below + 1) - 18} class="pvf-restore" marker-end="url(#pvf-arrow)" />
+            <text x={r.col === 3 ? cx - 2 * cell : cx + 2 * cell} y={top + 13} class="pvf-note" text-anchor={r.col === 3 ? 'end' : 'start'}>{r.label} · restore</text>
+          </g>
+        );
+      })}
+
+      <defs>
+        <marker id="pvf-arrow" viewBox="0 0 8 8" refX="7" refY="4" markerWidth="7" markerHeight="7" orient="auto">
+          <path d="M0 0 L8 4 L0 8 z" class="pvf-arrowhead" />
+        </marker>
+      </defs>
+
+      <g transform={`translate(24 ${bottom + 30})`}>
+        <rect x="0" y="-9" width="16" height="12" rx="3" class="pvf-seg is-computed" style={`--c: ${colours[2]}`} />
+        <text x="22" y="1" class="pvf-legend">computed by this conversation</text>
+        <rect x="222" y="-9" width="16" height="12" rx="3" class="pvf-seg is-ref" style={`--c: ${colours[1]}`} />
+        <text x="244" y="1" class="pvf-legend">reference to another's chunks</text>
+        <rect x="440" y="-9" width="16" height="12" rx="3" class="pvf-seg is-copy" style={`--c: ${colours.copy}`} />
+        <text x="462" y="1" class="pvf-legend">own copy of a partial chunk</text>
+      </g>
+    </svg>
+  </div>
+  {caption && <figcaption>{caption}</figcaption>}
+</figure>
+
+<style>
+  .pvf {
+    margin: 2.5rem 0;
+    padding: 20px;
+    background: var(--color-paper);
+    border: 1px solid var(--color-line-strong);
+    border-radius: 10px;
+    font-family: var(--font-sans);
+  }
+  .pvf-eyebrow { display: flex; align-items: center; gap: 8px; font: 12px var(--font-mono); color: var(--color-ink-3); }
+  .pvf-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--color-forest); }
+  .pvf-scroll { margin: 14px 0; overflow-x: auto; }
+  .pvf svg { display: block; width: 100%; min-width: 560px; height: auto; }
+
+  .pvf-head { font: 10.5px var(--font-mono); letter-spacing: 0.06em; text-transform: uppercase; fill: var(--color-ink-4); }
+  .pvf-axis { font: 10.5px var(--font-mono); fill: var(--color-ink-4); }
+  .pvf-note { font: italic 12px var(--font-sans); fill: var(--color-ink-3); }
+  .pvf-legend { font: 12px var(--font-sans); fill: var(--color-ink-3); }
+  .pvf-restore { stroke: var(--color-ink-3); stroke-width: 1.4; }
+  .pvf-arrowhead { fill: var(--color-ink-3); }
+  .pvf-state { stroke: var(--color-paper); stroke-width: 1; fill-opacity: 0.75; }
+
+  .pvf-chip { fill: color-mix(in srgb, var(--c) 14%, white); stroke: var(--c); stroke-width: 1.4; }
+  .pvf-chip-text { font: 12px var(--font-mono); fill: var(--color-ink); }
+  .pvf-seg.is-computed, .pvf-seg.is-copy { fill: color-mix(in srgb, var(--c) 14%, white); stroke: var(--c); stroke-width: 1.4; }
+  .pvf-seg.is-ref { fill: var(--color-ivory); stroke: color-mix(in srgb, var(--c) 55%, white); }
+  .pvf-seg-text { font: 11.5px var(--font-mono); fill: var(--color-ink); }
+  .pvf-seg-text.is-ref, .pvf-seg-text.is-copy { fill: color-mix(in srgb, var(--c) 75%, black); }
+
+  .pvf figcaption { font-family: var(--font-serif); font-style: italic; font-size: 14px; line-height: 1.5; color: var(--color-ink-2); }
+</style>

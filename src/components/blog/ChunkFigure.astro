@@ -1,0 +1,128 @@
+---
+// How checkpoints share rows, in the style of the other blog figures: one
+// conversation's rows stored once as full chunks, and three checkpoints that
+// reference those chunks and store only their own private state, plus a tail
+// when they end inside a chunk. Inline SVG rendered on the server.
+interface Props {
+  figure?: number | string;
+  caption?: string;
+}
+
+const { figure, caption } = Astro.props;
+
+// Same readable chunk size as the cache figures; Flash-Next really uses 256 rows.
+const chunk = 2048;
+const total = 8192;
+const checkpoints = [4096, 7000, 8192];
+const number = (t: number) => t.toLocaleString('en-US');
+
+const left = 160;
+const span = 440;
+const x = (t: number) => left + (t / total) * span;
+const chunks = Array.from({ length: total / chunk }, (_, i) => ({ name: `C${i + 1}`, from: i * chunk, to: (i + 1) * chunk }));
+const ownX = 630;
+
+const storeY = 58;
+const rowY = (i: number) => 112 + i * 42;
+const bottom = rowY(checkpoints.length - 1) + 18;
+
+const rows = checkpoints.map((depth, i) => {
+  const full = Math.floor(depth / chunk);
+  const tail = depth - full * chunk;
+  return { depth, y: rowY(i), refs: chunks.slice(0, full), tail: tail > 0 ? { from: full * chunk, to: depth, rows: tail } : undefined };
+});
+const deep = checkpoints.reduce((sum, d) => sum + d, 0);
+const tails = rows.reduce((sum, r) => sum + (r.tail?.rows ?? 0), 0);
+
+// The private state block from figures 2 and 3.
+const palette = ['#3f7a4f', '#4f86b8', '#c27a2c', '#3d8a8a', '#9a5c8a'];
+const cell = 7;
+const block = (y: number, seed: number) =>
+  Array.from({ length: 9 }, (_, k) => ({
+    x: ownX + (k % 3) * cell,
+    y: y - 1.5 * cell + Math.floor(k / 3) * cell,
+    fill: palette[(k * 2 + seed) % palette.length],
+  }));
+---
+<figure class="chf">
+  <p class="chf-eyebrow"><span class="chf-dot"></span>{figure !== undefined && <>Fig. {figure} · </>}Checkpoints share chunks</p>
+  <div class="chf-scroll">
+    <svg viewBox={`0 0 760 ${bottom + 40}`} role="img" aria-label={`One conversation's rows are stored once as ${chunks.length} chunks. Checkpoints at ${checkpoints.map(number).join(', ')} reference the full chunks they need and store only their own private state; the checkpoint at 7,000 also stores an ${number(tails)}-row tail. ${number(deep)} rows of depth cost ${number(total + tails)} stored rows.`}>
+      <text x="24" y="26" class="chf-head">Checkpoint</text>
+      <text x={left} y="26" class="chf-head">Rows · {number(chunk)}-token chunks</text>
+      <text x={ownX} y="26" class="chf-head">Own bytes</text>
+
+      {[...chunks.map((c) => c.from), total].map((t) => <line x1={x(t)} y1="38" x2={x(t)} y2={bottom} class="chf-grid" />)}
+
+      <rect x="24" y={storeY - 14} width="104" height="28" rx="6" class="chf-chip is-store" />
+      <text x="76" y={storeY + 4.5} class="chf-chip-text" text-anchor="middle">chunk store</text>
+      {chunks.map((c) => (
+        <g>
+          <rect x={x(c.from) + 2} y={storeY - 14} width={x(c.to) - x(c.from) - 4} height="28" rx="6" class="chf-chunk" />
+          <text x={(x(c.from) + x(c.to)) / 2} y={storeY + 4.5} class="chf-chunk-text" text-anchor="middle">{c.name}</text>
+        </g>
+      ))}
+      <text x={ownX} y={storeY + 4.5} class="chf-note">stored once</text>
+
+      {rows.map((r, i) => (
+        <g>
+          <rect x="24" y={r.y - 14} width="104" height="28" rx="6" class="chf-chip" />
+          <text x="76" y={r.y + 4.5} class="chf-chip-text" text-anchor="middle">A@{number(r.depth)}</text>
+          {r.refs.map((c) => (
+            <g>
+              <rect x={x(c.from) + 2} y={r.y - 11} width={x(c.to) - x(c.from) - 4} height="22" rx="5" class="chf-ref" />
+              <text x={(x(c.from) + x(c.to)) / 2} y={r.y + 4} class="chf-ref-text" text-anchor="middle">→ {c.name}</text>
+            </g>
+          ))}
+          {r.tail && (
+            <g>
+              <rect x={x(r.tail.from) + 2} y={r.y - 11} width={x(r.tail.to) - x(r.tail.from) - 2} height="22" rx="5" class="chf-tail" />
+              <text x={(x(r.tail.from) + x(r.tail.to)) / 2 + 1} y={r.y + 4} class="chf-tail-text" text-anchor="middle">tail</text>
+            </g>
+          )}
+          {block(r.y, i * 2 + 1).map((s) => <rect x={s.x} y={s.y} width={cell} height={cell} fill={s.fill} class="chf-state" />)}
+          <text x={ownX + 3 * cell + 8} y={r.y + 4} class="chf-own">{r.tail ? `state + ${number(r.tail.rows)} rows` : 'state'}</text>
+        </g>
+      ))}
+
+      <text x={left} y={bottom + 24} class="chf-note">As full copies: {number(deep)} rows. Shared: {number(total)} rows in chunks + {number(tails)} in a tail + {checkpoints.length} states.</text>
+    </svg>
+  </div>
+  {caption && <figcaption>{caption}</figcaption>}
+</figure>
+
+<style>
+  .chf {
+    --rows: #3f7a4f;
+    --tail: #c27a2c;
+    margin: 2.5rem 0;
+    padding: 20px;
+    background: var(--color-paper);
+    border: 1px solid var(--color-line-strong);
+    border-radius: 10px;
+    font-family: var(--font-sans);
+  }
+  .chf-eyebrow { display: flex; align-items: center; gap: 8px; font: 12px var(--font-mono); color: var(--color-ink-3); }
+  .chf-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--color-forest); }
+  .chf-scroll { margin: 14px 0; overflow-x: auto; }
+  .chf svg { display: block; width: 100%; min-width: 560px; height: auto; }
+
+  .chf-head { font: 10.5px var(--font-mono); letter-spacing: 0.06em; text-transform: uppercase; fill: var(--color-ink-4); }
+  .chf-note { font: italic 12px var(--font-sans); fill: var(--color-ink-3); }
+  .chf-grid { stroke: var(--color-line-strong); stroke-dasharray: 2 4; }
+
+  .chf-chip { fill: var(--color-ivory); stroke: var(--color-line-strong); }
+  .chf-chip.is-store { fill: color-mix(in srgb, var(--rows) 8%, white); stroke: var(--rows); stroke-width: 1.4; }
+  .chf-chip-text { font: 13px var(--font-mono); fill: var(--color-ink); }
+
+  .chf-chunk { fill: color-mix(in srgb, var(--rows) 14%, white); stroke: var(--rows); stroke-width: 1.4; }
+  .chf-chunk-text { font: 13px var(--font-mono); fill: var(--color-ink); }
+  .chf-ref { fill: var(--color-ivory); stroke: color-mix(in srgb, var(--rows) 55%, white); }
+  .chf-ref-text { font: 11px var(--font-mono); fill: color-mix(in srgb, var(--rows) 75%, black); }
+  .chf-tail { fill: color-mix(in srgb, var(--tail) 14%, white); stroke: var(--tail); stroke-width: 1.4; }
+  .chf-tail-text { font: 11px var(--font-mono); fill: color-mix(in srgb, var(--tail) 75%, black); }
+  .chf-state { stroke: var(--color-paper); stroke-width: 1; fill-opacity: 0.75; }
+  .chf-own { font: 11px var(--font-mono); fill: var(--color-ink-3); }
+
+  .chf figcaption { font-family: var(--font-serif); font-style: italic; font-size: 14px; line-height: 1.5; color: var(--color-ink-2); }
+</style>
