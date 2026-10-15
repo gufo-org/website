@@ -1,5 +1,6 @@
 ---
 import { getPosts } from '../lib/posts';
+import Logo from './Logo.astro';
 
 interface Props {
   currentPath?: string;
@@ -33,7 +34,7 @@ const isActive = (href: string) =>
       <!-- Left: wordmark and desktop links -->
       <div class="flex items-center gap-8 min-w-0">
         <a href="/" class="flex items-center gap-2.5 shrink-0">
-          <img src="/images/gufo-logo-128.jpg" alt="" width="28" height="28" class="w-7 h-7 rounded-md object-cover" />
+          <Logo />
           <span class="font-serif text-xl text-ink tracking-tight">Gufo</span>
         </a>
 
