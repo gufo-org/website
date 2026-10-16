@@ -49,9 +49,10 @@ const parentTop = 84;
 const blockTop = 50;
 const learnedTop = subagents[0].top + 58;
 const bottom = subagents[1].top + 52;
+import ExploreLink from './ExploreLink.astro';
 ---
 <figure class="fkf">
-  <p class="fkf-eyebrow"><span class="fkf-dot"></span>{figure !== undefined && <>Fig. {figure} · </>}Learning a boundary</p>
+  <p class="fkf-eyebrow"><span class="fig-eyebrow-title"><span class="fkf-dot"></span>{figure !== undefined && <>Fig. {figure} · </>}Learning a boundary</span><ExploreLink story="fork" /></p>
   <div class="fkf-scroll">
     <svg viewBox={`0 0 760 ${bottom + 8}`} role="img" aria-label={`A parent has ${number(parent)} tokens and a checkpoint at ${number(grid)}. Its subagents share the first ${number(shared)} tokens. The first subagent restores ${number(grid)}, computes the gap to ${number(shared)}, captures a learned checkpoint there and prefills its own task. The second subagent restores the learned checkpoint and prefills only its own task.`}>
       <defs>
@@ -115,7 +116,7 @@ const bottom = subagents[1].top + 52;
     border-radius: 10px;
     font-family: var(--font-sans);
   }
-  .fkf-eyebrow { display: flex; align-items: center; gap: 8px; font: 12px var(--font-mono); color: var(--color-ink-3); }
+  .fkf-eyebrow { display: flex; align-items: center; justify-content: space-between; gap: 8px 12px; font: 12px var(--font-mono); color: var(--color-ink-3); }
   .fkf-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--color-forest); }
   .fkf-scroll { margin: 14px 0; overflow-x: auto; }
   .fkf svg { display: block; width: 100%; min-width: 560px; height: auto; }

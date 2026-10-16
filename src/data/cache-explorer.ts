@@ -1,12 +1,9 @@
-// Research archive pinned at the revision the walkthrough was built from; the RFC and cards track main.
-export const CACHE_SOURCE = 'https://github.com/gufo-org/gufo/blob/5e401f9b/docs/cache-redesign';
-export const CACHE_RFC = 'https://github.com/gufo-org/gufo/blob/main/docs/cache-redesign/RFC.md';
-export const CACHE_CARDS = 'https://github.com/gufo-org/gufo/blob/main/docs/cache-redesign/cards/README.md';
 export const CHUNK_TOKENS = 2048;
 
 export const cacheModels = {
-  flash: { name: 'Flash-Next · MTP', fixed: 119_328_358, perToken: 27_460 },
-  qwen: { name: '27B · DFlash2', fixed: 243_700_000, perToken: 65_536 },
+  // Measured with Gufo f6ca085 on Strix Halo (Flash-Next UD-Q4_K_XL + Q8_0 MTP, one slot, 131,072 context):
+  // eleven RAM checkpoints held 1,468,465,152 bytes of private state, and disk chunks held 27,460 bytes per row.
+  flash: { name: 'Flash-Next · MTP', fixed: 133_496_832, perToken: 27_460 },
 };
 export type ModelId = keyof typeof cacheModels;
 export type Chunk = { id: string; start: number; end: number; lineage: string; tail: boolean };

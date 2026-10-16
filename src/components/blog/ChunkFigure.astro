@@ -43,9 +43,10 @@ const block = (y: number, seed: number) =>
     y: y - 1.5 * cell + Math.floor(k / 3) * cell,
     fill: palette[(k * 2 + seed) % palette.length],
   }));
+import ExploreLink from './ExploreLink.astro';
 ---
 <figure class="chf">
-  <p class="chf-eyebrow"><span class="chf-dot"></span>{figure !== undefined && <>Fig. {figure} · </>}Checkpoints share chunks</p>
+  <p class="chf-eyebrow"><span class="fig-eyebrow-title"><span class="chf-dot"></span>{figure !== undefined && <>Fig. {figure} · </>}Checkpoints share chunks</span><ExploreLink view="memory" label="Size it yourself →" /></p>
   <div class="chf-scroll">
     <svg viewBox={`0 0 760 ${bottom + 40}`} role="img" aria-label={`One conversation's rows are stored once as ${chunks.length} chunks. Checkpoints at ${checkpoints.map(number).join(', ')} reference the full chunks they need and store only their own private state; the checkpoint at 7,000 also stores an ${number(tails)}-row tail. ${number(deep)} rows of depth cost ${number(total + tails)} stored rows.`}>
       <text x="24" y="26" class="chf-head">Checkpoint</text>
@@ -102,7 +103,7 @@ const block = (y: number, seed: number) =>
     border-radius: 10px;
     font-family: var(--font-sans);
   }
-  .chf-eyebrow { display: flex; align-items: center; gap: 8px; font: 12px var(--font-mono); color: var(--color-ink-3); }
+  .chf-eyebrow { display: flex; align-items: center; justify-content: space-between; gap: 8px 12px; font: 12px var(--font-mono); color: var(--color-ink-3); }
   .chf-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--color-forest); }
   .chf-scroll { margin: 14px 0; overflow-x: auto; }
   .chf svg { display: block; width: 100%; min-width: 560px; height: auto; }

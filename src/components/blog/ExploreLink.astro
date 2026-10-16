@@ -1,0 +1,14 @@
+---
+// A small link from a blog figure to the matching view of the cache explorer in the playground.
+interface Props {
+  /** Explorer story id from src/data/cache-explorer.ts, e.g. "edit". */
+  story?: string;
+  /** Open another view of the explorer instead of a story, e.g. "memory". */
+  view?: string;
+  label?: string;
+}
+
+const { story, view, label = 'Step through it →' } = Astro.props;
+const params = new URLSearchParams(story ? { story, step: '1' } : view ? { view } : {});
+---
+<a class="fig-explore" href={`/playground/cache?${params}`}>{label}</a>

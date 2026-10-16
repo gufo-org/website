@@ -9,30 +9,26 @@ const number = (value: number) => Math.round(value).toLocaleString('en-US');
 const bytes = (value: number) => value >= 2 ** 30 ? `${(value / 2 ** 30).toFixed(2)} GiB` : `${(value / 2 ** 20).toFixed(1)} MiB`;
 let scenarioIndex = 0;
 let stepIndex = 0;
-let model: ModelId = 'flash';
+// Flash-Next is the only model shown, the one the cache blog post measures.
+const model: ModelId = 'flash';
 let timer: ReturnType<typeof setInterval> | undefined;
-let inspected: { kind: 'checkpoint' | 'chunk'; id: string } | undefined;
 let earlierOpen = false;
 const prev = element<HTMLButtonElement>('cache-prev');
 const next = element<HTMLButtonElement>('cache-next');
 const play = element<HTMLButtonElement>('cache-play');
-const modelSelect = element<HTMLSelectElement>('cache-model');
 const depth = element<HTMLInputElement>('cache-depth');
 const count = element<HTMLInputElement>('cache-count');
 const budget = element<HTMLInputElement>('cache-budget');
 const tree = element('cache-tree');
 const treeScroll = element('cache-tree-scroll');
 const card = element('cache-hybrid');
-const previousCard = element('cache-previous');
-const peekPrev = element('cache-peek-prev');
-const peekNext = element('cache-peek-next');
 const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)');
 const scenario = () => cacheScenarios[scenarioIndex];
 const points = () => cacheConversations[scenario().id].points;
 const currentStep = () => scenario().steps[stepIndex];
 
 // Tree geometry in CSS pixels: one row per branch, one column per turn.
-const LANE_HEIGHT = 54;
+const LANE_HEIGHT = 40;
 const TREE_PADDING = 12;
 const COLUMN_MIN = 50;
 const COLUMN_MAX = 132;
@@ -51,7 +47,6 @@ function goTo(index: number) {
   if (target === stepIndex) return;
   const direction = target > stepIndex ? 'next' : 'prev';
   stepIndex = target;
-  inspected = undefined;
   renderStory(direction);
 }
 
@@ -260,9 +255,7 @@ function rowStatus(row: HistoryRow, reused: number, prompt: number) {
   return { kind: 'partial', label: `${number(reused - row.start)} of ${number(row.end - row.start)} in cache` };
 }
 
-type CardMode = 'current' | 'previous' | 'peek';
-
-function threadMarkup(index: number, mode: CardMode) {
+function threadMarkup(index: number) {
   const step = scenario().steps[index];
   const rows = historyRows(index);
   const tokenRows = rows.filter(holdsTokens);
@@ -276,10 +269,10 @@ function threadMarkup(index: number, mode: CardMode) {
     const status = applies ? rowStatus(r, step.state.reused, step.prompt) : { kind: 'neutral', label: 'tokens' };
     const role = r.point?.role ?? 'context';
     return `<li class="thread-row role-${role} status-${status.kind} ${current ? 'is-current' : ''}">
-      <div class="thread-bubble"><span class="thread-speaker">${r.point?.speaker ?? 'Earlier context'}${current && mode === 'current' ? '<span class="thread-now">now</span>' : ''}</span><p>${r.point?.text ?? 'System prompt, tools and earlier turns.'}</p></div>
+      <div class="thread-bubble"><span class="thread-speaker">${r.point?.speaker ?? 'Earlier context'}${current ? '<span class="thread-now">now</span>' : ''}</span><p>${r.point?.text ?? 'System prompt, tools and earlier turns.'}</p></div>
       <span class="thread-meta"><i></i>${status.label} · ${number(r.start)}–${number(r.end)}${r.start === 0 && r.point ? ' · incl. system prompt' : ''}</span></li>`;
   };
-  const shown = rows.length > 5 ? rows.slice(-4) : rows;
+  const shown = rows.length > 3 ? rows.slice(-3) : rows;
   const earlier = rows.slice(0, rows.length - shown.length);
   const earlierTokens = earlier.filter(holdsTokens);
   const earlierEnd = Math.max(0, ...earlierTokens.map(r => r.end));
@@ -289,7 +282,7 @@ function threadMarkup(index: number, mode: CardMode) {
   return `
     <section class="cache-thread">
       <div class="cache-store-heading"><h4>Conversation · branch ${points()[index].lane}</h4><span>${applies ? `${number(step.prompt)}-token prompt` : 'no request on this branch at this step'}</span></div>
-      ${earlier.length ? `<details class="thread-earlier" ${mode !== 'peek' && earlierOpen ? 'open' : ''}><summary>${earlier.length} earlier messages · ${earlierLabel}</summary><ol class="thread">${earlier.map(row).join('')}</ol></details>` : ''}
+      ${earlier.length ? `<details class="thread-earlier" ${earlierOpen ? 'open' : ''}><summary>${earlier.length} earlier messages · ${earlierLabel}</summary><ol class="thread">${earlier.map(row).join('')}</ol></details>` : ''}
       <ol class="thread">${shown.map(row).join('')}</ol>
     </section>`;
 }
@@ -300,137 +293,76 @@ function checkpointExcerpt(c: Checkpoint) {
   return point ? `<span class="checkpoint-excerpt" title="${point.speaker}: ${point.text}">after “${excerpt(point.text)}”</span>` : '';
 }
 
-// Render one step's cache. The selected step ("Now") marks what is new or changed; the earlier state
-// it is compared with ("Before") marks what is about to change or disappear. Faded peeks stay plain.
-function cardMarkup(index: number, mode: CardMode, diff?: StateDiff) {
+// Render the selected step's cache in two columns: the request on the left, what the cache holds on
+// the right. Marks show what is new or changed since the state this step evolved from.
+function cardMarkup(index: number, diff?: StateDiff) {
   const steps = scenario().steps;
   const step = steps[index];
   const point = points()[index];
   const state = step.state;
   const route = state.route;
-  const current = mode === 'current';
-  const marks = mode === 'peek' ? undefined : diff;
-  const tag = current ? 'button' : 'div';
   const fraction = state.reused / step.prompt * 100;
   const prefill = step.prompt - state.reused;
-  const label = { current: 'Now', previous: 'Before', peek: 'Step' }[mode];
   const sessions = state.sessions.map((s, i) => {
-    const other = marks && (current ? marks.before : marks.after).sessions[i];
+    const other = diff?.before.sessions[i];
     const moved = other && (other.name !== s.name || other.position !== s.position);
-    const frontier = current && moved && other.name === s.name && other.position ? `${number(other.position)} → ${number(s.position)}` : number(s.position);
+    const frontier = moved && other.name === s.name && other.position ? `${number(other.position)} → ${number(s.position)}` : number(s.position);
     return `
-    <div class="session-card ${s.position === 0 ? 'free' : ''} ${route?.target === i + 1 ? 'route-target' : ''} ${moved ? 'is-changed' : ''}"><small>Execution slot ${i + 1}${route?.target === i + 1 ? ' · this request' : ''}</small><b>${s.name}</b><span>${s.position ? `Live frontier · ${frontier}` : 'No retained live state'}</span>${current && moved && other.name !== s.name ? `<em class="diff-delta">was ${other.name}</em>` : ''}</div>`;
+    <div class="session-card ${s.position === 0 ? 'free' : ''} ${route?.target === i + 1 ? 'route-target' : ''} ${moved ? 'is-changed' : ''}"><small>Slot ${i + 1}${route?.target === i + 1 ? ' · this request' : ''}</small><b>${s.name}</b><span>${s.position ? `Live frontier · ${frontier}` : 'No live state'}</span>${moved && other.name !== s.name ? `<em class="diff-delta">was ${other.name}</em>` : ''}</div>`;
   }).join('');
   const checkpoints = state.checkpoints.length ? state.checkpoints.map(c => {
     const source = route?.checkpoint === c.id;
-    const added = current && marks?.addedCheckpoints.has(c.id);
-    const removed = !current && marks?.removedCheckpoints.some(k => k.id === c.id);
-    const change = marks?.changed.get(c.id);
-    const mark = added ? 'is-added' : removed ? 'is-removed' : change ? 'is-changed' : '';
-    const diffTag = added ? '<span class="diff-tag added">+ new</span>' : removed ? '<span class="diff-tag removed">− removed next</span>' : change ? `<span class="diff-tag changed">~ ${change}</span>` : '';
-    const attributes = current ? `type="button" data-checkpoint="${c.id}" aria-pressed="false" aria-label="Inspect ${c.id}, ${number(c.position)} tokens${source ? ', source of this restore' : ''}${added ? ', new in this step' : change ? `, changed: ${change}` : ''}"` : '';
-    return `<${tag} class="checkpoint-card ${source ? 'restore-source' : ''} ${mark}" ${attributes}>
-      <span class="checkpoint-label"><span class="checkpoint-name">${c.id}</span>${checkpointExcerpt(c)}</span><span class="checkpoint-tags">${diffTag}${source ? '<span class="state-tag source-tag">restore source</span>' : ''}<span class="state-tag">fixed state</span>
-      <span class="state-tag ref-tag">${c.chunks.length} refs</span>
+    const added = diff?.addedCheckpoints.has(c.id);
+    const change = diff?.changed.get(c.id);
+    const mark = added ? 'is-added' : change ? 'is-changed' : '';
+    const diffTag = added ? '<span class="diff-tag added">+ new</span>' : change ? `<span class="diff-tag changed">~ ${change}</span>` : '';
+    return `<div class="checkpoint-card ${source ? 'restore-source' : ''} ${mark}">
+      <span class="checkpoint-label"><span class="checkpoint-name">${c.id}</span>${checkpointExcerpt(c)}</span><span class="checkpoint-tags">${diffTag}${source ? '<span class="state-tag source-tag">restore source</span>' : ''}<span class="state-tag ref-tag">${c.chunks.length} refs</span>
       ${c.ram ? '<span class="state-tag ram-tag">RAM</span>' : ''}
-      ${c.disk !== 'none' ? `<span class="state-tag ${c.disk === 'durable' ? 'durable-tag' : 'queued-tag'}">${c.disk === 'durable' ? 'disk ✓' : 'disk queued'}</span>` : ''}</span></${tag}>`;
+      ${c.disk !== 'none' ? `<span class="state-tag ${c.disk === 'durable' ? 'durable-tag' : 'queued-tag'}">${c.disk === 'durable' ? 'disk ✓' : 'disk queued'}</span>` : ''}</span></div>`;
   }).join('') : '<div class="cache-empty">No checkpoint at an exact restore boundary yet</div>';
   const chunkList = uniqueChunks(state.checkpoints);
   const chunks = chunkList.length ? chunkList.map(c => {
     const refs = refsTo(state, c.id);
-    const added = current && marks?.addedChunks.has(c.id);
-    const removed = !current && marks?.removedChunks.some(k => k.id === c.id);
-    const refDelta = current && marks && !added ? refs - refsTo(marks.before, c.id) : 0;
-    const attributes = current ? `type="button" data-chunk="${c.id}" aria-pressed="false" aria-label="Inspect ${c.id}, ${number(c.end - c.start)} rows, ${refs} checkpoint references${added ? ', new in this step' : ''}"` : '';
-    return `<${tag} class="chunk-card origin-${c.lineage} ${c.tail ? 'tail' : ''} ${added ? 'is-added' : removed ? 'is-removed' : ''}" ${attributes}>
-      <b>${chunkName(c)}</b><small>${number(c.end - c.start)} rows · ${refs} ref${refs > 1 ? 's' : ''}${refDelta ? ` <em class="diff-delta">(${refDelta > 0 ? '+' : '−'}${Math.abs(refDelta)})</em>` : ''}${state.checkpoints.filter(p => p.chunks.some(k => k.id === c.id)).every(p => !p.ram) ? ' · disk' : ''}${added ? '<em class="diff-delta"> · + new</em>' : removed ? '<em class="diff-delta"> · − freed next</em>' : ''}</small></${tag}>`;
+    const added = diff?.addedChunks.has(c.id);
+    const refDelta = diff && !added ? refs - refsTo(diff.before, c.id) : 0;
+    return `<div class="chunk-card origin-${c.lineage} ${c.tail ? 'tail' : ''} ${added ? 'is-added' : ''}">
+      <b>${chunkName(c)}</b><small>${number(c.end - c.start)} rows · ${refs} ref${refs > 1 ? 's' : ''}${refDelta ? ` <em class="diff-delta">(${refDelta > 0 ? '+' : '−'}${Math.abs(refDelta)})</em>` : ''}${state.checkpoints.filter(p => p.chunks.some(k => k.id === c.id)).every(p => !p.ram) ? ' · disk' : ''}</small></div>`;
   }).join('') : '<div class="cache-empty">Chunks appear when a checkpoint needs rows</div>';
   const storage = retained(state);
-  const oldStorage = current && marks && retained(marks.before);
+  const oldStorage = diff && retained(diff.before);
   const storageDelta = oldStorage && oldStorage.label === storage.label && oldStorage.bytes !== storage.bytes ? ` <em class="diff-delta">${signed(storage.bytes - oldStorage.bytes)}</em>` : '';
-  // Each top-level block is one row of the shared grid, so matching sections line up across cards.
   return `
-    <header class="cache-card-head">
-      <div class="cache-card-meta"><span class="cache-step-number">${label} · step ${index + 1} / ${steps.length}</span><span>${point.boundary}</span></div>
-      <div class="cache-story-copy"><h3>${step.title}</h3><p>${step.explanation}</p></div>
-    </header>
-    ${threadMarkup(index, mode)}
-    <div class="cache-request">
-      <div class="request-label"><span>Incoming prompt</span><span>${number(step.prompt)} tokens</span></div>
-      <div class="request-bar" role="img" aria-label="${number(state.reused)} reused tokens and ${number(prefill)} tokens needing prefill">
-        <span class="reused-segment" style="width:${fraction}%">${fraction > 18 ? number(state.reused) : ''}</span>
-        <span class="prefill-segment" style="width:${100 - fraction}%">${fraction < 82 ? number(prefill) : ''}</span>
+    <div class="cache-col">
+      <header class="cache-card-head">
+        <div class="cache-card-meta">${point.boundary}</div>
+        <div class="cache-story-copy"><h3>${step.title}</h3><p>${step.explanation}</p></div>
+      </header>
+      <div class="cache-request">
+        <div class="request-label"><span>Incoming prompt</span><span>${number(step.prompt)} tokens</span></div>
+        <div class="request-bar" role="img" aria-label="${number(state.reused)} reused tokens and ${number(prefill)} tokens needing prefill">
+          <span class="reused-segment" style="width:${fraction}%">${fraction > 18 ? number(state.reused) : ''}</span>
+          <span class="prefill-segment" style="width:${100 - fraction}%">${fraction < 82 ? number(prefill) : ''}</span>
+        </div>
+        <div class="request-metrics"><span><b>${number(state.reused)}</b> reused</span><span><b>${number(prefill)}</b> prefilled</span><span><b>${number(step.common)}</b> common prefix</span><span class="cache-outcome">${state.source}</span></div>
       </div>
-      <div class="request-metrics"><span><b>${number(state.reused)}</b> reused</span><span><b>${number(prefill)}</b> prefilled</span><span><b>${number(step.common)}</b> common prefix</span></div>
-      <div class="cache-outcome">${state.source}</div>
+      ${route ? `<div class="cache-route" data-kind="${route.kind}"><b>${ROUTE_LABELS[route.kind]}</b><span>${route.from} · to slot ${route.target}</span></div>` : ''}
+      ${threadMarkup(index)}
     </div>
-    ${route ? `<div class="cache-route" data-kind="${route.kind}"><b>${ROUTE_LABELS[route.kind]}</b><span>${route.from}</span><span class="cache-route-destination">↓ Execution slot ${route.target}</span></div>`
-      : '<div class="cache-flow-label">↓ continue live, or restore a checkpoint</div>'}
-    <section><div class="cache-store-heading"><h4>Execution pool</h4><span>Example · ${state.sessions.length} slots</span></div><div class="cache-sessions">${sessions}</div></section>
-    <section><div class="cache-store-heading"><h4>Checkpoints · fixed state</h4><span>${storage.bytes ? bytes(storage.bytes) : '0 bytes'} ${storage.label}${storageDelta}</span></div><div class="cache-checkpoints">${checkpoints}</div></section>
-    <section class="cache-pool"><div class="cache-store-heading"><h4>Shared KV chunks · RAM / disk</h4>${current ? '<span>Click to trace references</span>' : ''}</div><div class="cache-chunks">${chunks}</div></section>
-    <p class="cache-lane-note">${state.note}</p>`;
-}
-
-function renderPeek(peek: HTMLElement, index: number, edge = '') {
-  const exists = index >= 0 && index < scenario().steps.length;
-  peek.classList.toggle('is-edge', !exists);
-  peek.innerHTML = exists ? `<div class="cache-lane cache-card">${cardMarkup(index, 'peek')}</div>` : edge ? `<div class="cache-card-edge">${edge}</div>` : '';
+    <div class="cache-col">
+      <div class="cache-diff">${diff ? diffSummary(index, diff) : '<span class="cache-diff-title">Step 1</span><ul><li class="diff-none">Starting state</li></ul>'}</div>
+      <section><div class="cache-store-heading"><h4>Execution slots</h4><span>example · ${state.sessions.length} slots</span></div><div class="cache-sessions">${sessions}</div></section>
+      <section><div class="cache-store-heading"><h4>Checkpoints · fixed state</h4><span>${storage.bytes ? bytes(storage.bytes) : '0 bytes'} ${storage.label}${storageDelta}</span></div><div class="cache-checkpoints">${checkpoints}</div></section>
+      <section class="cache-pool"><div class="cache-store-heading"><h4>Shared KV chunks · RAM / disk</h4></div><div class="cache-chunks">${chunks}</div></section>
+      <p class="cache-lane-note">${state.note}</p>
+    </div>`;
 }
 
 function renderCards(direction?: 'next' | 'prev') {
-  const diff = stateDiff(stepIndex);
-  card.innerHTML = cardMarkup(stepIndex, 'current', diff);
-  previousCard.classList.toggle('is-empty', !diff);
-  previousCard.innerHTML = diff ? cardMarkup(diff.from, 'previous', diff) : '<p class="cache-card-empty">Step 1 starts the story, so there is no earlier state to compare with.</p>';
-  element('cache-diff').innerHTML = diff ? diffSummary(stepIndex, diff) : '<span class="cache-diff-title">Step 1</span><ul><li class="diff-none">Starting state · nothing to compare yet</li></ul>';
-  renderPeek(peekPrev, diff ? diff.from - 1 : -1);
-  renderPeek(peekNext, stepIndex + 1, 'End of the story');
+  card.innerHTML = cardMarkup(stepIndex, stateDiff(stepIndex));
   if (!direction || reducedMotion.matches) return;
-  const shift = direction === 'next' ? 28 : -28;
-  const timing = { duration: 340, easing: 'cubic-bezier(.2, .7, .2, 1)' };
-  [card, previousCard].forEach(node => node.animate([{ opacity: 0.35, transform: `translateX(${shift}px)` }, { opacity: 1, transform: 'none' }], timing));
-  [peekPrev, peekNext].forEach(peek => peek.firstElementChild?.animate([{ opacity: 0, transform: `translateX(${shift}px)` }, { opacity: 1, transform: 'none' }], timing));
-}
-
-function renderInspector() {
-  card.querySelectorAll('.checkpoint-card, .chunk-card').forEach(node => {
-    node.classList.remove('selected', 'referenced');
-    node.setAttribute('aria-pressed', 'false');
-  });
-  const title = element('cache-inspector-title');
-  const copy = element('cache-inspector-copy');
-  if (!inspected) {
-    title.textContent = 'Click a checkpoint or a chunk';
-    copy.textContent = 'Inspect the exact token boundary, RAM or disk status, and the checkpoints that share a physical KV range.';
-    return;
-  }
-  if (inspected.kind === 'checkpoint') {
-    const c = currentStep().state.checkpoints.find(c => c.id === inspected!.id);
-    if (!c) { inspected = undefined; renderInspector(); return; }
-    card.querySelectorAll<HTMLElement>('[data-checkpoint]').forEach(node => {
-      if (node.dataset.checkpoint === c.id) { node.classList.add('selected'); node.setAttribute('aria-pressed', 'true'); }
-    });
-    card.querySelectorAll<HTMLElement>('[data-chunk]').forEach(node => {
-      if (c.chunks.some(k => k.id === node.dataset.chunk)) node.classList.add('referenced');
-    });
-    const location = [c.ram ? 'RAM' : '', c.disk === 'durable' ? 'durable disk' : c.disk === 'queued' ? 'queued for disk (not durable)' : ''].filter(Boolean).join(' + ');
-    title.textContent = `${c.id} · exact state at token ${number(c.position)}`;
-    copy.textContent = `${bytes(cacheModels[model].fixed)} of fixed state paired with ${c.chunks.length} KV ranges. Location: ${location}. ${c.ram ? c.borrowed ? 'Rows are borrowed from live storage where possible, with backing spill capacity reserved.' : 'Rows have been preserved in the chunk pool.' : 'Rows are restored from durable disk storage.'} It can resume only a prompt that extends these exact tokens with compatible input identity.`;
-  } else {
-    const state = currentStep().state;
-    const c = uniqueChunks(state.checkpoints).find(c => c.id === inspected!.id);
-    if (!c) { inspected = undefined; renderInspector(); return; }
-    const refs = state.checkpoints.filter(p => p.chunks.some(k => k.id === c.id));
-    card.querySelectorAll<HTMLElement>('[data-chunk]').forEach(node => {
-      if (node.dataset.chunk === c.id) { node.classList.add('selected'); node.setAttribute('aria-pressed', 'true'); }
-    });
-    card.querySelectorAll<HTMLElement>('[data-checkpoint]').forEach(node => {
-      if (refs.some(p => p.id === node.dataset.checkpoint)) node.classList.add('referenced');
-    });
-    title.textContent = `${c.id} · rows ${number(c.start)}–${number(c.end - 1)} · provenance ${c.lineage}`;
-    copy.textContent = `${bytes((c.end - c.start) * cacheModels[model].perToken)} of ${c.tail ? 'partial-tail' : 'append-only'} data, referenced by ${refs.map(p => p.id).join(', ')}. Deleting one checkpoint only frees these bytes when its last reference disappears. Token equality with another computation does not establish common provenance.`;
-  }
+  const shift = direction === 'next' ? 16 : -16;
+  card.animate([{ opacity: 0.4, transform: `translateX(${shift}px)` }, { opacity: 1, transform: 'none' }], { duration: 260, easing: 'cubic-bezier(.2, .7, .2, 1)' });
 }
 
 function renderStory(direction?: 'next' | 'prev') {
@@ -438,26 +370,25 @@ function renderStory(direction?: 'next' | 'prev') {
   element('cache-step-number').textContent = `Step ${stepIndex + 1} / ${steps.length}`;
   element('cache-step-status').textContent = `Step ${stepIndex + 1} of ${steps.length}: ${currentStep().title}`;
   element('cache-conversation-context').textContent = cacheConversations[scenario().id].setup;
-  element('cache-lesson').textContent = scenario().lesson;
   prev.disabled = stepIndex === 0;
   next.disabled = stepIndex === steps.length - 1;
   document.querySelectorAll<HTMLButtonElement>('[data-scenario]').forEach(button => {
     const active = button.dataset.scenario === scenario().id;
     button.classList.toggle('active', active);
-    button.setAttribute('aria-pressed', String(active));
+    button.setAttribute('aria-selected', String(active));
   });
+  element('cache-story-name').textContent = scenario().name;
+  element('cache-story-caption').textContent = scenario().caption;
   renderTree();
   renderCards(direction);
-  renderInspector();
   if (started) syncLocation();
 }
 
-// Deep links: /cache?story=edit&step=2&model=qwen opens that story at that step.
+// Deep links: /playground/cache?story=edit&step=2 opens that story at that step; ?view=memory opens the Memory tab.
 // The address follows along once the reader starts exploring, so it can be shared.
 let started = false;
 function syncLocation() {
   const params = new URLSearchParams({ story: scenario().id, step: String(stepIndex + 1) });
-  if (model !== 'flash') params.set('model', model);
   history.replaceState(history.state, '', `${location.pathname}?${params}${location.hash}`);
 }
 function readLocation() {
@@ -467,8 +398,7 @@ function readLocation() {
     scenarioIndex = linked;
     stepIndex = Math.max(0, Math.min(scenario().steps.length - 1, (Number(params.get('step')) || 1) - 1));
   }
-  const linkedModel = params.get('model');
-  if (linkedModel && linkedModel in cacheModels) modelSelect.value = linkedModel;
+  if (params.get('view') === 'memory') showView('memory');
 }
 
 function renderCapacity() {
@@ -481,10 +411,13 @@ function renderCapacity() {
   element<HTMLOutputElement>('cache-depth-value').value = `${number(context)} tokens`;
   element<HTMLOutputElement>('cache-count-value').value = String(checkpoints);
   element<HTMLOutputElement>('cache-budget-value').value = `${budgetGiB.toFixed(1)} GiB`;
-  element('cache-shared-bytes').textContent = bytes(result.total);
+  // The cost doesn't depend on the budget, so show the two side by side: changing the budget changes the share.
+  element('cache-shared-bytes').innerHTML = `${bytes(result.total)} <small>of ${budgetGiB.toFixed(1)} GiB budget · ${Math.round(result.total / result.budget * 100)}%</small>`;
   element('cache-kv-bytes').textContent = bytes(result.kv);
   element('cache-fixed-bytes').textContent = bytes(result.fixed);
-  const ceiling = Math.max(result.total, result.budget) * 1.12;
+  // A fixed scale up to the largest budget the slider allows, so moving the budget moves its marker
+  // instead of rescaling the bars.
+  const ceiling = Math.max(result.total, Number(budget.max) * 2 ** 30);
   element('cache-shared-kv-bar').style.width = `${result.kv / ceiling * 100}%`;
   element('cache-shared-fixed-bar').style.width = `${result.fixed / ceiling * 100}%`;
   document.querySelectorAll<HTMLElement>('.cache-budget-marker').forEach(node => { node.style.left = `${result.budget / ceiling * 100}%`; });
@@ -495,13 +428,34 @@ function renderCapacity() {
 }
 
 const turnButton = (event: Event) => (event.target as HTMLElement).closest<HTMLButtonElement>('[data-time]');
-document.querySelector('.cache-scenarios')!.addEventListener('click', event => {
+// The story picker is a dropdown: a toggle button over a list of stories.
+const storyToggle = element<HTMLButtonElement>('cache-story-toggle');
+const storyList = element<HTMLUListElement>('cache-story-list');
+const storyOptions = () => [...storyList.querySelectorAll<HTMLButtonElement>('[data-scenario]')];
+function setStoryMenu(open: boolean, focus = false) {
+  storyList.hidden = !open;
+  storyToggle.setAttribute('aria-expanded', String(open));
+  if (open) storyOptions().find(option => option.classList.contains('active'))?.focus();
+  else if (focus) storyToggle.focus();
+}
+storyToggle.addEventListener('click', () => setStoryMenu(storyList.hidden));
+document.addEventListener('click', event => {
+  if (!storyList.hidden && !(event.target as HTMLElement).closest('.cache-story-picker')) setStoryMenu(false);
+});
+storyList.addEventListener('keydown', event => {
+  const options = storyOptions();
+  const index = options.indexOf(document.activeElement as HTMLButtonElement);
+  if (event.key === 'Escape') { event.preventDefault(); setStoryMenu(false, true); }
+  else if (event.key === 'ArrowDown') { event.preventDefault(); options[Math.min(options.length - 1, index + 1)].focus(); }
+  else if (event.key === 'ArrowUp') { event.preventDefault(); options[Math.max(0, index - 1)].focus(); }
+});
+storyList.addEventListener('click', event => {
   const button = (event.target as HTMLElement).closest<HTMLButtonElement>('[data-scenario]');
   if (!button) return;
+  setStoryMenu(false, true);
   stop();
   scenarioIndex = cacheScenarios.findIndex(s => s.id === button.dataset.scenario);
   stepIndex = 0;
-  inspected = undefined;
   renderStory();
   renderReadout();
 });
@@ -522,13 +476,11 @@ tree.addEventListener('focusin', event => { const button = turnButton(event); if
 tree.addEventListener('pointerleave', () => renderReadout());
 tree.addEventListener('focusout', () => renderReadout());
 new ResizeObserver(() => renderTree()).observe(treeScroll);
-peekPrev.addEventListener('click', () => { stop(); goTo(stepIndex - 1); });
-peekNext.addEventListener('click', () => { stop(); goTo(stepIndex + 1); });
 prev.addEventListener('click', () => { stop(); goTo(stepIndex - 1); });
 next.addEventListener('click', () => { stop(); goTo(stepIndex + 1); });
 play.addEventListener('click', () => {
   if (timer !== undefined) { stop(); return; }
-  if (next.disabled) { stepIndex = 0; inspected = undefined; renderStory(); }
+  if (next.disabled) { stepIndex = 0; renderStory(); }
   play.textContent = 'Pause story';
   play.setAttribute('aria-pressed', 'true');
   timer = setInterval(() => {
@@ -536,32 +488,39 @@ play.addEventListener('click', () => {
     if (next.disabled) stop();
   }, 6500);
 });
-card.addEventListener('click', event => {
-  const checkpoint = (event.target as HTMLElement).closest<HTMLElement>('[data-checkpoint]');
-  const chunk = (event.target as HTMLElement).closest<HTMLElement>('[data-chunk]');
-  if (checkpoint) inspected = { kind: 'checkpoint', id: checkpoint.dataset.checkpoint! };
-  else if (chunk) inspected = { kind: 'chunk', id: chunk.dataset.chunk! };
-  else return;
-  stop(); renderInspector();
-});
-// Expanding earlier messages on one card expands them on the card beside it too.
+// Earlier messages stay expanded across steps once the reader opens them.
 element('cache-state').addEventListener('toggle', event => {
   const details = event.target as HTMLElement;
-  if (!details.matches('.cache-card > .cache-thread > .thread-earlier')) return;
-  earlierOpen = (details as HTMLDetailsElement).open;
-  [card, previousCard].forEach(node => node.querySelectorAll<HTMLDetailsElement>('.thread-earlier').forEach(other => { other.open = earlierOpen; }));
+  if (details.matches('.thread-earlier')) earlierOpen = (details as HTMLDetailsElement).open;
 }, true);
+// Walkthrough and Memory are tabs, so each view fits the screen on its own.
+const tabs = [...document.querySelectorAll<HTMLButtonElement>('[data-view]')];
+function showView(view: string, focus = false) {
+  tabs.forEach(tab => {
+    const active = tab.dataset.view === view;
+    tab.setAttribute('aria-selected', String(active));
+    tab.tabIndex = active ? 0 : -1;
+    element(tab.getAttribute('aria-controls')!).hidden = !active;
+    if (active && focus) tab.focus();
+  });
+  if (view !== 'walkthrough') stop();
+}
+tabs.forEach((tab, i) => {
+  tab.addEventListener('click', () => showView(tab.dataset.view!));
+  tab.addEventListener('keydown', event => {
+    if (event.key !== 'ArrowRight' && event.key !== 'ArrowLeft') return;
+    event.preventDefault();
+    showView(tabs[(i + (event.key === 'ArrowRight' ? 1 : tabs.length - 1)) % tabs.length].dataset.view!, true);
+  });
+});
 const diffToggle = element<HTMLInputElement>('cache-diff-toggle');
 // Highlighting starts on, even when the browser restores an unchecked box from an earlier visit.
 diffToggle.checked = true;
 diffToggle.addEventListener('change', () => element('cache-state').classList.toggle('hide-diff', !diffToggle.checked));
-modelSelect.addEventListener('change', () => { model = modelSelect.value as ModelId; renderStory(); renderCapacity(); });
 [depth, count, budget].forEach(input => input.addEventListener('input', renderCapacity));
 window.addEventListener('pagehide', stop);
 document.addEventListener('visibilitychange', () => { if (document.hidden) stop(); });
 readLocation();
-// Follow the select, which a browser may restore from an earlier visit.
-model = modelSelect.value as ModelId;
 renderStory();
 renderReadout();
 renderCapacity();

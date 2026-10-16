@@ -47,9 +47,10 @@ const arrows = [
   { col: 3, from: 1, to: 2, label: 'restore' },
 ];
 const bottom = laneY(lanes.length - 1) + h / 2;
+import ExploreLink from './ExploreLink.astro';
 ---
 <figure class="slf">
-  <p class="slf-eyebrow"><span class="slf-dot"></span>{figure !== undefined && <>Fig. {figure} · </>}A slot changes hands</p>
+  <p class="slf-eyebrow"><span class="fig-eyebrow-title"><span class="slf-dot"></span>{figure !== undefined && <>Fig. {figure} · </>}A slot changes hands</span><ExploreLink story="sessions" /></p>
   <div class="slf-scroll">
     <svg viewBox={`0 0 760 ${bottom + 40}`} role="img" aria-label="Moment 1: A has just finished a turn in slot 1, and its checkpoints borrow the rows there. Moment 2: while slot 1 is idle, A's borrowed rows are copied to backing RAM. Moment 3: B takes slot 1 and overwrites it; A's rows are kept in backing RAM. Moment 4: A comes back and is restored into slot 2.">
       <defs>
@@ -109,7 +110,7 @@ const bottom = laneY(lanes.length - 1) + h / 2;
     border-radius: 10px;
     font-family: var(--font-sans);
   }
-  .slf-eyebrow { display: flex; align-items: center; gap: 8px; font: 12px var(--font-mono); color: var(--color-ink-3); }
+  .slf-eyebrow { display: flex; align-items: center; justify-content: space-between; gap: 8px 12px; font: 12px var(--font-mono); color: var(--color-ink-3); }
   .slf-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--color-forest); }
   .slf-scroll { margin: 14px 0; overflow-x: auto; }
   .slf svg { display: block; width: 100%; min-width: 560px; height: auto; }

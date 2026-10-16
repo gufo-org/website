@@ -39,9 +39,10 @@ const outcomes = [
 ];
 const gap = 1.5;
 const bottom = outcomes[1].top + 46;
+import ExploreLink from './ExploreLink.astro';
 ---
 <figure class="rsf">
-  <p class="rsf-eyebrow"><span class="rsf-dot"></span>{figure !== undefined && <>Fig. {figure} · </>}Queued is not durable</p>
+  <p class="rsf-eyebrow"><span class="fig-eyebrow-title"><span class="rsf-dot"></span>{figure !== undefined && <>Fig. {figure} · </>}Queued is not durable</span><ExploreLink story="restart" /></p>
   <div class="rsf-scroll">
     <svg viewBox={`0 0 760 ${bottom + 40}`} role="img" aria-label={`Before a restart, A@${number(durable)} is durable on disk and A@${number(queued)} is still queued. If the restart comes after A@${number(queued)}'s manifest is durable, a ${number(prompt)}-token request restores ${number(queued)} tokens and prefills ${number(prompt - queued)}. If it comes while the write is queued, only ${number(durable)} tokens come back and ${number(prompt - durable)} are prefilled.`}>
       <text x={left} y="26" class="rsf-head">On disk, just before the restart</text>
@@ -104,7 +105,7 @@ const bottom = outcomes[1].top + 46;
     border-radius: 10px;
     font-family: var(--font-sans);
   }
-  .rsf-eyebrow { display: flex; align-items: center; gap: 8px; font: 12px var(--font-mono); color: var(--color-ink-3); }
+  .rsf-eyebrow { display: flex; align-items: center; justify-content: space-between; gap: 8px 12px; font: 12px var(--font-mono); color: var(--color-ink-3); }
   .rsf-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--color-forest); }
   .rsf-scroll { margin: 14px 0; overflow-x: auto; }
   .rsf svg { display: block; width: 100%; min-width: 560px; height: auto; }

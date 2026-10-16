@@ -39,9 +39,10 @@ const block = Array.from({ length: 9 }, (_, k) => ({
   y: blockTop + Math.floor(k / 3) * cell,
   fill: palette[(k * 2 + 1) % palette.length],
 }));
+import ExploreLink from './ExploreLink.astro';
 ---
 <figure class="cof">
-  <p class="cof-eyebrow"><span class="cof-dot"></span>{figure !== undefined && <>Fig. {figure} · </>}Two cold prefills, one restore</p>
+  <p class="cof-eyebrow"><span class="fig-eyebrow-title"><span class="cof-dot"></span>{figure !== undefined && <>Fig. {figure} · </>}Two cold prefills, one restore</span><ExploreLink story="provenance" /></p>
   <div class="cof-scroll">
     <svg viewBox={`0 0 760 ${bottom + 34}`} role="img" aria-label="B and A each compute the same 6,144 tokens cold and keep three chunks each; nothing is shared between them. C restores A's checkpoint at 6,144, references A's three chunks and computes one new chunk up to 8,192.">
       <defs>
@@ -96,7 +97,7 @@ const block = Array.from({ length: 9 }, (_, k) => ({
     border-radius: 10px;
     font-family: var(--font-sans);
   }
-  .cof-eyebrow { display: flex; align-items: center; gap: 8px; font: 12px var(--font-mono); color: var(--color-ink-3); }
+  .cof-eyebrow { display: flex; align-items: center; justify-content: space-between; gap: 8px 12px; font: 12px var(--font-mono); color: var(--color-ink-3); }
   .cof-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--color-forest); }
   .cof-scroll { margin: 14px 0; overflow-x: auto; }
   .cof svg { display: block; width: 100%; min-width: 560px; height: auto; }

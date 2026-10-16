@@ -48,9 +48,10 @@ const block = (y: number, seed: number) =>
     fill: palette[(k * 2 + seed) % palette.length],
   }));
 const box = (i: number) => ({ x1: x(i * chunk) + 2, x2: x((i + 1) * chunk) - 2 });
+import ExploreLink from './ExploreLink.astro';
 ---
 <figure class="spf">
-  <p class="spf-eyebrow"><span class="spf-dot"></span>{figure !== undefined && <>Fig. {figure} · </>}Preserving borrowed rows</p>
+  <p class="spf-eyebrow"><span class="fig-eyebrow-title"><span class="spf-dot"></span>{figure !== undefined && <>Fig. {figure} · </>}Preserving borrowed rows</span><ExploreLink story="spill" /></p>
   <div class="spf-scroll">
     <svg viewBox={`0 0 760 ${bottom + 40}`} role="img" aria-label="Before: A's six chunks are live in slot 1, and checkpoints A@8,192 and A@12,288 borrow four and six of them. After B takes slot 1, the six chunks are copied once into backing RAM and A@12,288 still references all of them. Evicting A@8,192 frees only its private state.">
       {stages.map((stage) => (
@@ -109,7 +110,7 @@ const box = (i: number) => ({ x1: x(i * chunk) + 2, x2: x((i + 1) * chunk) - 2 }
     border-radius: 10px;
     font-family: var(--font-sans);
   }
-  .spf-eyebrow { display: flex; align-items: center; gap: 8px; font: 12px var(--font-mono); color: var(--color-ink-3); }
+  .spf-eyebrow { display: flex; align-items: center; justify-content: space-between; gap: 8px 12px; font: 12px var(--font-mono); color: var(--color-ink-3); }
   .spf-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--color-forest); }
   .spf-scroll { margin: 14px 0; overflow-x: auto; }
   .spf svg { display: block; width: 100%; min-width: 560px; height: auto; }

@@ -5,7 +5,7 @@ date: 2026-10-16
 kind: Engineering
 tags: [cache, hybrid models, internals]
 related:
-  - { label: Interactive, title: Cache explorer, href: /cache }
+  - { label: Interactive, title: Cache explorer, href: /playground/cache }
   - { label: Source, title: The cache package, href: "https://github.com/gufo-org/gufo/tree/main/src/cache" }
 ---
 import KvFigure from '../../components/blog/KvFigure.astro';
@@ -307,7 +307,7 @@ Some questions are still open:
 - **Checkpoint density.** The grid limits and eviction ranks are starting points. They'll move as real workloads show where restore points are missing.
 - **Concurrency.** Qualifying eight simultaneous requests per model, inside each model's memory envelope, is still ahead.
 
-If you want to see these mechanisms move, the [cache explorer](/cache) steps through all the scenarios in this post and lets you change the memory budget.
+If you want to see these mechanisms move, the [cache explorer](/playground/cache) steps through all the scenarios in this post and lets you change the memory budget.
 
 The figures use made-up conversations with 2,048-token chunks to stay readable. The numbers in the text come from the single measured run described in section 1.
 

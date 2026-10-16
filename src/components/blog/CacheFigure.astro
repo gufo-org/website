@@ -1,6 +1,6 @@
 ---
 // A compact, embeddable view of one cache-explorer story for blog posts.
-// It reads the same scenarios as /cache but renders its own figure: every
+// It reads the same scenarios as /playground/cache but renders its own figure: every
 // step is rendered here on the server, and a small script only switches
 // between them, so several figures can share a page and the first step
 // still shows without JavaScript.
@@ -66,8 +66,8 @@ const panels = shown.map((s) => {
   };
 });
 const pinned = panels.length === 1;
-// Opens /cache on the same story and step; the script updates it as the reader steps through.
-const explorerLink = (index: number) => `/cache?${new URLSearchParams({ story: scenario.id, step: String(index + 1), ...(model !== 'flash' && { model }) })}#walkthrough-heading`;
+// Opens /playground/cache on the same story and step; the script updates it as the reader steps through.
+const explorerLink = (index: number) => `/playground/cache?${new URLSearchParams({ story: scenario.id, step: String(index + 1), })}#walkthrough-heading`;
 ---
 
 <figure class="cf" data-cache-figure tabindex={pinned ? undefined : 0} aria-label={`${scenario.name}: cache figure`}>

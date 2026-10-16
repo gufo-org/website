@@ -42,12 +42,10 @@ const block = (c: number) =>
 const oldTop = 84;
 const newTop = 166;
 const gap = 1.5;
+import ExploreLink from './ExploreLink.astro';
 ---
 <figure class="edf">
-  <p class="edf-eyebrow">
-    <span><span class="edf-dot"></span>{figure !== undefined && <>Fig. {figure} · </>}Editing an earlier message</span>
-    <a href="/cache?story=edit&step=1#walkthrough-heading">Step through it →</a>
-  </p>
+  <p class="edf-eyebrow"><span class="fig-eyebrow-title"><span class="edf-dot"></span>{figure !== undefined && <>Fig. {figure} · </>}Editing an earlier message</span><ExploreLink story="edit" /></p>
   <div class="edf-scroll">
     <svg viewBox="0 0 760 226" role="img" aria-label={`Conversation A has checkpoints at ${checkpoints.map(number).join(', ')}. An edit changes token ${number(edit + 1)}. The edited request restores the checkpoint at ${number(restored)}, computes tokens ${number(restored)} to ${number(edit)} again although they didn't change, and prefills the edited text after that.`}>
       <defs>
@@ -109,9 +107,6 @@ const gap = 1.5;
     font-family: var(--font-sans);
   }
   .edf-eyebrow { display: flex; justify-content: space-between; align-items: center; gap: 12px; font: 12px var(--font-mono); color: var(--color-ink-3); }
-  .edf-eyebrow > span { display: flex; align-items: center; gap: 8px; }
-  .edf-eyebrow a { font: 12px var(--font-sans); color: var(--color-forest); text-decoration: none; }
-  .edf-eyebrow a:hover { text-decoration: underline; }
   .edf-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--color-forest); }
   .edf-scroll { margin: 14px 0; overflow-x: auto; }
   .edf svg { display: block; width: 100%; min-width: 560px; height: auto; }

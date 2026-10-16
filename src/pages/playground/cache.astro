@@ -1,0 +1,81 @@
+---
+import Layout from '../../layouts/Layout.astro';
+import Navbar from '../../components/Navbar.astro';
+import Footer from '../../components/Footer.astro';
+import { cacheScenarios } from '../../data/cache-explorer';
+import '../../styles/cache-explorer.css';
+---
+
+<Layout title="Cache explorer · Gufo" description="An interactive walkthrough of Gufo’s cache: live sessions, checkpoints, shared KV memory and restoring from disk.">
+  <Navbar currentPath="/playground/cache" />
+  <main class="cache-page">
+    <header class="cache-bar">
+      <div class="cache-breadcrumb"><a href="/playground">Playground</a><span>/</span><span>Cache explorer</span></div>
+      <div class="cache-tabs" role="tablist" aria-label="Cache explorer views">
+        <button type="button" role="tab" id="cache-tab-walkthrough" aria-controls="cache-walkthrough" aria-selected="true" data-view="walkthrough">Walkthrough</button>
+        <button type="button" role="tab" id="cache-tab-memory" aria-controls="cache-memory" aria-selected="false" tabindex="-1" data-view="memory">Memory</button>
+      </div>
+      <a class="cache-source" href="/blog/how-gufo-caches-a-hybrid-model/">Read the explanation · <b>How Gufo caches a hybrid model →</b></a>
+    </header>
+
+    <section id="cache-walkthrough" class="cache-lab" role="tabpanel" aria-labelledby="cache-tab-walkthrough">
+      <div class="cache-toolbar">
+        <div class="cache-story-picker">
+            <button type="button" id="cache-story-toggle" class="cache-story-toggle" aria-haspopup="listbox" aria-expanded="false" aria-controls="cache-story-list" aria-label="Story">
+              <span><b id="cache-story-name">{cacheScenarios[0].name}</b><small id="cache-story-caption">{cacheScenarios[0].caption}</small></span>
+              <svg width="12" height="12" viewBox="0 0 12 12" aria-hidden="true"><path d="M2.5 4.5 6 8l3.5-3.5" fill="none" stroke="currentColor" stroke-width="1.5" /></svg>
+            </button>
+            <ul id="cache-story-list" class="cache-scenarios" role="listbox" aria-label="Cache scenarios" hidden>
+              {cacheScenarios.map((s, i) => <li><button type="button" role="option" class={`scenario-button ${i === 0 ? 'active' : ''}`} data-scenario={s.id} aria-selected={i === 0 ? 'true' : 'false'}><b>{s.name}</b><small>{s.caption}</small></button></li>)}
+            </ul>
+          </div>
+        <div class="cache-playback"><button type="button" id="cache-prev" aria-label="Previous step">←</button><button type="button" id="cache-play">Play story</button><button type="button" id="cache-next" aria-label="Next step">→</button><span id="cache-step-number" class="cache-step-number">Step 1</span></div>
+        <span class="cache-model-label">Model <b>Flash-Next · MTP</b></span>
+      </div>
+      <div class="cache-tree-panel">
+        <p id="cache-conversation-context" class="cache-tree-context"></p>
+        <div class="cache-tree-body">
+          <ol id="cache-tree-lanes" class="cache-tree-lanes" aria-label="Conversation branches"></ol>
+          <div id="cache-tree-scroll" class="cache-tree-scroll"><div id="cache-tree" class="cache-tree" role="toolbar" aria-label="Conversation turns. Use the arrow keys to move through time."></div></div>
+        </div>
+        <div class="cache-tree-footer">
+          <p id="cache-tree-readout" class="cache-tree-readout"></p>
+          <div class="cache-tree-legend"><span><i class="node-user"></i>User</span><span><i class="node-assistant"></i>Gufo</span><span><i class="node-tool"></i>Tool result</span><span><i class="node-event"></i>Cache event</span><span><i class="node-history"></i>History of the selected turn</span></div>
+        </div>
+      </div>
+      <p id="cache-step-status" class="sr-only" aria-live="polite" aria-atomic="true"></p>
+      <div class="cache-state" id="cache-state">
+        <article id="cache-hybrid" class="cache-card" aria-label="Cache state at the selected turn"></article>
+        <div class="cache-key">
+        <div class="cache-key-group"><span class="cache-key-title">Cache state</span><span><i class="legend-reused"></i>Reused prefix</span><span><i class="legend-new"></i>Needs prefill</span><span><i class="legend-fixed"></i>Fixed state</span><span><i class="legend-queued"></i>Queued for disk</span><span><i class="legend-durable"></i>Durable on disk</span></div>
+        <div class="cache-key-group"><label class="cache-diff-switch"><input id="cache-diff-toggle" type="checkbox" role="switch" checked autocomplete="off" />Highlight changes</label><span><i class="key-added"></i>+ New in this step</span><span><i class="key-changed"></i>~ Changed</span></div>
+      </div>
+      </div>
+      <noscript><p class="cache-noscript">The walkthrough needs JavaScript.</p></noscript>
+    </section>
+
+    <section id="cache-memory" class="cache-capacity" role="tabpanel" aria-labelledby="cache-tab-memory" hidden>
+      <div class="cache-section-heading"><h2 id="capacity-heading">How much does history cost?</h2><span class="cache-lane-tag">Estimate, not a benchmark</span></div>
+      <p class="cache-capacity-intro">Say you keep several checkpoints along one conversation. The KV memory is stored once; each checkpoint only adds its own fixed state. Move the sliders to see which part grows.</p>
+      <div class="cache-capacity-layout">
+        <div class="cache-sliders">
+          <label for="cache-depth">Latest checkpoint depth<output id="cache-depth-value" for="cache-depth"></output></label><input id="cache-depth" type="range" min="8192" max="151552" step="2048" value="100352" />
+          <label for="cache-count">Retained checkpoints<output id="cache-count-value" for="cache-count"></output></label><input id="cache-count" type="range" min="1" max="32" step="1" value="8" />
+          <label for="cache-budget">RAM cache budget<output id="cache-budget-value" for="cache-budget"></output></label><input id="cache-budget" type="range" min="1" max="32" step="0.5" value="9" />
+          <p id="cache-size-formula" class="cache-method-note"></p>
+        </div>
+        <div class="cache-capacity-results" aria-live="polite">
+          <div class="capacity-row"><div><span>Shared KV + fixed state</span><strong id="cache-shared-bytes"></strong></div><div class="capacity-bar"><div id="cache-shared-kv-bar" class="shared-kv-bar"></div><div id="cache-shared-fixed-bar" class="shared-fixed-bar"></div><i class="cache-budget-marker"></i></div><p id="cache-shared-fit"></p></div>
+          <div class="capacity-footer"><span><i class="legend-reused"></i>Unique KV <b id="cache-kv-bytes"></b></span><span><i class="legend-fixed"></i>Fixed state <b id="cache-fixed-bytes"></b></span><span>│ Budget</span></div>
+        </div>
+      </div>
+      <p class="cache-method-note">Sizes measured with Gufo running Flash-Next on Strix Halo: a fixed cost per checkpoint plus a cost per token. Checkpoints are 2,048 tokens apart on one conversation. Sessions, transfer buffers and allocator overhead come on top. Separate conversations share less. At most 128 checkpoints.</p>
+    </section>
+
+  </main>
+  <Footer />
+</Layout>
+
+<script>
+  import '../../scripts/cache-explorer';
+</script>
