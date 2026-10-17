@@ -1,0 +1,129 @@
+---
+// The "continuation" story from the cache explorer, in the style of the
+// other blog figures: three turns of one conversation. Each turn checkpoints
+// its prompt, generates, and leaves a live frontier that the next turn
+// continues from in place. Inline SVG rendered on the server.
+interface Props {
+  figure?: number | string;
+  caption?: string;
+}
+
+const { figure, caption } = Astro.props;
+
+const number = (t: number) => t.toLocaleString('en-US');
+const total = 6144;
+const left = 24;
+const width = 712;
+const x = (t: number) => left + (t / total) * width;
+
+const colours = { live: '#3f7a4f', prefill: '#4f86b8', generated: '#9a5c8a' };
+type Kind = keyof typeof colours;
+const turns: { prompt: number; segments: { from: number; to: number; kind: Kind }[] }[] = [
+  { prompt: 4096, segments: [{ from: 0, to: 4096, kind: 'prefill' }, { from: 4096, to: 4608, kind: 'generated' }] },
+  { prompt: 5120, segments: [{ from: 0, to: 4608, kind: 'live' }, { from: 4608, to: 5120, kind: 'prefill' }, { from: 5120, to: 5376, kind: 'generated' }] },
+  { prompt: 5888, segments: [{ from: 0, to: 5376, kind: 'live' }, { from: 5376, to: 5888, kind: 'prefill' }, { from: 5888, to: 6144, kind: 'generated' }] },
+];
+const stride = 104;
+const barTop = (i: number) => 62 + i * stride;
+const gap = 1.5;
+
+const palette = ['#3f7a4f', '#4f86b8', '#c27a2c', '#3d8a8a', '#9a5c8a'];
+const cell = 7;
+const block = (cx: number, top: number, seed: number) =>
+  Array.from({ length: 9 }, (_, k) => ({
+    x: cx - 1.5 * cell + (k % 3) * cell,
+    y: top + Math.floor(k / 3) * cell,
+    fill: palette[(k * 2 + seed) % palette.length],
+  }));
+const legendY = barTop(turns.length - 1) + 82;
+const legend = [
+  { kind: 'live' as Kind, label: 'live state, no restore' },
+  { kind: 'prefill' as Kind, label: 'prefilled' },
+  { kind: 'generated' as Kind, label: 'generated' },
+];
+import ExploreLink from './ExploreLink.astro';
+---
+<figure class="ctf">
+  <p class="ctf-eyebrow"><span class="fig-eyebrow-title"><span class="ctf-dot"></span>{figure !== undefined && <>Fig. {figure} · </>}Continuing a conversation</span><ExploreLink story="continuation" /></p>
+  <div class="ctf-scroll">
+    <svg viewBox={`0 0 760 ${legendY + 12}`} role="img" aria-label="Turn 1 prefills a 4,096-token prompt cold, checkpoints it and generates 512 tokens, leaving a live frontier at 4,608. Turn 2 continues from that frontier in place, prefills only the 512-token message, checkpoints 5,120 and generates to 5,376. Turn 3 does the same: 512 new tokens, a checkpoint at 5,888 and a tool call that brings the frontier to 6,144.">
+      <defs>
+        <marker id="ctf-arrow" viewBox="0 0 8 8" refX="7" refY="4" markerWidth="7" markerHeight="7" orient="auto">
+          <path d="M0 0 L8 4 L0 8 z" class="ctf-arrowhead" />
+        </marker>
+      </defs>
+
+      {turns.map((turn, i) => {
+        const top = barTop(i);
+        const frontier = turn.segments[turn.segments.length - 1].to;
+        return (
+          <g>
+            <text x={left} y={top - 36} class="ctf-head">Turn {i + 1} · {number(turn.prompt)}-token prompt</text>
+            {block(x(turn.prompt), top - 26, i * 2 + 1).map((s) => <rect x={s.x} y={s.y} width={cell} height={cell} fill={s.fill} class="ctf-state" />)}
+            <line x1={x(turn.prompt)} y1={top - 26 + 3 * cell + 1} x2={x(turn.prompt)} y2={top} class="ctf-cp-line" />
+            {turn.segments.map((s, k) => {
+              const x1 = x(s.from) + (k > 0 ? gap : 0);
+              const x2 = x(s.to) - (turn.segments.length - 1 > k ? gap : 0);
+              return (
+                <g style={`--c: ${colours[s.kind]}`}>
+                  <rect x={x1} y={top} width={x2 - x1} height="28" rx="6" class="ctf-seg" />
+                  {x2 - x1 > 50 && <text x={(x1 + x2) / 2} y={top + 18.5} class="ctf-seg-count" text-anchor="middle">{number(s.to - s.from)}</text>}
+                </g>
+              );
+            })}
+            {turns.length - 1 > i
+              ? (
+                <g>
+                  <line x1={x(frontier)} y1={top + 32} x2={x(frontier)} y2={barTop(i + 1) - 4} class="ctf-frontier" marker-end="url(#ctf-arrow)" />
+                  <text x={x(frontier) - 8} y={top + 48} class="ctf-note" text-anchor="end">live frontier · {number(frontier)}</text>
+                </g>
+              )
+              : <text x={x(frontier) - 4} y={top + 46} class="ctf-note" text-anchor="end">live frontier · {number(frontier)}</text>}
+          </g>
+        );
+      })}
+
+      <g transform={`translate(${left} ${legendY})`}>
+        {legend.map((l, i) => (
+          <g transform={`translate(${[0, 180, 290][i]} 0)`} style={`--c: ${colours[l.kind]}`}>
+            <rect x="0" y="-9" width="16" height="12" rx="3" class="ctf-seg" />
+            <text x="22" y="1" class="ctf-legend">{l.label}</text>
+          </g>
+        ))}
+        <g transform="translate(400 0)">
+          {Array.from({ length: 9 }, (_, k) => <rect x={(k % 3) * 5} y={-10 + Math.floor(k / 3) * 5} width="5" height="5" fill={palette[(k * 2 + 1) % palette.length]} class="ctf-state" />)}
+          <text x="22" y="1" class="ctf-legend">prompt checkpoint</text>
+        </g>
+      </g>
+    </svg>
+  </div>
+  {caption && <figcaption>{caption}</figcaption>}
+</figure>
+
+<style>
+  .ctf {
+    margin: 2.5rem 0;
+    padding: 20px;
+    background: var(--color-paper);
+    border: 1px solid var(--color-line-strong);
+    border-radius: 10px;
+    font-family: var(--font-sans);
+  }
+  .ctf-eyebrow { display: flex; align-items: center; justify-content: space-between; gap: 8px 12px; font: 12px var(--font-mono); color: var(--color-ink-3); }
+  .ctf-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--color-forest); }
+  .ctf-scroll { margin: 14px 0; overflow-x: auto; }
+  .ctf svg { display: block; width: 100%; min-width: 560px; height: auto; }
+
+  .ctf-head { font: 10.5px var(--font-mono); letter-spacing: 0.06em; text-transform: uppercase; fill: var(--color-ink-4); }
+  .ctf-note { font: italic 12px var(--font-sans); fill: var(--color-ink-3); }
+  .ctf-legend { font: 12px var(--font-sans); fill: var(--color-ink-3); }
+  .ctf-arrowhead { fill: var(--color-ink-3); }
+  .ctf-state { stroke: var(--color-paper); stroke-width: 1; fill-opacity: 0.75; }
+  .ctf-cp-line { stroke: var(--color-ink-3); stroke-width: 1.2; }
+  .ctf-frontier { stroke: var(--color-ink-3); stroke-width: 1.4; stroke-dasharray: 4 3; }
+
+  .ctf-seg { fill: color-mix(in srgb, var(--c) 14%, white); stroke: var(--c); stroke-width: 1.4; }
+  .ctf-seg-count { font: 13px var(--font-mono); fill: var(--color-ink); }
+
+  .ctf figcaption { font-family: var(--font-serif); font-style: italic; font-size: 14px; line-height: 1.5; color: var(--color-ink-2); }
+</style>

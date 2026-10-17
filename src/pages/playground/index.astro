@@ -1,0 +1,45 @@
+---
+import Layout from '../../layouts/Layout.astro';
+import Navbar from '../../components/Navbar.astro';
+import Footer from '../../components/Footer.astro';
+
+// Each playground is a page under /playground; add new ones here.
+const playgrounds = [
+  {
+    href: '/playground/cache',
+    title: 'Cache explorer',
+    summary: 'Step through conversations and watch what the cache keeps, reuses and computes again, then size the RAM budget for your own history.',
+    tags: ['cache', 'hybrid models', 'internals'],
+    related: { title: 'How Gufo caches a hybrid model', href: '/blog/how-gufo-caches-a-hybrid-model/' },
+  },
+];
+---
+
+<Layout title="Playground · Gufo" description="Interactive pages for exploring how Gufo works inside.">
+  <Navbar currentPath="/playground" />
+  <main class="flex-1">
+    <div class="max-w-3xl mx-auto px-4 sm:px-6 pt-16 sm:pt-24 pb-24">
+      <header class="pb-12 border-b border-line">
+        <p class="eyebrow mb-5">Playground</p>
+        <h1 class="text-4xl sm:text-6xl text-ink leading-[1.08]">Try it yourself</h1>
+        <p class="mt-8 font-serif text-xl text-ink-2 leading-relaxed">Interactive pages for the ideas behind Gufo. Change the inputs and watch the mechanisms move.</p>
+      </header>
+
+      <ul class="divide-y divide-line">
+        {playgrounds.map((p) => (
+          <li class="py-10">
+            <a href={p.href} class="group block">
+              <h2 class="text-2xl sm:text-3xl text-ink leading-tight group-hover:text-forest transition-colors">{p.title} →</h2>
+              <p class="mt-3 text-ink-3 leading-relaxed">{p.summary}</p>
+            </a>
+            <p class="mt-4 flex flex-wrap items-center gap-2">
+              {p.tags.map((tag) => <span class="text-[11px] text-ink-3 border border-line-strong rounded-full px-2.5 py-0.5">{tag}</span>)}
+              <a href={p.related.href} class="ml-1 text-sm text-ink-3 hover:text-forest">Read: {p.related.title}</a>
+            </p>
+          </li>
+        ))}
+      </ul>
+    </div>
+  </main>
+  <Footer />
+</Layout>

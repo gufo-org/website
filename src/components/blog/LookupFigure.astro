@@ -1,0 +1,117 @@
+---
+// How a lookup chooses, in the style of the other blog figures: one prefix
+// tree holding live, RAM and disk candidates; the new prompt walks one path,
+// collects the candidates on it, takes the deepest and breaks the tie by tier.
+// Inline SVG rendered on the server.
+interface Props {
+  figure?: number | string;
+  caption?: string;
+}
+
+const { figure, caption } = Astro.props;
+
+const tiers = { live: '#3f7a4f', RAM: '#4f86b8', disk: '#9a5c8a' };
+type Tier = keyof typeof tiers;
+
+const pathX = 200;
+const root = { x: pathX, y: 56 };
+const n1 = { x: pathX, y: 126 };
+const n2 = { x: pathX, y: 206 };
+const n3 = { x: 340, y: 206 };
+const ghostEnd = 262;
+const chipW = 84;
+const chipH = 22;
+
+const chips: { tier: Tier; depth: string; x: number; y: number; off?: boolean }[] = [
+  { tier: 'RAM', depth: '4,096', x: pathX - 12 - chipW, y: n1.y },
+  { tier: 'disk', depth: '8,192', x: pathX - 12 - chipW, y: n2.y },
+  { tier: 'live', depth: '8,192', x: pathX - 16 - 2 * chipW, y: n2.y },
+  { tier: 'RAM', depth: '6,000', x: n3.x + 12, y: n3.y, off: true },
+];
+
+const panelX = 470;
+const ranking: { tier: Tier; depth: string; note: string; chosen?: boolean; off?: boolean }[] = [
+  { tier: 'live', depth: '8,192', note: 'deepest, wins the tie', chosen: true },
+  { tier: 'disk', depth: '8,192', note: 'same depth, slower' },
+  { tier: 'RAM', depth: '4,096', note: 'shallower' },
+  { tier: 'RAM', depth: '6,000', note: "B's branch, not on the path", off: true },
+];
+const rankY = (i: number) => 78 + i * 40;
+---
+<figure class="lkf">
+  <p class="lkf-eyebrow"><span class="lkf-dot"></span>{figure !== undefined && <>Fig. {figure} · </>}One lookup, three tiers</p>
+  <div class="lkf-scroll">
+    <svg viewBox="0 0 760 276" role="img" aria-label="A prefix tree holds a shared 4,096-token system prompt with a RAM checkpoint, A's history to 8,192 with a live frontier and a disk checkpoint, and B's history to 6,000 with a RAM checkpoint. A's next turn walks the system prompt and A's history, collecting RAM at 4,096, live at 8,192 and disk at 8,192. The deepest are at 8,192, and live wins the tie over disk.">
+      <text x="24" y="26" class="lkf-head">Prefix index · new prompt: A's next turn</text>
+      <text x={panelX} y="26" class="lkf-head">Candidates on the path</text>
+
+      <path d={`M${n1.x} ${n1.y} C ${n1.x + 90} ${n1.y}, ${n3.x} ${n1.y + 20}, ${n3.x} ${n3.y - 7}`} class="lkf-edge" />
+      <text x={n3.x + 10} y={n1.y + 44} class="lkf-edge-label">B's history → 6,000</text>
+
+      <line x1={root.x} y1={root.y} x2={n1.x} y2={n1.y} class="lkf-path" />
+      <line x1={n1.x} y1={n1.y} x2={n2.x} y2={n2.y} class="lkf-path" />
+      <line x1={n2.x} y1={n2.y} x2={n2.x} y2={ghostEnd} class="lkf-ghost" />
+      <text x={pathX - 12} y={(root.y + n1.y) / 2 + 4} class="lkf-edge-label" text-anchor="end">system prompt → 4,096</text>
+      <text x={pathX - 12} y={(n1.y + n2.y) / 2 + 4} class="lkf-edge-label" text-anchor="end">A's history → 8,192</text>
+      <text x={pathX + 12} y={ghostEnd - 4} class="lkf-note">new message, not cached yet</text>
+
+      <circle cx={root.x} cy={root.y} r="5" class="lkf-root" />
+      <text x={root.x + 12} y={root.y + 4} class="lkf-note">root</text>
+      {[n1, n2].map((n) => <circle cx={n.x} cy={n.y} r="6" class="lkf-node" />)}
+      <circle cx={n3.x} cy={n3.y} r="6" class="lkf-node is-off" />
+
+      {chips.map((c) => (
+        <g style={`--c: ${tiers[c.tier]}`}>
+          <rect x={c.x} y={c.y - chipH / 2} width={chipW} height={chipH} rx="5" class={c.off ? 'lkf-chip is-off' : 'lkf-chip'} />
+          <text x={c.x + chipW / 2} y={c.y + 4} class="lkf-chip-text" text-anchor="middle">{c.tier} · {c.depth}</text>
+        </g>
+      ))}
+
+      {ranking.map((r, i) => (
+        <g style={`--c: ${tiers[r.tier]}`}>
+          <rect x={panelX} y={rankY(i) - chipH / 2} width={chipW} height={chipH} rx="5" class={r.off ? 'lkf-chip is-off' : 'lkf-chip'} />
+          <text x={panelX + chipW / 2} y={rankY(i) + 4} class="lkf-chip-text" text-anchor="middle">{r.tier} · {r.depth}</text>
+          <text x={panelX + chipW + 10} y={rankY(i) + 4} class={r.chosen ? 'lkf-rank is-chosen' : r.off ? 'lkf-rank is-off' : 'lkf-rank'}>{r.chosen ? `✓ ${r.note}` : r.note}</text>
+        </g>
+      ))}
+      <text x={panelX} y={rankY(ranking.length) + 6} class="lkf-note">Deepest wins.</text>
+      <text x={panelX} y={rankY(ranking.length) + 22} class="lkf-note">On a tie: live, then RAM, then disk.</text>
+    </svg>
+  </div>
+  {caption && <figcaption>{caption}</figcaption>}
+</figure>
+
+<style>
+  .lkf {
+    margin: 2.5rem 0;
+    padding: 20px;
+    background: var(--color-paper);
+    border: 1px solid var(--color-line-strong);
+    border-radius: 10px;
+    font-family: var(--font-sans);
+  }
+  .lkf-eyebrow { display: flex; align-items: center; gap: 8px; font: 12px var(--font-mono); color: var(--color-ink-3); }
+  .lkf-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--color-forest); }
+  .lkf-scroll { margin: 14px 0; overflow-x: auto; }
+  .lkf svg { display: block; width: 100%; min-width: 560px; height: auto; }
+
+  .lkf-head { font: 10.5px var(--font-mono); letter-spacing: 0.06em; text-transform: uppercase; fill: var(--color-ink-4); }
+  .lkf-note { font: italic 12px var(--font-sans); fill: var(--color-ink-3); }
+  .lkf-edge-label { font: 11px var(--font-mono); fill: var(--color-ink-3); }
+
+  .lkf-path { stroke: var(--color-forest); stroke-width: 2.4; }
+  .lkf-edge { fill: none; stroke: var(--color-ink-4); stroke-width: 1.2; }
+  .lkf-ghost { stroke: var(--color-ink-4); stroke-width: 1.4; stroke-dasharray: 4 3; }
+  .lkf-root { fill: var(--color-ink-3); }
+  .lkf-node { fill: var(--color-ivory); stroke: var(--color-forest); stroke-width: 2; }
+  .lkf-node.is-off { stroke: var(--color-ink-4); stroke-width: 1.4; }
+
+  .lkf-chip { fill: color-mix(in srgb, var(--c) 14%, white); stroke: var(--c); stroke-width: 1.4; }
+  .lkf-chip.is-off { fill: none; stroke: var(--color-ink-4); stroke-dasharray: 3 3; }
+  .lkf-chip-text { font: 11.5px var(--font-mono); fill: var(--color-ink); }
+  .lkf-rank { font: 12px var(--font-sans); fill: var(--color-ink-3); }
+  .lkf-rank.is-chosen { font-weight: 600; fill: var(--color-forest); }
+  .lkf-rank.is-off { font-style: italic; fill: var(--color-ink-4); }
+
+  .lkf figcaption { font-family: var(--font-serif); font-style: italic; font-size: 14px; line-height: 1.5; color: var(--color-ink-2); }
+</style>

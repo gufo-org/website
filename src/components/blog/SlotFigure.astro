@@ -1,0 +1,132 @@
+---
+// A slot changing hands, in the style of the other blog figures: four
+// moments across slot 1, backing RAM and slot 2. A's borrowed rows are copied
+// out while slot 1 is idle, B takes the slot, and A later restores into
+// slot 2. Inline SVG rendered on the server.
+interface Props {
+  figure?: number | string;
+  caption?: string;
+}
+
+const { figure, caption } = Astro.props;
+
+const colours = { A: '#3f7a4f', B: '#4f86b8' };
+type Cell =
+  | { kind: 'free'; text: string }
+  | { kind: 'busy'; owner: keyof typeof colours; text: string; progress?: number };
+
+const moments = ['1 · A finishes a turn', '2 · slot 1 is idle', '3 · B takes slot 1', '4 · A comes back'];
+const lanes: { name: string; cells: Cell[] }[] = [
+  { name: 'slot 1', cells: [
+    { kind: 'busy', owner: 'A', text: 'A · live rows' },
+    { kind: 'busy', owner: 'A', text: 'A · live rows' },
+    { kind: 'busy', owner: 'B', text: 'B · running' },
+    { kind: 'busy', owner: 'B', text: 'B · running' },
+  ] },
+  { name: 'backing RAM', cells: [
+    { kind: 'free', text: 'nothing yet' },
+    { kind: 'busy', owner: 'A', text: "A's rows", progress: 0.6 },
+    { kind: 'busy', owner: 'A', text: "A's rows · kept" },
+    { kind: 'busy', owner: 'A', text: "A's rows · kept" },
+  ] },
+  { name: 'slot 2', cells: [
+    { kind: 'free', text: 'free' },
+    { kind: 'free', text: 'free' },
+    { kind: 'free', text: 'free' },
+    { kind: 'busy', owner: 'A', text: 'A · restored' },
+  ] },
+];
+
+const colX = (j: number) => 152 + j * 150;
+const cellW = 140;
+const laneY = (i: number) => 70 + i * 62;
+const h = 34;
+// Arrows between lanes: copy out in moment 2, restore in moment 4.
+const arrows = [
+  { col: 1, from: 0, to: 1, label: 'copy while idle' },
+  { col: 3, from: 1, to: 2, label: 'restore' },
+];
+const bottom = laneY(lanes.length - 1) + h / 2;
+import ExploreLink from './ExploreLink.astro';
+---
+<figure class="slf">
+  <p class="slf-eyebrow"><span class="fig-eyebrow-title"><span class="slf-dot"></span>{figure !== undefined && <>Fig. {figure} · </>}A slot changes hands</span><ExploreLink story="sessions" /></p>
+  <div class="slf-scroll">
+    <svg viewBox={`0 0 760 ${bottom + 40}`} role="img" aria-label="Moment 1: A has just finished a turn in slot 1, and its checkpoints borrow the rows there. Moment 2: while slot 1 is idle, A's borrowed rows are copied to backing RAM. Moment 3: B takes slot 1 and overwrites it; A's rows are kept in backing RAM. Moment 4: A comes back and is restored into slot 2.">
+      <defs>
+        <marker id="slf-arrow" viewBox="0 0 8 8" refX="7" refY="4" markerWidth="7" markerHeight="7" orient="auto">
+          <path d="M0 0 L8 4 L0 8 z" class="slf-arrowhead" />
+        </marker>
+        <clipPath id="slf-clip"><rect x="0" y="0" width={cellW} height={h} rx="6" /></clipPath>
+      </defs>
+
+      {moments.map((m, j) => <text x={colX(j)} y="30" class="slf-head">{m}</text>)}
+
+      {lanes.map((lane, i) => {
+        const y = laneY(i);
+        return (
+          <g>
+            <rect x="24" y={y - 14} width="104" height="28" rx="6" class="slf-chip" />
+            <text x="76" y={y + 4.5} class="slf-chip-text" text-anchor="middle">{lane.name}</text>
+            {lane.cells.map((c, j) => (
+              <g transform={`translate(${colX(j)} ${y - h / 2})`} style={c.kind === 'busy' ? `--c: ${colours[c.owner]}` : undefined}>
+                {c.kind === 'free'
+                  ? <rect width={cellW} height={h} rx="6" class="slf-free" />
+                  : <rect width={cellW} height={h} rx="6" class="slf-busy" />}
+                {c.kind === 'busy' && c.progress !== undefined && (
+                  <g clip-path="url(#slf-clip)">
+                    <rect y={h - 5} width={cellW * c.progress} height="5" class="slf-progress" />
+                  </g>
+                )}
+                <text x={cellW / 2} y={h / 2 + 4.5} class={c.kind === 'free' ? 'slf-free-text' : 'slf-busy-text'} text-anchor="middle">{c.text}</text>
+              </g>
+            ))}
+          </g>
+        );
+      })}
+
+      {arrows.map((a) => {
+        const cx = colX(a.col) + cellW - 22;
+        return (
+          <g>
+            <line x1={cx} y1={laneY(a.from) + h / 2 + 2} x2={cx} y2={laneY(a.to) - h / 2 - 4} class="slf-flow" marker-end="url(#slf-arrow)" />
+            <text x={cx - 8} y={(laneY(a.from) + laneY(a.to)) / 2 + 4} class="slf-note" text-anchor="end">{a.label}</text>
+          </g>
+        );
+      })}
+
+      <text x="24" y={bottom + 30} class="slf-note">The copy runs piece by piece while slot 1 has nothing to do, so by the time B arrives it is usually finished.</text>
+    </svg>
+  </div>
+  {caption && <figcaption>{caption}</figcaption>}
+</figure>
+
+<style>
+  .slf {
+    margin: 2.5rem 0;
+    padding: 20px;
+    background: var(--color-paper);
+    border: 1px solid var(--color-line-strong);
+    border-radius: 10px;
+    font-family: var(--font-sans);
+  }
+  .slf-eyebrow { display: flex; align-items: center; justify-content: space-between; gap: 8px 12px; font: 12px var(--font-mono); color: var(--color-ink-3); }
+  .slf-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--color-forest); }
+  .slf-scroll { margin: 14px 0; overflow-x: auto; }
+  .slf svg { display: block; width: 100%; min-width: 560px; height: auto; }
+
+  .slf-head { font: 10.5px var(--font-mono); letter-spacing: 0.06em; text-transform: uppercase; fill: var(--color-ink-4); }
+  .slf-note { font: italic 12px var(--font-sans); fill: var(--color-ink-3); }
+  .slf-arrowhead { fill: var(--color-ink-3); }
+  .slf-flow { stroke: var(--color-ink-3); stroke-width: 1.4; }
+
+  .slf-chip { fill: var(--color-ivory); stroke: var(--color-line-strong); }
+  .slf-chip-text { font: 12px var(--font-mono); fill: var(--color-ink); }
+  .slf-busy { fill: color-mix(in srgb, var(--c) 14%, white); stroke: var(--c); stroke-width: 1.4; }
+  .slf-busy-text { font: 12px var(--font-mono); fill: var(--color-ink); }
+  .slf-progress { fill: var(--c); fill-opacity: 0.6; }
+  .slf-free { fill: none; stroke: var(--color-ink-4); stroke-dasharray: 3 3; }
+  .slf-free-text { font: italic 12px var(--font-sans); fill: var(--color-ink-4); }
+
+  .slf figcaption { font-family: var(--font-serif); font-style: italic; font-size: 14px; line-height: 1.5; color: var(--color-ink-2); }
+</style>

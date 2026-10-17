@@ -1,0 +1,135 @@
+---
+// A one-panel summary of the "edit" story from the cache explorer, drawn in
+// the same style as KvFigure and HybridFigure: the old conversation with its
+// checkpoints, and the edited request split into what is restored, what is
+// recomputed although unchanged, and what is new. The explorer has the full
+// walkthrough.
+interface Props {
+  figure?: number | string;
+  caption?: string;
+}
+
+const { figure, caption } = Astro.props;
+
+const total = 8192;
+const edit = 7000;
+const checkpoints = [2048, 4096, 6144, 8192];
+const restored = Math.max(...checkpoints.filter((c) => edit >= c));
+
+const left = 24;
+const width = 712;
+const x = (t: number) => left + (t / total) * width;
+const number = (t: number) => t.toLocaleString('en-US');
+
+// Same colours as the token palette in the first two figures.
+const segments = [
+  { from: 0, to: restored, c: '#3f7a4f', label: 'restored' },
+  { from: restored, to: edit, c: '#c27a2c', label: 'recomputed' },
+  { from: edit, to: total, c: '#4f86b8', label: 'edited text' },
+];
+
+// A checkpoint is frozen private state: a small block like the recurrent state in figure 2.
+const palette = ['#3f7a4f', '#4f86b8', '#c27a2c', '#3d8a8a', '#9a5c8a'];
+const cell = 7;
+const blockTop = 50;
+const block = (c: number) =>
+  Array.from({ length: 9 }, (_, k) => ({
+    x: x(c) - 1.5 * cell + (k % 3) * cell,
+    y: blockTop + Math.floor(k / 3) * cell,
+    fill: palette[(k * 2 + c / 2048) % palette.length],
+  }));
+
+const oldTop = 84;
+const newTop = 166;
+const gap = 1.5;
+import ExploreLink from './ExploreLink.astro';
+---
+<figure class="edf">
+  <p class="edf-eyebrow"><span class="fig-eyebrow-title"><span class="edf-dot"></span>{figure !== undefined && <>Fig. {figure} · </>}Editing an earlier message</span><ExploreLink story="edit" /></p>
+  <div class="edf-scroll">
+    <svg viewBox="0 0 760 226" role="img" aria-label={`Conversation A has checkpoints at ${checkpoints.map(number).join(', ')}. An edit changes token ${number(edit + 1)}. The edited request restores the checkpoint at ${number(restored)}, computes tokens ${number(restored)} to ${number(edit)} again although they didn't change, and prefills the edited text after that.`}>
+      <defs>
+        <marker id="edf-arrow" viewBox="0 0 8 8" refX="7" refY="4" markerWidth="7" markerHeight="7" orient="auto">
+          <path d="M0 0 L8 4 L0 8 z" class="edf-arrowhead" />
+        </marker>
+      </defs>
+
+      <text x={left} y="26" class="edf-head">Conversation A · before the edit</text>
+      <line x1={x(edit)} y1="34" x2={x(edit)} y2={newTop + 36} class="edf-edit" />
+      <text x={x(edit) - 6} y="26" class="edf-edit-label" text-anchor="end">edit at {number(edit + 1)}</text>
+
+      <rect x={x(0)} y={oldTop} width={width} height="28" rx="6" class="edf-old" />
+      <text x={x(edit / 2)} y={oldTop + 18.5} class="edf-old-text" text-anchor="middle">{number(total)} tokens, ending in the old text</text>
+      {checkpoints.map((c) => {
+        const stale = c > edit;
+        const anchor = c === total ? 'end' : 'middle';
+        const labelX = c === total ? x(c) - 12 : x(c);
+        return (
+          <g class={stale ? 'is-stale' : undefined}>
+            <text x={labelX} y={blockTop - 8} class="edf-cp-label" text-anchor={anchor}>{stale ? `${number(c)} · stale` : number(c)}</text>
+            {stale
+              ? <rect x={x(c) - 1.5 * cell} y={blockTop} width={3 * cell} height={3 * cell} rx="2" class="edf-ghost" />
+              : block(c).map((s) => <rect x={s.x} y={s.y} width={cell} height={cell} fill={s.fill} class="edf-state" />)}
+            <line x1={x(c)} y1={blockTop + 3 * cell + 1} x2={x(c)} y2={oldTop} class={stale ? 'edf-ghost-line' : 'edf-cp-line'} />
+          </g>
+        );
+      })}
+
+      <line x1={x(restored)} y1={oldTop + 32} x2={x(restored)} y2={newTop - 6} class="edf-restore" marker-end="url(#edf-arrow)" />
+      <text x={x(restored) - 8} y={(oldTop + newTop) / 2 + 12} class="edf-note" text-anchor="end">restore</text>
+
+      <text x={left} y={newTop - 12} class="edf-head">Edited request · {number(total)} tokens</text>
+      {segments.map((s, i) => {
+        const x1 = x(s.from) + (i > 0 ? gap : 0);
+        const x2 = x(s.to) - (segments.length - 1 > i ? gap : 0);
+        const mid = (x(s.from) + x(s.to)) / 2;
+        return (
+          <g style={`--c: ${s.c}`}>
+            <rect x={x1} y={newTop} width={x2 - x1} height="28" rx="6" class="edf-seg" />
+            <text x={mid} y={newTop + 18.5} class="edf-seg-count" text-anchor="middle">{number(s.to - s.from)}</text>
+            <text x={mid} y={newTop + 48} class="edf-seg-label" text-anchor="middle">{s.label}</text>
+          </g>
+        );
+      })}
+    </svg>
+  </div>
+  {caption && <figcaption>{caption}</figcaption>}
+</figure>
+
+<style>
+  .edf {
+    --diff: #b8336a;
+    margin: 2.5rem 0;
+    padding: 20px;
+    background: var(--color-paper);
+    border: 1px solid var(--color-line-strong);
+    border-radius: 10px;
+    font-family: var(--font-sans);
+  }
+  .edf-eyebrow { display: flex; justify-content: space-between; align-items: center; gap: 12px; font: 12px var(--font-mono); color: var(--color-ink-3); }
+  .edf-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--color-forest); }
+  .edf-scroll { margin: 14px 0; overflow-x: auto; }
+  .edf svg { display: block; width: 100%; min-width: 560px; height: auto; }
+
+  .edf-head { font: 10.5px var(--font-mono); letter-spacing: 0.06em; text-transform: uppercase; fill: var(--color-ink-4); }
+  .edf-cp-label { font: 11px var(--font-mono); fill: var(--color-ink-3); }
+  .is-stale .edf-cp-label { font-style: italic; fill: var(--color-ink-4); }
+  .edf-note { font: italic 12px var(--font-sans); fill: var(--color-ink-3); }
+  .edf-arrowhead { fill: var(--color-ink-3); }
+
+  .edf-old { fill: var(--color-ivory); stroke: var(--color-line-strong); }
+  .edf-old-text { font: 12px var(--font-mono); fill: var(--color-ink-4); }
+  .edf-state { stroke: var(--color-paper); stroke-width: 1; fill-opacity: 0.75; }
+  .edf-cp-line { stroke: var(--color-ink-3); stroke-width: 1.2; }
+  .edf-ghost { fill: none; stroke: var(--color-ink-4); stroke-dasharray: 3 3; }
+  .edf-ghost-line { stroke: var(--color-ink-4); stroke-dasharray: 3 3; }
+  .edf-restore { stroke: var(--color-ink-3); stroke-width: 1.4; }
+  .edf-edit { stroke: var(--diff); stroke-width: 1.4; stroke-dasharray: 4 3; }
+  .edf-edit-label { font: 11px var(--font-mono); fill: var(--diff); }
+
+  .edf-seg { fill: color-mix(in srgb, var(--c) 14%, white); stroke: var(--c); stroke-width: 1.4; }
+  .edf-seg-count { font: 13px var(--font-mono); fill: var(--color-ink); }
+  .edf-seg-label { font: italic 12px var(--font-sans); fill: color-mix(in srgb, var(--c) 75%, black); }
+
+  .edf figcaption { font-family: var(--font-serif); font-style: italic; font-size: 14px; line-height: 1.5; color: var(--color-ink-2); }
+</style>
