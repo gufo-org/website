@@ -2,7 +2,7 @@
 // The "fork" story from the cache explorer, in the style of the other blog
 // figures: a parent with a checkpoint at 4,096, a first subagent that
 // recomputes the gap and learns the 6,000-token boundary, and a second
-// subagent that restores it. Inline SVG rendered on the server.
+// subagent that restores it, in four steps. Inline SVG rendered on the server.
 interface Props {
   figure?: number | string;
   caption?: string;
@@ -49,10 +49,20 @@ const parentTop = 84;
 const blockTop = 50;
 const learnedTop = subagents[0].top + 58;
 const bottom = subagents[1].top + 52;
-import ExploreLink from './ExploreLink.astro';
+
+const steps = [
+  `A parent agent has ${number(parent)} tokens of history and a checkpoint at ${number(grid)}.`,
+  `It starts subagents that share its first ${number(shared)} tokens, the system prompt and tools. No checkpoint sits there.`,
+  `The first subagent restores ${number(grid)} and computes the gap. On the way it captures a learned checkpoint where it stopped matching, at ${number(shared)}.`,
+  `The second subagent restores the learned checkpoint and prefills only its own task.`,
+];
+const show = frames(steps.length);
+import StepControls from './StepControls.astro';
+import StepText from './StepText.astro';
+import { frames } from './steps';
 ---
-<figure class="fkf">
-  <p class="fkf-eyebrow"><span class="fig-eyebrow-title"><span class="fkf-dot"></span>{figure !== undefined && <>Fig. {figure} · </>}Learning a boundary</span><ExploreLink story="fork" /></p>
+<figure class="fkf" data-steps={steps.length}>
+  <p class="fkf-eyebrow"><span class="fig-eyebrow-title"><span class="fkf-dot"></span>{figure !== undefined && <>Fig. {figure} · </>}Learning a boundary</span><span class="fig-eyebrow-side"><StepControls count={steps.length} /></span></p>
   <div class="fkf-scroll">
     <svg viewBox={`0 0 760 ${bottom + 8}`} role="img" aria-label={`A parent has ${number(parent)} tokens and a checkpoint at ${number(grid)}. Its subagents share the first ${number(shared)} tokens. The first subagent restores ${number(grid)}, computes the gap to ${number(shared)}, captures a learned checkpoint there and prefills its own task. The second subagent restores the learned checkpoint and prefills only its own task.`}>
       <defs>
@@ -62,8 +72,10 @@ import ExploreLink from './ExploreLink.astro';
       </defs>
 
       <text x={left} y="26" class="fkf-head">Parent · {number(parent)} tokens</text>
-      <line x1={x(shared)} y1="34" x2={x(shared)} y2={subagents[0].top + 32} class="fkf-diverge" />
-      <text x={x(shared) + 6} y="26" class="fkf-diverge-label">subagents diverge at {number(shared)}</text>
+      <g {...show('2-')}>
+        <line x1={x(shared)} y1="34" x2={x(shared)} y2={subagents[0].top + 32} class="fkf-diverge" />
+        <text x={x(shared) + 6} y="26" class="fkf-diverge-label">subagents diverge at {number(shared)}</text>
+      </g>
 
       {[grid, parent].map((c, i) => (
         <g>
@@ -76,11 +88,11 @@ import ExploreLink from './ExploreLink.astro';
       <text x={x(shared / 2)} y={parentTop + 18.5} class="fkf-parent-text" text-anchor="middle">system prompt and tools</text>
       <text x={x((shared + parent) / 2)} y={parentTop + 18.5} class="fkf-parent-text" text-anchor="middle">parent's own history</text>
 
-      <line x1={x(grid)} y1={parentTop + 32} x2={x(grid)} y2={subagents[0].top - 6} class="fkf-restore" marker-end="url(#fkf-arrow)" />
-      <text x={x(grid) - 8} y={(parentTop + subagents[0].top) / 2 + 12} class="fkf-note" text-anchor="end">restore</text>
+      <line x1={x(grid)} y1={parentTop + 32} x2={x(grid)} y2={subagents[0].top - 6} class="fkf-restore" marker-end="url(#fkf-arrow)" {...show('3-')} />
+      <text {...show('3-')} x={x(grid) - 8} y={(parentTop + subagents[0].top) / 2 + 12} class="fkf-note" text-anchor="end">restore</text>
 
-      {subagents.map((sub) => (
-        <g>
+      {subagents.map((sub, n) => (
+        <g {...show(`${n + 3}-`)}>
           <text x={left} y={sub.top - 12} class="fkf-head">{sub.head}</text>
           {sub.segments.map((s, i) => {
             const x1 = x(s.from) + (i > 0 ? gap : 0);
@@ -97,12 +109,17 @@ import ExploreLink from './ExploreLink.astro';
         </g>
       ))}
 
-      {block(x(shared), learnedTop, 4).map((s) => <rect x={s.x} y={s.y} width={cell} height={cell} fill={s.fill} class="fkf-state" />)}
-      <text x={x(shared) + 2 * cell + 2} y={learnedTop + 14} class="fkf-learned">learned checkpoint</text>
-      <line x1={x(shared)} y1={learnedTop + 3 * cell + 2} x2={x(shared)} y2={subagents[1].top - 6} class="fkf-restore" marker-end="url(#fkf-arrow)" />
-      <text x={x(shared) - 8} y={subagents[1].top - 14} class="fkf-note" text-anchor="end">restore</text>
+      <g {...show('3-')}>
+        {block(x(shared), learnedTop, 4).map((s) => <rect x={s.x} y={s.y} width={cell} height={cell} fill={s.fill} class="fkf-state" />)}
+        <text x={x(shared) + 2 * cell + 2} y={learnedTop + 14} class="fkf-learned">learned checkpoint</text>
+      </g>
+      <g {...show('4-')}>
+        <line x1={x(shared)} y1={learnedTop + 3 * cell + 2} x2={x(shared)} y2={subagents[1].top - 6} class="fkf-restore" marker-end="url(#fkf-arrow)" />
+        <text x={x(shared) - 8} y={subagents[1].top - 14} class="fkf-note" text-anchor="end">restore</text>
+      </g>
     </svg>
   </div>
+  <StepText steps={steps} />
   {caption && <figcaption>{caption}</figcaption>}
 </figure>
 

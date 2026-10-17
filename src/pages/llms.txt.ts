@@ -4,8 +4,8 @@ import { getPosts } from '../lib/posts';
 // Generated rather than kept in public/ so the blog is listed only once it has posts.
 export const GET: APIRoute = async () => {
   const posts = await getPosts();
-  const blog = posts.length > 0 ? `- [Blog](https://gufo.blog/blog): engineering notes and design decisions\n` : '';
-  const optional = `\n## Optional\n\n${blog}- [Playground](https://gufo.blog/playground): interactive pages, starting with the cache explorer\n`;
+  const optional =
+    posts.length > 0 ? `\n## Optional\n\n- [Blog](https://gufo.blog/blog): engineering notes and design decisions\n` : '';
 
   return new Response(
     `# Gufo

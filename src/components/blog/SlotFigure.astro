@@ -2,7 +2,7 @@
 // A slot changing hands, in the style of the other blog figures: four
 // moments across slot 1, backing RAM and slot 2. A's borrowed rows are copied
 // out while slot 1 is idle, B takes the slot, and A later restores into
-// slot 2. Inline SVG rendered on the server.
+// slot 2. Each moment is one step. Inline SVG rendered on the server.
 interface Props {
   figure?: number | string;
   caption?: string;
@@ -47,10 +47,20 @@ const arrows = [
   { col: 3, from: 1, to: 2, label: 'restore' },
 ];
 const bottom = laneY(lanes.length - 1) + h / 2;
-import ExploreLink from './ExploreLink.astro';
+
+const steps = [
+  "A finishes a turn in slot 1. Its checkpoints don't copy A's rows; they borrow them from the slot.",
+  "While slot 1 is idle, Gufo copies A's borrowed rows to backing RAM, piece by piece.",
+  "B takes slot 1 and overwrites it. A's rows are safe in backing RAM.",
+  "A comes back while slot 1 is busy, so Gufo restores A's checkpoint into slot 2.",
+];
+const show = frames(steps.length);
+import StepControls from './StepControls.astro';
+import StepText from './StepText.astro';
+import { frames } from './steps';
 ---
-<figure class="slf">
-  <p class="slf-eyebrow"><span class="fig-eyebrow-title"><span class="slf-dot"></span>{figure !== undefined && <>Fig. {figure} · </>}A slot changes hands</span><ExploreLink story="sessions" /></p>
+<figure class="slf" data-steps={steps.length}>
+  <p class="slf-eyebrow"><span class="fig-eyebrow-title"><span class="slf-dot"></span>{figure !== undefined && <>Fig. {figure} · </>}A slot changes hands</span><span class="fig-eyebrow-side"><StepControls count={steps.length} /></span></p>
   <div class="slf-scroll">
     <svg viewBox={`0 0 760 ${bottom + 40}`} role="img" aria-label="Moment 1: A has just finished a turn in slot 1, and its checkpoints borrow the rows there. Moment 2: while slot 1 is idle, A's borrowed rows are copied to backing RAM. Moment 3: B takes slot 1 and overwrites it; A's rows are kept in backing RAM. Moment 4: A comes back and is restored into slot 2.">
       <defs>
@@ -60,7 +70,7 @@ import ExploreLink from './ExploreLink.astro';
         <clipPath id="slf-clip"><rect x="0" y="0" width={cellW} height={h} rx="6" /></clipPath>
       </defs>
 
-      {moments.map((m, j) => <text x={colX(j)} y="30" class="slf-head">{m}</text>)}
+      {moments.map((m, j) => <text x={colX(j)} y="30" class="slf-head" {...show(`${j + 1}-`)}>{m}</text>)}
 
       {lanes.map((lane, i) => {
         const y = laneY(i);
@@ -69,7 +79,7 @@ import ExploreLink from './ExploreLink.astro';
             <rect x="24" y={y - 14} width="104" height="28" rx="6" class="slf-chip" />
             <text x="76" y={y + 4.5} class="slf-chip-text" text-anchor="middle">{lane.name}</text>
             {lane.cells.map((c, j) => (
-              <g transform={`translate(${colX(j)} ${y - h / 2})`} style={c.kind === 'busy' ? `--c: ${colours[c.owner]}` : undefined}>
+              <g transform={`translate(${colX(j)} ${y - h / 2})`} style={c.kind === 'busy' ? `--c: ${colours[c.owner]}` : undefined} {...show(`${j + 1}-`)}>
                 {c.kind === 'free'
                   ? <rect width={cellW} height={h} rx="6" class="slf-free" />
                   : <rect width={cellW} height={h} rx="6" class="slf-busy" />}
@@ -88,16 +98,17 @@ import ExploreLink from './ExploreLink.astro';
       {arrows.map((a) => {
         const cx = colX(a.col) + cellW - 22;
         return (
-          <g>
+          <g {...show(`${a.col + 1}-`)}>
             <line x1={cx} y1={laneY(a.from) + h / 2 + 2} x2={cx} y2={laneY(a.to) - h / 2 - 4} class="slf-flow" marker-end="url(#slf-arrow)" />
             <text x={cx - 8} y={(laneY(a.from) + laneY(a.to)) / 2 + 4} class="slf-note" text-anchor="end">{a.label}</text>
           </g>
         );
       })}
 
-      <text x="24" y={bottom + 30} class="slf-note">The copy runs piece by piece while slot 1 has nothing to do, so by the time B arrives it is usually finished.</text>
+      <text x="24" y={bottom + 30} class="slf-note" {...show('2-')}>The copy runs piece by piece while slot 1 has nothing to do, so by the time B arrives it is usually finished.</text>
     </svg>
   </div>
+  <StepText steps={steps} />
   {caption && <figcaption>{caption}</figcaption>}
 </figure>
 

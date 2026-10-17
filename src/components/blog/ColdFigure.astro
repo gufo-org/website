@@ -1,8 +1,8 @@
 ---
 // The "provenance" story from the cache explorer, in the style of the other
 // blog figures: two independent cold prefills of the same 6,144 tokens keep
-// separate chunks, and only a branch that really restores A shares A's rows.
-// Inline SVG rendered on the server.
+// separate chunks, and only a branch that really restores A shares A's rows,
+// in three steps. Inline SVG rendered on the server.
 interface Props {
   figure?: number | string;
   caption?: string;
@@ -39,10 +39,19 @@ const block = Array.from({ length: 9 }, (_, k) => ({
   y: blockTop + Math.floor(k / 3) * cell,
   fill: palette[(k * 2 + 1) % palette.length],
 }));
-import ExploreLink from './ExploreLink.astro';
+
+const steps = [
+  'Conversation B computes 6,144 tokens cold and stores three chunks.',
+  "Conversation A computes the same 6,144 tokens cold. Its rows may differ in the last bits, so A keeps its own three chunks.",
+  "C restores A's checkpoint. It references A's three chunks and computes only one new chunk.",
+];
+const show = frames(steps.length);
+import StepControls from './StepControls.astro';
+import StepText from './StepText.astro';
+import { frames } from './steps';
 ---
-<figure class="cof">
-  <p class="cof-eyebrow"><span class="fig-eyebrow-title"><span class="cof-dot"></span>{figure !== undefined && <>Fig. {figure} · </>}Two cold prefills, one restore</span><ExploreLink story="provenance" /></p>
+<figure class="cof" data-steps={steps.length}>
+  <p class="cof-eyebrow"><span class="fig-eyebrow-title"><span class="cof-dot"></span>{figure !== undefined && <>Fig. {figure} · </>}Two cold prefills, one restore</span><span class="fig-eyebrow-side"><StepControls count={steps.length} /></span></p>
   <div class="cof-scroll">
     <svg viewBox={`0 0 760 ${bottom + 34}`} role="img" aria-label="B and A each compute the same 6,144 tokens cold and keep three chunks each; nothing is shared between them. C restores A's checkpoint at 6,144, references A's three chunks and computes one new chunk up to 8,192.">
       <defs>
@@ -56,8 +65,8 @@ import ExploreLink from './ExploreLink.astro';
       <text x={sideX} y="26" class="cof-head">Stores</text>
       {[0, 2048, 4096, 6144, 8192].map((t) => <line x1={x(t)} y1="40" x2={x(t)} y2={bottom - 6} class="cof-grid" />)}
 
-      {rows.map((r) => (
-        <g>
+      {rows.map((r, n) => (
+        <g {...show(`${n + 1}-`)}>
           <rect x="24" y={r.y - 14} width="104" height="28" rx="6" class="cof-chip" style={`--c: ${r.c}`} />
           <text x="76" y={r.y + 4.5} class="cof-chip-text" text-anchor="middle">{r.name}</text>
           {r.cells.map((k) => {
@@ -75,16 +84,21 @@ import ExploreLink from './ExploreLink.astro';
         </g>
       ))}
 
-      <text x={x(7168)} y="92" class="cof-note" text-anchor="middle">same tokens,</text>
-      <text x={x(7168)} y="106" class="cof-note" text-anchor="middle">not shared</text>
+      <g {...show('2-')}>
+        <text x={x(7168)} y="92" class="cof-note" text-anchor="middle">same tokens,</text>
+        <text x={x(7168)} y="106" class="cof-note" text-anchor="middle">not shared</text>
+      </g>
 
-      {block.map((s) => <rect x={s.x} y={s.y} width={cell} height={cell} fill={s.fill} class="cof-state" />)}
-      <line x1={x(6144)} y1={blockTop + 3 * cell + 2} x2={x(6144)} y2={rows[2].y - 18} class="cof-restore" marker-end="url(#cof-arrow)" />
-      <text x={x(6144) - 2 * cell} y={blockTop + 13} class="cof-note" text-anchor="end">restore A@6,144</text>
+      <g {...show('3-')}>
+        {block.map((s) => <rect x={s.x} y={s.y} width={cell} height={cell} fill={s.fill} class="cof-state" />)}
+        <line x1={x(6144)} y1={blockTop + 3 * cell + 2} x2={x(6144)} y2={rows[2].y - 18} class="cof-restore" marker-end="url(#cof-arrow)" />
+        <text x={x(6144) - 2 * cell} y={blockTop + 13} class="cof-note" text-anchor="end">restore A@6,144</text>
+      </g>
 
-      <text x="24" y={bottom + 20} class="cof-note">Seven chunks in memory: A's three, B's three and C's new one. C shares A's rows because it restored them.</text>
+      <text x="24" y={bottom + 20} class="cof-note" {...show('3-')}>Seven chunks in memory: A's three, B's three and C's new one. C shares A's rows because it restored them.</text>
     </svg>
   </div>
+  <StepText steps={steps} />
   {caption && <figcaption>{caption}</figcaption>}
 </figure>
 

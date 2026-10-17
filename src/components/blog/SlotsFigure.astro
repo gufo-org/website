@@ -1,0 +1,165 @@
+---
+// Execution slots, in the style of the other blog figures: with
+// `--sessions 2` two slots hold the exact live state of two conversations, a
+// turn continues in place, a third conversation waits, and takes a slot when
+// one frees up. One step each. Inline SVG rendered on the server.
+interface Props {
+  figure?: number | string;
+  caption?: string;
+}
+
+const { figure, caption } = Astro.props;
+
+const number = (t: number) => t.toLocaleString('en-US');
+const total = 6144;
+const left = 160;
+const width = 470;
+const x = (t: number) => left + (t / total) * width;
+const statusX = 652;
+const gap = 1.5;
+
+const colours = { live: '#3f7a4f', generated: '#9a5c8a', prefill: '#4f86b8' };
+type Kind = keyof typeof colours;
+type Segment = { from: number; to: number; kind: Kind; label?: string };
+// What each slot holds, and from which steps. `status` is shown next to the lane.
+const lanes: { name: string; y: number; states: { steps: string; who: string; segments: Segment[]; status: string; busy: boolean }[] }[] = [
+  { name: 'slot 1', y: 88, states: [
+    { steps: '1', who: 'A', status: 'idle', busy: false, segments: [
+      { from: 0, to: 4096, kind: 'live', label: 'A · history' },
+      { from: 4096, to: 4608, kind: 'generated' },
+    ] },
+    { steps: '2-', who: 'A', status: 'running', busy: true, segments: [
+      { from: 0, to: 4608, kind: 'live', label: 'A · live state' },
+      { from: 4608, to: 5120, kind: 'prefill', label: 'new' },
+    ] },
+  ] },
+  { name: 'slot 2', y: 156, states: [
+    { steps: '1-3', who: 'B', status: 'running', busy: true, segments: [
+      { from: 0, to: 3584, kind: 'live', label: 'B · live state' },
+      { from: 3584, to: 4096, kind: 'generated' },
+    ] },
+    { steps: '4-', who: 'C', status: 'running', busy: true, segments: [
+      { from: 0, to: 2560, kind: 'prefill', label: 'C · prompt' },
+    ] },
+  ] },
+];
+const queueY = 228;
+
+const palette = ['#3f7a4f', '#4f86b8', '#c27a2c', '#3d8a8a', '#9a5c8a'];
+const cell = 6;
+const block = (cx: number, top: number, seed: number) =>
+  Array.from({ length: 9 }, (_, k) => ({
+    x: cx - 1.5 * cell + (k % 3) * cell,
+    y: top + Math.floor(k / 3) * cell,
+    fill: palette[(k * 2 + seed) % palette.length],
+  }));
+const legend = [
+  { kind: 'live' as Kind, label: 'live state' },
+  { kind: 'generated' as Kind, label: 'just generated' },
+  { kind: 'prefill' as Kind, label: 'prefilling' },
+];
+
+const steps = [
+  "With --sessions 2, Gufo allocates two slots and runs at most two requests at once. Each slot holds one conversation's live state, exact up to the last token the model generated.",
+  "A's next turn starts exactly where A's live state ends, so Gufo carries on in place: no restore, and only the new message is prefilled.",
+  'Conversation C arrives while both slots are busy. With two slots, C waits.',
+  "B finishes and C takes slot 2. B's live state is overwritten; from now on B comes back from its checkpoints.",
+];
+const show = frames(steps.length);
+import StepControls from './StepControls.astro';
+import StepText from './StepText.astro';
+import { frames } from './steps';
+---
+<figure class="sxf" data-steps={steps.length}>
+  <p class="sxf-eyebrow"><span class="fig-eyebrow-title"><span class="sxf-dot"></span>{figure !== undefined && <>Fig. {figure} · </>}Two slots, two requests at a time</span><span class="fig-eyebrow-side"><StepControls count={steps.length} /></span></p>
+  <div class="sxf-scroll">
+    <svg viewBox={`0 0 760 ${queueY + 56}`} role="img" aria-label="With --sessions 2 there are two slots. Slot 1 holds A's live state, including the answer it just generated; slot 2 is running B. A's next turn continues in place and prefills only the new message. Conversation C arrives while both slots are busy and waits. When B finishes, C takes slot 2 and B's live state is overwritten.">
+      <text x="24" y="26" class="sxf-head">Execution slots · --sessions 2</text>
+      <text x={statusX} y="26" class="sxf-head">Status</text>
+
+      {lanes.map((lane, n) => (
+        <g>
+          <rect x="24" y={lane.y - 14} width="104" height="28" rx="6" class="sxf-chip" />
+          <text x="76" y={lane.y + 4.5} class="sxf-chip-text" text-anchor="middle">{lane.name}</text>
+          <rect x={left - 6} y={lane.y - 22} width={width + 12} height="44" rx="8" class="sxf-slot" />
+          {lane.states.map((state) => {
+            const frontier = state.segments[state.segments.length - 1].to;
+            return (
+              <g {...show(state.steps)}>
+                {state.segments.map((s, k) => {
+                  const x1 = x(s.from) + (k > 0 ? gap : 0);
+                  const x2 = x(s.to) - (state.segments.length - 1 > k ? gap : 0);
+                  return (
+                    <g style={`--c: ${colours[s.kind]}`}>
+                      <rect x={x1} y={lane.y - 14} width={x2 - x1} height="28" rx="6" class="sxf-seg" />
+                      {s.label && <text x={(x1 + x2) / 2} y={lane.y + 4.5} class="sxf-seg-text" text-anchor="middle">{s.label}</text>}
+                    </g>
+                  );
+                })}
+                {state.who !== 'C' && block(x(frontier) + 4 + 1.5 * cell, lane.y - 1.5 * cell, n * 2 + 1).map((s) => <rect x={s.x} y={s.y} width={cell} height={cell} fill={s.fill} class="sxf-state" />)}
+                <text x={statusX} y={lane.y + 4.5} class={state.busy ? 'sxf-status is-busy' : 'sxf-status'}>{state.status}</text>
+              </g>
+            );
+          })}
+        </g>
+      ))}
+      <text x={x(4608)} y={88 - 28} class="sxf-note" text-anchor="middle" {...show('2')}>continues in place · {number(4608)}</text>
+
+      <rect x="24" y={queueY - 14} width="104" height="28" rx="6" class="sxf-chip is-queue" />
+      <text x="76" y={queueY + 4.5} class="sxf-chip-text" text-anchor="middle">waiting</text>
+      <g style={`--c: ${colours.prefill}`} {...show('3')}>
+        <rect x={left} y={queueY - 14} width="96" height="28" rx="6" class="sxf-wait" />
+        <text x={left + 48} y={queueY + 4.5} class="sxf-seg-text" text-anchor="middle">C</text>
+        <text x={left + 108} y={queueY + 4.5} class="sxf-note">both slots busy</text>
+      </g>
+      <text x={left} y={queueY + 4.5} class="sxf-note" {...show('1-2')}>nothing</text>
+      <text x={left} y={queueY + 4.5} class="sxf-note" {...show('4-')}>nothing · B's state now lives only in its checkpoints</text>
+
+      <g transform={`translate(${left} ${queueY + 44})`}>
+        {legend.map((l, i) => (
+          <g transform={`translate(${i * 130} 0)`} style={`--c: ${colours[l.kind]}`}>
+            <rect x="0" y="-9" width="16" height="12" rx="3" class="sxf-seg" />
+            <text x="22" y="1" class="sxf-legend">{l.label}</text>
+          </g>
+        ))}
+        <g transform="translate(390 0)">
+          {Array.from({ length: 9 }, (_, k) => <rect x={(k % 3) * 5} y={-10 + Math.floor(k / 3) * 5} width="5" height="5" fill={palette[(k * 2 + 1) % palette.length]} class="sxf-state" />)}
+          <text x="22" y="1" class="sxf-legend">live frontier</text>
+        </g>
+      </g>
+    </svg>
+  </div>
+  <StepText steps={steps} />
+  {caption && <figcaption>{caption}</figcaption>}
+</figure>
+
+<style>
+  .sxf {
+    margin: 2.5rem 0;
+    padding: 20px;
+    background: var(--color-paper);
+    border: 1px solid var(--color-line-strong);
+    border-radius: 10px;
+    font-family: var(--font-sans);
+  }
+  .sxf-eyebrow { display: flex; align-items: center; justify-content: space-between; gap: 8px 12px; font: 12px var(--font-mono); color: var(--color-ink-3); }
+  .sxf-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--color-forest); }
+  .sxf-scroll { margin: 14px 0; overflow-x: auto; }
+  .sxf svg { display: block; width: 100%; min-width: 560px; height: auto; }
+
+  .sxf-head { font: 10.5px var(--font-mono); letter-spacing: 0.06em; text-transform: uppercase; fill: var(--color-ink-4); }
+  .sxf-note { font: italic 12px var(--font-sans); fill: var(--color-ink-3); }
+  .sxf-chip { fill: var(--color-ivory); stroke: var(--color-line-strong); }
+  .sxf-chip.is-queue { fill: none; stroke-dasharray: 3 3; }
+  .sxf-chip-text { font: 12px var(--font-mono); fill: var(--color-ink); }
+  .sxf-slot { fill: none; stroke: var(--color-ink-3); stroke-width: 1.2; }
+  .sxf-seg { fill: color-mix(in srgb, var(--c) 14%, white); stroke: var(--c); stroke-width: 1.4; }
+  .sxf-seg-text { font: 12px var(--font-mono); fill: var(--color-ink); }
+  .sxf-wait { fill: none; stroke: var(--c); stroke-width: 1.4; stroke-dasharray: 4 3; }
+  .sxf-state { stroke: var(--color-paper); stroke-width: 1; fill-opacity: 0.75; }
+  .sxf-status { font: 12px var(--font-mono); fill: var(--color-ink-4); }
+  .sxf-status.is-busy { fill: var(--color-forest); font-weight: 600; }
+  .sxf-legend { font: 12px var(--font-sans); fill: var(--color-ink-3); }
+
+  .sxf figcaption { font-family: var(--font-serif); font-style: italic; font-size: 14px; line-height: 1.5; color: var(--color-ink-2); }
+</style>

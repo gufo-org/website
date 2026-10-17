@@ -10,8 +10,6 @@ export default defineConfig({
   build: { format: 'file' },
   trailingSlash: 'never',
   integrations: [mdx()],
-  // The cache explorer moved under the playground; keep old links working.
-  redirects: { '/cache': '/playground/cache' },
   markdown: {
     // Light theme to sit on the paper background of the blog prose.
     shikiConfig: { theme: 'github-light' },

@@ -2,7 +2,7 @@
 // The "spill" story from the cache explorer, in the style of the other blog
 // figures: two checkpoints borrow A's rows in slot 1; when B takes the slot
 // the rows are preserved once in backing RAM, and evicting the older
-// checkpoint frees only its private state. Inline SVG rendered on the server.
+// checkpoint frees only its private state, in three steps. Inline SVG rendered on the server.
 interface Props {
   figure?: number | string;
   caption?: string;
@@ -19,22 +19,24 @@ const ownX = 630;
 const colours = { A: '#3f7a4f', B: '#4f86b8' };
 const names = Array.from({ length: total / chunk }, (_, i) => `C${i + 1}`);
 
-type Row =
+// `steps` limits a row to some steps of the walkthrough, see steps.ts.
+type Row = { steps?: string } & (
   | { kind: 'chunks'; label: string; y: number; own?: string }
   | { kind: 'refs'; label: string; y: number; count: number; own: string }
   | { kind: 'bar'; label: string; y: number; to: number; text: string; own?: string }
-  | { kind: 'evicted'; label: string; y: number; count: number; own: string };
+  | { kind: 'evicted'; label: string; y: number; count: number; own: string });
 const stages: { head: string; y: number; rows: Row[] }[] = [
   { head: 'Before · the checkpoints borrow slot 1', y: 26, rows: [
     { kind: 'chunks', label: 'slot 1 · A', y: 56, own: 'live rows' },
     { kind: 'refs', label: 'A@8,192', y: 96, count: 4, own: 'state' },
     { kind: 'refs', label: 'A@12,288', y: 136, count: 6, own: 'state' },
   ] },
-  { head: 'B takes slot 1, then A@8,192 is evicted', y: 186, rows: [
+  { head: 'After B takes slot 1', y: 186, rows: [
     { kind: 'bar', label: 'slot 1 · B', y: 216, to: 2048, text: "B's rows" },
     { kind: 'chunks', label: 'backing RAM', y: 256, own: 'copied once' },
     { kind: 'refs', label: 'A@12,288', y: 296, count: 6, own: 'state' },
-    { kind: 'evicted', label: 'A@8,192', y: 336, count: 4, own: 'state freed' },
+    { kind: 'refs', label: 'A@8,192', y: 336, count: 4, own: 'state', steps: '2' },
+    { kind: 'evicted', label: 'A@8,192', y: 336, count: 4, own: 'state freed', steps: '3-' },
   ] },
 ];
 const bottom = 352;
@@ -48,17 +50,26 @@ const block = (y: number, seed: number) =>
     fill: palette[(k * 2 + seed) % palette.length],
   }));
 const box = (i: number) => ({ x1: x(i * chunk) + 2, x2: x((i + 1) * chunk) - 2 });
-import ExploreLink from './ExploreLink.astro';
+
+const steps = [
+  "A's rows are live in slot 1. Two checkpoints borrow them: A@8,192 references four chunks and A@12,288 all six.",
+  "B takes slot 1. Before it does, the six chunks are copied once into backing RAM, and both checkpoints now reference that copy.",
+  "Evicting A@8,192 drops its references and frees its private state. A@12,288 still references every chunk, so no rows are freed.",
+];
+const show = frames(steps.length);
+import StepControls from './StepControls.astro';
+import StepText from './StepText.astro';
+import { frames } from './steps';
 ---
-<figure class="spf">
-  <p class="spf-eyebrow"><span class="fig-eyebrow-title"><span class="spf-dot"></span>{figure !== undefined && <>Fig. {figure} · </>}Preserving borrowed rows</span><ExploreLink story="spill" /></p>
+<figure class="spf" data-steps={steps.length}>
+  <p class="spf-eyebrow"><span class="fig-eyebrow-title"><span class="spf-dot"></span>{figure !== undefined && <>Fig. {figure} · </>}Preserving borrowed rows</span><span class="fig-eyebrow-side"><StepControls count={steps.length} /></span></p>
   <div class="spf-scroll">
     <svg viewBox={`0 0 760 ${bottom + 40}`} role="img" aria-label="Before: A's six chunks are live in slot 1, and checkpoints A@8,192 and A@12,288 borrow four and six of them. After B takes slot 1, the six chunks are copied once into backing RAM and A@12,288 still references all of them. Evicting A@8,192 frees only its private state.">
-      {stages.map((stage) => (
-        <g>
+      {stages.map((stage, j) => (
+        <g {...show(`${j + 1}-`)}>
           <text x="24" y={stage.y} class="spf-head">{stage.head}</text>
           {stage.rows.map((r, n) => (
-            <g style={`--c: ${r.kind === 'bar' ? colours.B : colours.A}`}>
+            <g style={`--c: ${r.kind === 'bar' ? colours.B : colours.A}`} {...(r.steps ? show(r.steps) : {})}>
               <rect x="24" y={r.y - 14} width="112" height="28" rx="6" class={r.kind === 'evicted' ? 'spf-chip is-gone' : 'spf-chip'} />
               <text x="80" y={r.y + 4.5} class={r.kind === 'evicted' ? 'spf-chip-text is-gone' : 'spf-chip-text'} text-anchor="middle">{r.label}</text>
 
@@ -95,9 +106,10 @@ import ExploreLink from './ExploreLink.astro';
         </g>
       ))}
 
-      <text x="24" y={bottom + 28} class="spf-note">Every chunk is still referenced by A@12,288, so evicting A@8,192 frees no rows at all.</text>
+      <text x="24" y={bottom + 28} class="spf-note" {...show('3-')}>Every chunk is still referenced by A@12,288, so evicting A@8,192 frees no rows at all.</text>
     </svg>
   </div>
+  <StepText steps={steps} />
   {caption && <figcaption>{caption}</figcaption>}
 </figure>
 
