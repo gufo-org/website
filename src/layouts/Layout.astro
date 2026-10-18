@@ -56,6 +56,13 @@ import '../styles/global.css';
     <meta name="twitter:title" content={title} />
     <meta name="twitter:description" content={description} />
     <meta name="twitter:image" content={ogImage} />
+    <!-- Cloudflare Web Analytics -->
+    <script
+      is:inline
+      type="module"
+      src="https://static.cloudflareinsights.com/beacon.min.js"
+      data-cf-beacon='{"token": "f0fadc5ea99a4d829fcdf0133c516a97"}'
+    ></script>
   </head>
   <body class="min-h-screen flex flex-col bg-ivory text-ink selection:bg-forest/20">
     <slot />
