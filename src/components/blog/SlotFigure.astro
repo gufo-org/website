@@ -14,13 +14,14 @@ const { figure, caption } = Astro.props;
 
 const colours = { A: '#3f7a4f', B: '#4f86b8' };
 // A cell is split into segments, so a slot can show its rows and its private state apart.
-type Segment =
-  | { kind: 'free'; x: number; w: number; text: string }
-  | { kind: 'busy'; owner: keyof typeof colours; x: number; w: number; text: string; progress?: number };
+type Content =
+  | { kind: 'free'; text: string }
+  | { kind: 'busy'; owner: keyof typeof colours; text: string; progress?: number };
+type Segment = Content & { x: number; w: number };
 
 const cellW = 140;
 const rowsW = 92;
-const whole = (s: Omit<Segment, 'x' | 'w'>) => ({ ...s, x: 0, w: cellW }) as Segment;
+const whole = (s: Content): Segment => ({ ...s, x: 0, w: cellW });
 const split = (owner: keyof typeof colours): Segment[] => [
   { kind: 'busy', owner, x: 0, w: rowsW, text: `${owner}'s rows` },
   { kind: 'busy', owner, x: rowsW + 4, w: cellW - rowsW - 4, text: 'state' },
