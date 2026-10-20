@@ -230,7 +230,7 @@ Persistence follows a few rules:
 - Writes go through small staging buffers, in both directions. In the measured run, the 2.75 GB checkpoint at 95,434 tokens went through a 1 MiB buffer, and after the restart it came back in 2,685 pieces: 0.43 s of reading and 0.16 s of checksum verification, 0.86 s in all.
 - A background queue does the writing. It yields to model work for at most half a second at a time, and merges pending writes when a newer checkpoint covers an older one.
 
-<RestartFigure figure={16} caption="A checkpoint survives a crash only after its manifest is durable; a queued write is not." />
+<RestartFigure figure={16} caption="A crash before the manifest is renamed leaves files that no manifest lists. The restart ignores them and falls back to A@8,192." />
 
 A checkpoint is published in a strict order: write and sync the chunk and private-state files, sync their directories, then write, sync and atomically rename the manifest. A crash at any point leaves either a complete checkpoint or none.
 
