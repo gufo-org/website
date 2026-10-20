@@ -1,6 +1,6 @@
 ---
 title: "How Gufo caches a hybrid model"
-summary: "A long agent conversation shouldn't cost minutes of prefill on every turn. This is how Gufo keeps model state between requests, why hybrid models need exact restore points."
+summary: "A long agent conversation shouldn't cost minutes of prefill on every turn. This is how Gufo keeps model state between requests, and why hybrid models need exact restore points."
 date: 2026-10-16
 kind: Engineering
 tags: [cache, hybrid models, internals]
@@ -28,7 +28,7 @@ To the program calling it, a language model is a black box with no memory betwee
 
 Processing 95,000 of those tokens from scratch takes about a minute with Gufo on Qwen 3.8 Flash Next on Strix Halo. Doing it on every turn would make the agent unusable. The **cache** is the part of Gufo that remembers work the model has already done, so that the next request pays only for what is new.
 
-This post explains how that cache is built. The first half is about ideas and doesn't assume you know Gufo. The second half is bit more technical and shows how Gufo implements the same ideas with code.
+This post explains how that cache is built. The first half is about ideas and doesn't assume you know Gufo. The second half is a bit more technical and shows how Gufo implements the same ideas with code.
 
 **Contents**
 
@@ -44,9 +44,9 @@ This post explains how that cache is built. The first half is about ideas and do
 
 ## 1. Why a cache at all
 
-Before a model can generate the next token, it has to process the whole prompt, including the whole conversation history. This step is called **prefill**. During this phase the model doesn't generate any output: it just updates its internal state, that upcoming requests could reuse.
+Before a model can generate the next token, it has to process the whole prompt, including the whole conversation history. This step is called **prefill**. During this phase the model doesn't generate any output: it just updates its internal state, which later requests can reuse.
 
-The arithmetic is lopsided. For this post we will use Qwen 3.8 Flash-Next as reference model. The input prompt consists 95,439 tokens of Gufo's own C++ source followed by a short question; each later turn added a sentence. This is the time to the first token of the answer in each case:
+The arithmetic is lopsided. For this post we will use Qwen 3.8 Flash-Next as reference model. The input prompt consists of 95,439 tokens of Gufo's own C++ source followed by a short question; each later turn added a sentence. This is the time to the first token of the answer in each case:
 
 | How the state was obtained | Time to first token | Of which restoring state |
 | --- | ---: | ---: |
@@ -112,7 +112,7 @@ The first request of that conversation captured six checkpoints, at 22,528, 47,1
 
 There's a catch. You might expect the cache to share any two chunks that cover the same tokens. It doesn't.
 
-The reason is that the same text doesn't always produce the same bytes. Gufo's GPU kernels are tuned based on the input shape of the work they process: a pass of a few dozen tokens, one of a thousand and one of several thousand take different code paths, with different tile sizes, different fused steps and a different order of additions. Also, when mutiple conversations run concurrently, their output tokens are computed together in one batch. The input shape can also depend on history. For example: one request prefills 6,144 tokens in a single pass; another restores a checkpoint at 4,096 and computes only the last 2,048; a third stops at 4,096 to capture a checkpoint and then carries on. Floating-point addition gives slightly different results in a different order, so these runs can leave KV rows and recurrent state that differ in the last bits. All of them are valid. They're just not the same bytes.
+The reason is that the same text doesn't always produce the same bytes. Gufo's GPU kernels are tuned based on the input shape of the work they process: a pass of a few dozen tokens, one of a thousand and one of several thousand take different code paths, with different tile sizes, different fused steps and a different order of additions. Also, when multiple conversations run concurrently, their tokens are computed together in one batch. The input shape can also depend on history. For example: one request prefills 6,144 tokens in a single pass; another restores a checkpoint at 4,096 and computes only the last 2,048; a third stops at 4,096 to capture a checkpoint and then carries on. Floating-point addition gives slightly different results in a different order, so these runs can leave KV rows and recurrent state that differ in the last bits. All of them are valid. They're just not the same bytes.
 
 <BytesFigure figure={5} caption="Three ways to compute the same 6,144 tokens. Each splits the work differently, so the kernels add in a different order and the rows end up differing in the last bits." />
 
@@ -138,7 +138,7 @@ The same rule applies to the edit in figure 3. The new branch shares the rows it
 
 Where does conversation 3's checkpoint at 6,000 come from? Nobody told the cache that the system prompt ends there. Conversation 1's checkpoints sit at the prompt end and on multiples of 2,048, not at 6,000.
 
-The cache learns it. When conversation 2 arrives, the lookup sees how far its prompt matches cached history: 6,000 tokens, well past the 4,096 it can restore. A shared prefix that extends at least 512 tokens past the restore point is a sign that other requests will diverge at the same place. So while conversation 2 prefills the gap, it stops at exactly 6,000 and captures a **learned checkpoint** there. Conversation 3 and every later one restore it directly and prefill only their own messages.
+The cache learns it. When conversation 2 arrives, the lookup finds two depths: the deepest checkpoint it can restore, 4,096, and the longest prefix it shares with any cached history, 6,000. A shared prefix that extends at least 512 tokens past the restore point is a sign that other requests will diverge at the same place. So while conversation 2 prefills the gap, it stops at exactly 6,000 and captures a **learned checkpoint** there. Conversation 3 and every later one restore it directly and prefill only their own messages.
 
 Agents make this pattern constant. A parent starts subagents that all receive its system prompt and tool definitions, then diverge at the same token every time. The first subagent pays for the gap; the rest start from the learned boundary.
 
@@ -160,7 +160,7 @@ So the cache captures a small set of boundaries on each request, chosen for how 
 
 - **Always**: the end of the prompt, where the next turn will pick up; the point where the request's reused history ended; and the **stable boundary**, the part of the prompt that a client is expected to send unchanged on the next turn. These are exact, required positions.
 - **Grid points**: a few evenly spaced positions on multiples of 2,048 tokens, so that an edit somewhere in the middle has a nearby restore point. There are at most four per request, fewer when the RAM budget is small, and a grid point moves to the end of a planned prefill pass when one is within 128 tokens, so it doesn't split a pass for nothing.
-- **Learned points**: the position where this prompt stops matching the cached history, as in the subagent example. It's captured only when it extends reuse by at least 512 tokens, and it merges with any other planned capture within 64 tokens.
+- **Learned points**: the end of the longest prefix this prompt shares with cached history, where it diverges, as in the subagent example. It's captured only when it extends reuse by at least 512 tokens, and it merges with any other planned capture within 64 tokens.
 
 <CaptureFigure figure={10} caption="One request, three kinds of capture. The always-captured positions serve the next turn, grid points serve edits, and the learned point serves the next prompt that diverges in the same place." />
 
@@ -288,7 +288,7 @@ Some questions are still open:
 - **Checkpoint density.** The grid limits and eviction ranks are starting points. They'll move as real workloads show where restore points are missing.
 - **Concurrency.** Qualifying eight simultaneous requests per model, inside each model's memory envelope, is still ahead.
 
-The figures use made-up conversations with 2,048-token chunks to stay readable. The numbers in the text come from the single measured run described in section 1.
+The figures use made-up conversations with 2,048-token chunks to stay readable, except figure 6, which uses Flash-Next's real 256-row chunks. The numbers in the text come from the single measured run described in section 1.
 
 ## References
 
