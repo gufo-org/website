@@ -36,8 +36,8 @@ const pct = (b: number) => `${Math.min(100, (b / (scaleGiB * 2 ** 30)) * 100)}%`
   <p class="mef-eyebrow"><span class="fig-eyebrow-title"><span class="mef-dot"></span>{figure !== undefined && <>Fig. {figure} · </>}What a set of checkpoints costs</span></p>
 
   <div class="mef-controls">
-    <label>Depth <output data-out="depth">{number(defaults.depth)} tokens</output>
-      <input type="range" data-in="depth" min="8192" max="151552" step="2048" value={defaults.depth} />
+    <label>Conversation length <output data-out="depth">{number(defaults.depth)} tokens</output>
+      <input type="range" data-in="depth" min="8192" max="131072" step="2048" value={defaults.depth} />
     </label>
     <label>Checkpoints kept <output data-out="count">{defaults.count}</output>
       <input type="range" data-in="count" min="1" max="32" step="1" value={defaults.count} />

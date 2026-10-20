@@ -1,6 +1,6 @@
 ---
 title: "How Gufo caches a hybrid model"
-summary: "A long agent conversation shouldn't cost minutes of prefill on every turn. This is how Gufo keeps model state between requests, why hybrid models need exact restore points."
+summary: "A long agent conversation shouldn't cost minutes of prefill on every turn. This is how Gufo keeps model state between requests, and why hybrid models need exact restore points."
 date: 2026-10-16
 kind: Engineering
 tags: [cache, hybrid models, internals]
@@ -28,7 +28,7 @@ To the program calling it, a language model is a black box with no memory betwee
 
 Processing 95,000 of those tokens from scratch takes about a minute with Gufo on Qwen 3.8 Flash Next on Strix Halo. Doing it on every turn would make the agent unusable. The **cache** is the part of Gufo that remembers work the model has already done, so that the next request pays only for what is new.
 
-This post explains how that cache is built. The first half is about ideas and doesn't assume you know Gufo. The second half is bit more technical and shows how Gufo implements the same ideas with code.
+This post explains how that cache is built. The first half is about ideas and doesn't assume you know Gufo. The second half is a bit more technical and shows how Gufo implements the same ideas with code.
 
 **Contents**
 
@@ -40,20 +40,21 @@ This post explains how that cache is built. The first half is about ideas and do
 6. [Slots, RAM and disk](#6-slots-ram-and-disk)
 7. [Inside the code](#7-inside-the-code)
 8. [Where it stands](#8-where-it-stands)
-9. [References](#references)
+9. [How it compares](#9-how-it-compares)
+10. [References](#references)
 
 ## 1. Why a cache at all
 
-Before a model can generate the next token, it has to process the whole prompt, including the whole conversation history. This step is called **prefill**. During this phase the model doesn't generate any output: it just updates its internal state, that upcoming requests could reuse.
+Before a model can generate the next token, it has to process the whole prompt, including the whole conversation history. This step is called **prefill**. During this phase the model doesn't generate any output: it just updates its internal state, which later requests can reuse.
 
-The arithmetic is lopsided. For this post we will use Qwen 3.8 Flash-Next as reference model. The input prompt consists 95,439 tokens of Gufo's own C++ source followed by a short question; each later turn added a sentence. This is the time to the first token of the answer in each case:
+The arithmetic is lopsided. For this post we will use Qwen 3.8 Flash-Next as reference model. The input prompt consists of 95,439 tokens of Gufo's own C++ source followed by a short question; each later turn added a sentence. This is the time to the first token of the answer in each case:
 
 | How the state was obtained | Time to first token | Of which restoring state |
 | --- | ---: | ---: |
-| Prefill from scratch | 57.8 s | — |
+| Prefill from scratch | 57.8 s | n/a |
 | Restore a checkpoint from disk, after a restart | 1.38 s | 0.86 s |
 | Restore a checkpoint from RAM, after another conversation used the slot | 0.24 s | 38 ms |
-| Continue the state still in memory | 0.19 s | — |
+| Continue the state still in memory | 0.19 s | n/a |
 
 In the cached rows, restoring is only part of the time. The rest is prefilling what the new turn adds: one sentence, 20 to 70 tokens, which takes about 150 ms however short it is. Anything the cache can return is between 40 and 300 times faster than recomputing it. Most of the design is about returning the right state, often, without running out of memory.
 
@@ -84,7 +85,7 @@ Everything else in this post follows from that split.
 
 ## 3. Restore points: an edit is not a truncation
 
-If recurrent state can't be wound back, the cache has to save it at the positions where it might be needed. Gufo calls these saved positions **checkpoints**. A checkpoint is a frozen copy of the private state at one exact token position, together with the append-only rows up to that position.
+If recurrent state can't be wound back, the cache has to save it at the positions where it might be needed. Gufo calls these saved positions **checkpoints**. A checkpoint is a frozen copy of the private state at one exact token position, its **depth**, together with the append-only rows up to that position.
 
 When a request arrives, Gufo looks for the deepest checkpoint whose tokens are an exact prefix of the new prompt, restores it, and prefills only the rest. The tokens between the checkpoint and the first difference are recomputed even though they didn't change.
 
@@ -112,7 +113,7 @@ The first request of that conversation captured six checkpoints, at 22,528, 47,1
 
 There's a catch. You might expect the cache to share any two chunks that cover the same tokens. It doesn't.
 
-The reason is that the same text doesn't always produce the same bytes. Gufo's GPU kernels are tuned based on the input shape of the work they process: a pass of a few dozen tokens, one of a thousand and one of several thousand take different code paths, with different tile sizes, different fused steps and a different order of additions. Also, when mutiple conversations run concurrently, their output tokens are computed together in one batch. The input shape can also depend on history. For example: one request prefills 6,144 tokens in a single pass; another restores a checkpoint at 4,096 and computes only the last 2,048; a third stops at 4,096 to capture a checkpoint and then carries on. Floating-point addition gives slightly different results in a different order, so these runs can leave KV rows and recurrent state that differ in the last bits. All of them are valid. They're just not the same bytes.
+The reason is that the same text doesn't always produce the same bytes. Gufo's GPU kernels are tuned based on the input shape of the work they process: a pass of a few dozen tokens, one of a thousand and one of several thousand take different code paths, with different tile sizes, different fused steps and a different order of additions. Also, when multiple conversations run concurrently, their tokens are computed together in one batch. The input shape can also depend on history. For example: one request prefills 6,144 tokens in a single pass; another restores a checkpoint at 4,096 and computes only the last 2,048; a third stops at 4,096 to capture a checkpoint and then carries on. Floating-point addition gives slightly different results in a different order, so these runs can leave KV rows and recurrent state that differ in the last bits. All of them are valid. They're just not the same bytes.
 
 <BytesFigure figure={5} caption="Three ways to compute the same 6,144 tokens. Each splits the work differently, so the kernels add in a different order and the rows end up differing in the last bits." />
 
@@ -138,7 +139,7 @@ The same rule applies to the edit in figure 3. The new branch shares the rows it
 
 Where does conversation 3's checkpoint at 6,000 come from? Nobody told the cache that the system prompt ends there. Conversation 1's checkpoints sit at the prompt end and on multiples of 2,048, not at 6,000.
 
-The cache learns it. When conversation 2 arrives, the lookup sees how far its prompt matches cached history: 6,000 tokens, well past the 4,096 it can restore. A shared prefix that extends at least 512 tokens past the restore point is a sign that other requests will diverge at the same place. So while conversation 2 prefills the gap, it stops at exactly 6,000 and captures a **learned checkpoint** there. Conversation 3 and every later one restore it directly and prefill only their own messages.
+The cache learns it. When conversation 2 arrives, the lookup finds two depths: the deepest checkpoint it can restore, 4,096, and the longest prefix it shares with any cached history, 6,000. A shared prefix that extends at least 512 tokens past the restore point is a sign that other requests will diverge at the same place. So while conversation 2 prefills the gap, it stops at exactly 6,000 and captures a **learned checkpoint** there. Conversation 3 and every later one restore it directly and prefill only their own messages.
 
 Agents make this pattern constant. A parent starts subagents that all receive its system prompt and tool definitions, then diverge at the same token every time. The first subagent pays for the gap; the rest start from the learned boundary.
 
@@ -152,7 +153,7 @@ If an extra checkpoint costs only its private state, why not keep one every few 
 
 First, private state still adds up. At about 135 MB per Flash-Next checkpoint, a hundred checkpoints take 13.5 GB, on a machine where the model weights already use most of the memory.
 
-<MemoryFigure figure={9} caption="Rows are stored once, so depth sets most of the cost and each extra checkpoint adds only its private state. Stored as full copies, the same checkpoints outgrow any budget." />
+<MemoryFigure figure={9} caption="Rows are stored once, so the conversation length sets most of the cost and each extra checkpoint adds only its private state. Stored as full copies, the same checkpoints outgrow any budget." />
 
 Second, capturing a checkpoint can slow prefill down. The recurrent state exists only between prefill passes, so a checkpoint at an arbitrary position forces a pass to stop there. Smaller passes run less efficiently on the GPU, and each capture adds synchronisation.
 
@@ -160,7 +161,7 @@ So the cache captures a small set of boundaries on each request, chosen for how 
 
 - **Always**: the end of the prompt, where the next turn will pick up; the point where the request's reused history ended; and the **stable boundary**, the part of the prompt that a client is expected to send unchanged on the next turn. These are exact, required positions.
 - **Grid points**: a few evenly spaced positions on multiples of 2,048 tokens, so that an edit somewhere in the middle has a nearby restore point. There are at most four per request, fewer when the RAM budget is small, and a grid point moves to the end of a planned prefill pass when one is within 128 tokens, so it doesn't split a pass for nothing.
-- **Learned points**: the position where this prompt stops matching the cached history, as in the subagent example. It's captured only when it extends reuse by at least 512 tokens, and it merges with any other planned capture within 64 tokens.
+- **Learned points**: the end of the longest prefix this prompt shares with cached history, where it diverges, as in the subagent example. It's captured only when it extends reuse by at least 512 tokens, and it merges with any other planned capture within 64 tokens.
 
 <CaptureFigure figure={10} caption="One request, three kinds of capture. The always-captured positions serve the next turn, grid points serve edits, and the learned point serves the next prompt that diverges in the same place." />
 
@@ -203,7 +204,7 @@ Borrowing creates an obligation. If another conversation needs the slot, it will
 
 Two details keep that cheap:
 
-- The backing memory is reserved when the checkpoint is admitted, out of memory the cache has already pinned, so preservation never has to allocate. The cache doesn't pin its whole budget up front: Flash-Next starts small and pins about 1 GiB more at a time as captures need it, up to the budget. That budget defaults to half the free RAM, at most 32 GiB, and `--cache-ram-bytes` sets it explicitly. Pinning memory stalls other GPU work on this hardware, which is why it happens in steps when a capture needs room and never while rows are being preserved.
+- The backing memory is reserved when the checkpoint is admitted, out of memory the cache has already pinned, so preservation never has to allocate. The cache doesn't pin its whole budget up front: Flash-Next pins 2 GiB before it starts serving, then about 128 MiB more at a time as captures need it, up to the budget. That budget defaults to half the free RAM, at most 32 GiB, and `--cache-ram-bytes` sets it explicitly. Pinning memory stalls other GPU work on this hardware, which is why it happens in small steps, prepared before the GPU work that needs it rather than in the middle of a copy.
 - Copies happen in the background while the slot is idle, piece by piece, and stop whenever the model has work to do. When a new request does need the slot, most of the copying is usually done. Gufo also prefers slots whose copying has finished.
 
 <SpillFigure figure={14} caption="Two checkpoints borrow the same rows; before B takes the slot, the rows are preserved once. Evicting the older checkpoint then frees only its private state." />
@@ -212,7 +213,7 @@ When A comes back and its slot is busy, Gufo restores A's checkpoint into anothe
 
 ### One index for live, RAM and disk
 
-Checkpoints can also be written to disk, so they survive RAM eviction and server restarts. The important part is how they're found. All three kinds of state — live frontiers, RAM checkpoints and disk checkpoints — sit in **one prefix index**: a compressed tree of token sequences, one per model configuration.
+When Gufo runs with `--cache-disk`, checkpoints are also written to disk, so they survive RAM eviction and server restarts. The important part is how they're found. Live frontiers, RAM checkpoints and disk checkpoints all sit in **one prefix index**: a compressed tree of token sequences, one per model configuration.
 
 A lookup walks the new prompt down the tree and collects every compatible candidate along the path. It then picks the deepest one. When two candidates are equally deep, it prefers live state, then RAM, then disk.
 
@@ -230,11 +231,11 @@ Persistence follows a few rules:
 - Writes go through small staging buffers, in both directions. In the measured run, the 2.75 GB checkpoint at 95,434 tokens went through a 1 MiB buffer, and after the restart it came back in 2,685 pieces: 0.43 s of reading and 0.16 s of checksum verification, 0.86 s in all.
 - A background queue does the writing. It yields to model work for at most half a second at a time, and merges pending writes when a newer checkpoint covers an older one.
 
-<RestartFigure figure={16} caption="A checkpoint survives a crash only after its manifest is durable; a queued write is not." />
+<RestartFigure figure={16} caption="A crash before the manifest is renamed leaves files that no manifest lists. The restart ignores them and falls back to A@8,192." />
 
 A checkpoint is published in a strict order: write and sync the chunk and private-state files, sync their directories, then write, sync and atomically rename the manifest. A crash at any point leaves either a complete checkpoint or none.
 
-On restart, Gufo reads manifests and file sizes, not payloads, so start-up time doesn't grow with the size of the cache. Checksums are verified while a checkpoint is restored, and the slot can't run until every check passes. If a shared chunk turns out to be corrupt, every checkpoint that depends on it is quarantined and the request falls back to an earlier checkpoint or a cold prefill.
+On restart, Gufo reads manifests and file sizes, not payloads, so start-up time doesn't grow with the size of the cache. Files that no manifest lists, left by a crash before a manifest was renamed, are deleted by a background pass after start-up. Checksums are verified while a checkpoint is restored, and the slot can't run until every check passes. If a shared chunk turns out to be corrupt, every checkpoint that depends on it is quarantined and the request falls back to an earlier checkpoint or a cold prefill.
 
 ## 7. Inside the code
 
@@ -288,7 +289,40 @@ Some questions are still open:
 - **Checkpoint density.** The grid limits and eviction ranks are starting points. They'll move as real workloads show where restore points are missing.
 - **Concurrency.** Qualifying eight simultaneous requests per model, inside each model's memory envelope, is still ahead.
 
-The figures use made-up conversations with 2,048-token chunks to stay readable. The numbers in the text come from the single measured run described in section 1.
+The figures use made-up conversations with 2,048-token chunks to stay readable, except figure 6, which uses Flash-Next's real 256-row chunks. The numbers in the text come from the single measured run described in section 1.
+
+## 9. How it compares
+
+Gufo's cache borrows from the projects in the references, but it targets a different setting: one machine, a few slots and long agent sessions, rather than many GPUs serving many users. The table compares design choices, not quality. Where another project chose differently, its choice usually fits its own setting better.
+
+<div style="overflow-x: auto">
+
+| | Gufo | vLLM | SGLang | llama.cpp |
+| --- | --- | --- | --- | --- |
+| Where recurrent state is saved | Where the next turn, an edit or a shared prompt will likely resume | At block boundaries, at the end of each scheduling step (experimental for GDN models) | At the end of the cached prefix | Up to 32 points per slot, at least 8,192 tokens apart |
+| What gets shared | Rows from the same computation | Blocks with the same tokens | Pages with the same tokens | Matching prompts, per slot |
+| Where state lives | Slots, RAM and disk, in one index | GPU; CPU and disk through add-ons such as LMCache | GPU, host RAM and storage, in one tree | Slots and a RAM cache |
+| Disk | Built in and crash-safe (opt-in) | Through add-ons such as LMCache | Storage backends, shareable between servers | Manual save and restore of a slot |
+| Live memory | One buffer per slot | Paged, shared between requests | Paged, shared between requests | Per slot, optionally one shared buffer |
+| Built for | One machine, a few slots | Many GPUs, many users | Many GPUs, many users | Local use on CPU and GPU |
+
+</div>
+
+Why Gufo made each choice, and what it gets from it:
+
+- **Restore points where work resumes.** An agent mostly continues its last turn, edits a recent message or starts subagents from the same prompt. Gufo saves state at those places instead of at fixed intervals. *Gain:* a handful of checkpoints per request covers the common cases, so memory goes to conversations rather than to restore points nobody uses.
+- **Sharing by provenance.** The same tokens can produce slightly different bytes, and mixing them would give a state that no run produced. *Gain:* a restored conversation continues exactly as the original run would have. The cost is that two independent cold prefills of the same text don't share.
+- **One index for every tier.** Live state, RAM and disk are found by the same lookup. *Gain:* after an eviction or a restart, the next turn still finds its deepest restore point without a separate recovery path.
+- **A crash-safe disk cache.** A local server restarts often, for updates or after a crash, and a long agent session costs about a minute to prefill. *Gain:* the 95,000-token conversation from section 1 comes back in 1.4 s after a restart instead of 58 s, and checkpoints share chunk files instead of storing full copies.
+- **One buffer per slot.** With a few slots, most turns continue in the slot they left, so nothing needs to move. Paging live memory would be a large change to the attention kernels. *Gain:* the cache works without that change, which waits until measurements show it's needed. The cost is that a restore into another slot copies rows, which section 8 lists as an open question.
+
+Gufo is behind where those systems are strongest: paged live memory, many concurrent users and many model families.
+
+<aside class="note">
+
+**As of October 2026.** The comparison reflects each project's documentation in October 2026. These projects change quickly, so check their current docs before relying on any cell.
+
+</aside>
 
 ## References
 
