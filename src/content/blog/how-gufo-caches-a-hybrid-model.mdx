@@ -203,7 +203,7 @@ Borrowing creates an obligation. If another conversation needs the slot, it will
 
 Two details keep that cheap:
 
-- The backing memory is reserved when the checkpoint is admitted, out of memory the cache has already pinned, so preservation never has to allocate. The cache doesn't pin its whole budget up front: Flash-Next starts small and pins about 1 GiB more at a time as captures need it, up to the budget. That budget defaults to half the free RAM, at most 32 GiB, and `--cache-ram-bytes` sets it explicitly. Pinning memory stalls other GPU work on this hardware, which is why it happens in steps when a capture needs room and never while rows are being preserved.
+- The backing memory is reserved when the checkpoint is admitted, out of memory the cache has already pinned, so preservation never has to allocate. The cache doesn't pin its whole budget up front: Flash-Next pins 2 GiB before it starts serving, then about 128 MiB more at a time as captures need it, up to the budget. That budget defaults to half the free RAM, at most 32 GiB, and `--cache-ram-bytes` sets it explicitly. Pinning memory stalls other GPU work on this hardware, which is why it happens in small steps, prepared before the GPU work that needs it rather than in the middle of a copy.
 - Copies happen in the background while the slot is idle, piece by piece, and stop whenever the model has work to do. When a new request does need the slot, most of the copying is usually done. Gufo also prefers slots whose copying has finished.
 
 <SpillFigure figure={14} caption="Two checkpoints borrow the same rows; before B takes the slot, the rows are preserved once. Evicting the older checkpoint then frees only its private state." />
@@ -212,7 +212,7 @@ When A comes back and its slot is busy, Gufo restores A's checkpoint into anothe
 
 ### One index for live, RAM and disk
 
-Checkpoints can also be written to disk, so they survive RAM eviction and server restarts. The important part is how they're found. Live frontiers, RAM checkpoints and disk checkpoints all sit in **one prefix index**: a compressed tree of token sequences, one per model configuration.
+When Gufo runs with `--cache-disk`, checkpoints are also written to disk, so they survive RAM eviction and server restarts. The important part is how they're found. Live frontiers, RAM checkpoints and disk checkpoints all sit in **one prefix index**: a compressed tree of token sequences, one per model configuration.
 
 A lookup walks the new prompt down the tree and collects every compatible candidate along the path. It then picks the deepest one. When two candidates are equally deep, it prefers live state, then RAM, then disk.
 
@@ -234,7 +234,7 @@ Persistence follows a few rules:
 
 A checkpoint is published in a strict order: write and sync the chunk and private-state files, sync their directories, then write, sync and atomically rename the manifest. A crash at any point leaves either a complete checkpoint or none.
 
-On restart, Gufo reads manifests and file sizes, not payloads, so start-up time doesn't grow with the size of the cache. Checksums are verified while a checkpoint is restored, and the slot can't run until every check passes. If a shared chunk turns out to be corrupt, every checkpoint that depends on it is quarantined and the request falls back to an earlier checkpoint or a cold prefill.
+On restart, Gufo reads manifests and file sizes, not payloads, so start-up time doesn't grow with the size of the cache. Files that no manifest lists, left by a crash before a manifest was renamed, are deleted by a background pass after start-up. Checksums are verified while a checkpoint is restored, and the slot can't run until every check passes. If a shared chunk turns out to be corrupt, every checkpoint that depends on it is quarantined and the request falls back to an earlier checkpoint or a cold prefill.
 
 ## 7. Inside the code
 
