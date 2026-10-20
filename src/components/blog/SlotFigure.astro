@@ -1,7 +1,9 @@
 ---
 // A slot changing hands, in the style of the other blog figures: four
-// moments across slot 1, backing RAM and slot 2. A's borrowed rows are copied
-// out while slot 1 is idle, B takes the slot, and A later restores into
+// moments across slot 1, A's checkpoints, backing RAM and slot 2. A's
+// checkpoints own a copy of the private state and borrow the rows in slot 1.
+// The rows are copied out while slot 1 is idle, B takes the slot, the
+// checkpoints follow their rows to backing RAM, and A later restores into
 // slot 2. Each moment is one step. Inline SVG rendered on the server.
 interface Props {
   figure?: number | string;
@@ -11,48 +13,68 @@ interface Props {
 const { figure, caption } = Astro.props;
 
 const colours = { A: '#3f7a4f', B: '#4f86b8' };
-type Cell =
-  | { kind: 'free'; text: string }
-  | { kind: 'busy'; owner: keyof typeof colours; text: string; progress?: number };
+// A cell is split into segments, so a slot can show its rows and its private state apart.
+type Segment =
+  | { kind: 'free'; x: number; w: number; text: string }
+  | { kind: 'busy'; owner: keyof typeof colours; x: number; w: number; text: string; progress?: number };
+
+const cellW = 140;
+const rowsW = 92;
+const whole = (s: Omit<Segment, 'x' | 'w'>) => ({ ...s, x: 0, w: cellW }) as Segment;
+const split = (owner: keyof typeof colours): Segment[] => [
+  { kind: 'busy', owner, x: 0, w: rowsW, text: `${owner}'s rows` },
+  { kind: 'busy', owner, x: rowsW + 4, w: cellW - rowsW - 4, text: 'state' },
+];
+const checkpoint: Segment[] = [{ kind: 'busy', owner: 'A', x: 0, w: rowsW, text: 'state copy' }];
 
 const moments = ['1 · A finishes a turn', '2 · slot 1 is idle', '3 · B takes slot 1', '4 · A comes back'];
-const lanes: { name: string; cells: Cell[] }[] = [
-  { name: 'slot 1', cells: [
-    { kind: 'busy', owner: 'A', text: 'A · live rows' },
-    { kind: 'busy', owner: 'A', text: 'A · live rows' },
-    { kind: 'busy', owner: 'B', text: 'B · running' },
-    { kind: 'busy', owner: 'B', text: 'B · running' },
-  ] },
+const lanes: { name: string; cells: Segment[][] }[] = [
+  { name: 'slot 1', cells: [split('A'), split('A'), [whole({ kind: 'busy', owner: 'B', text: 'B · running' })], [whole({ kind: 'busy', owner: 'B', text: 'B · running' })]] },
+  { name: 'checkpoints', cells: [checkpoint, checkpoint, checkpoint, checkpoint] },
   { name: 'backing RAM', cells: [
-    { kind: 'free', text: 'nothing yet' },
-    { kind: 'busy', owner: 'A', text: "A's rows", progress: 0.6 },
-    { kind: 'busy', owner: 'A', text: "A's rows · kept" },
-    { kind: 'busy', owner: 'A', text: "A's rows · kept" },
+    [whole({ kind: 'free', text: 'nothing yet' })],
+    [whole({ kind: 'busy', owner: 'A', text: "A's rows · copying", progress: 0.6 })],
+    [whole({ kind: 'busy', owner: 'A', text: "A's rows · kept" })],
+    [whole({ kind: 'busy', owner: 'A', text: "A's rows · kept" })],
   ] },
   { name: 'slot 2', cells: [
-    { kind: 'free', text: 'free' },
-    { kind: 'free', text: 'free' },
-    { kind: 'free', text: 'free' },
-    { kind: 'busy', owner: 'A', text: 'A · restored' },
+    [whole({ kind: 'free', text: 'free' })],
+    [whole({ kind: 'free', text: 'free' })],
+    [whole({ kind: 'free', text: 'free' })],
+    split('A'),
   ] },
 ];
 
 const colX = (j: number) => 152 + j * 150;
-const cellW = 140;
 const laneY = (i: number) => 70 + i * 62;
 const h = 34;
-// Arrows between lanes: copy out in moment 2, restore in moment 4.
+const top = (i: number) => laneY(i) - h / 2;
+const end = (i: number) => laneY(i) + h / 2;
+const ckpt = 1;
+
+// References from the checkpoints to the rows they use: up into slot 1 while
+// they borrow it, down into backing RAM once the rows have been preserved.
+// The ghost is where a reference would point if the rows had not been copied.
+const refs = [
+  { col: 0, to: 0, label: 'borrows' },
+  { col: 1, to: 0, label: 'borrows' },
+  { col: 2, to: 2, label: 'references' },
+  { col: 3, to: 2, label: 'references' },
+];
+const ghost = { col: 2, label: "would read B's rows" };
+// Arrows that move rows: copy out in moment 2, restore in moment 4. The label
+// sits in the gap just above the lane the rows arrive in.
 const arrows = [
-  { col: 1, from: 0, to: 1, label: 'copy while idle' },
-  { col: 3, from: 1, to: 2, label: 'restore' },
+  { col: 1, from: 0, to: 2, label: 'copy' },
+  { col: 3, from: 2, to: 3, label: 'restore' },
 ];
 const bottom = laneY(lanes.length - 1) + h / 2;
 
 const steps = [
-  "A finishes a turn in slot 1. Its checkpoints don't copy A's rows; they borrow them from the slot.",
-  "While slot 1 is idle, Gufo copies A's borrowed rows to backing RAM, piece by piece.",
-  "B takes slot 1 and overwrites it. A's rows are safe in backing RAM.",
-  "A comes back while slot 1 is busy, so Gufo restores A's checkpoint into slot 2.",
+  "A finishes a turn in slot 1. Its checkpoints copy the private state and borrow the rows.",
+  "Slot 1 is idle, so Gufo copies the borrowed rows to backing RAM, piece by piece.",
+  "B overwrites slot 1. A's checkpoints now reference backing RAM; without the copy they would read B's rows.",
+  "A comes back while slot 1 is busy, so Gufo restores its checkpoint into slot 2.",
 ];
 const show = frames(steps.length);
 import StepControls from './StepControls.astro';
@@ -62,10 +84,13 @@ import { frames } from './steps';
 <figure class="slf" data-steps={steps.length}>
   <p class="slf-eyebrow"><span class="fig-eyebrow-title"><span class="slf-dot"></span>{figure !== undefined && <>Fig. {figure} · </>}A slot changes hands</span><span class="fig-eyebrow-side"><StepControls count={steps.length} /></span></p>
   <div class="slf-scroll">
-    <svg viewBox={`0 0 760 ${bottom + 40}`} role="img" aria-label="Moment 1: A has just finished a turn in slot 1, and its checkpoints borrow the rows there. Moment 2: while slot 1 is idle, A's borrowed rows are copied to backing RAM. Moment 3: B takes slot 1 and overwrites it; A's rows are kept in backing RAM. Moment 4: A comes back and is restored into slot 2.">
+    <svg viewBox={`0 0 760 ${bottom + 40}`} role="img" aria-label="Moment 1: A has just finished a turn in slot 1. Its checkpoints hold their own copy of the private state and borrow the rows in the slot. Moment 2: while slot 1 is idle, the borrowed rows are copied to backing RAM. Moment 3: B takes slot 1 and overwrites it; the checkpoints now reference the rows in backing RAM, and without the copy they would read B's rows. Moment 4: A comes back and is restored into slot 2.">
       <defs>
         <marker id="slf-arrow" viewBox="0 0 8 8" refX="7" refY="4" markerWidth="7" markerHeight="7" orient="auto">
           <path d="M0 0 L8 4 L0 8 z" class="slf-arrowhead" />
+        </marker>
+        <marker id="slf-ref" viewBox="0 0 8 8" refX="7" refY="4" markerWidth="7" markerHeight="7" orient="auto">
+          <path d="M0 0 L8 4 L0 8 z" class="slf-ref-head" />
         </marker>
         <clipPath id="slf-clip"><rect x="0" y="0" width={cellW} height={h} rx="6" /></clipPath>
       </defs>
@@ -78,29 +103,58 @@ import { frames } from './steps';
           <g>
             <rect x="24" y={y - 14} width="104" height="28" rx="6" class="slf-chip" />
             <text x="76" y={y + 4.5} class="slf-chip-text" text-anchor="middle">{lane.name}</text>
-            {lane.cells.map((c, j) => (
-              <g transform={`translate(${colX(j)} ${y - h / 2})`} style={c.kind === 'busy' ? `--c: ${colours[c.owner]}` : undefined} {...show(`${j + 1}-`)}>
-                {c.kind === 'free'
-                  ? <rect width={cellW} height={h} rx="6" class="slf-free" />
-                  : <rect width={cellW} height={h} rx="6" class="slf-busy" />}
-                {c.kind === 'busy' && c.progress !== undefined && (
-                  <g clip-path="url(#slf-clip)">
-                    <rect y={h - 5} width={cellW * c.progress} height="5" class="slf-progress" />
+            {lane.cells.map((cell, j) => (
+              <g transform={`translate(${colX(j)} ${y - h / 2})`} {...show(`${j + 1}-`)}>
+                {cell.map((s) => (
+                  <g style={s.kind === 'busy' ? `--c: ${colours[s.owner]}` : undefined}>
+                    <rect x={s.x} width={s.w} height={h} rx="6" class={s.kind === 'free' ? 'slf-free' : 'slf-busy'} />
+                    {s.kind === 'busy' && s.progress !== undefined && (
+                      <g clip-path="url(#slf-clip)">
+                        <rect x={s.x} y={h - 5} width={s.w * s.progress} height="5" class="slf-progress" />
+                      </g>
+                    )}
+                    <text x={s.x + s.w / 2} y={h / 2 + 4.5} class={s.kind === 'free' ? 'slf-free-text' : 'slf-busy-text'} text-anchor="middle">{s.text}</text>
                   </g>
-                )}
-                <text x={cellW / 2} y={h / 2 + 4.5} class={c.kind === 'free' ? 'slf-free-text' : 'slf-busy-text'} text-anchor="middle">{c.text}</text>
+                ))}
               </g>
             ))}
           </g>
         );
       })}
 
+      {refs.map((r) => {
+        const x = colX(r.col) + 46;
+        const up = r.to < ckpt;
+        const y1 = up ? top(ckpt) - 2 : end(ckpt) + 2;
+        const y2 = up ? end(r.to) + 4 : top(r.to) - 4;
+        return (
+          <g style={`--c: ${colours.A}`} {...show(`${r.col + 1}-`)}>
+            <line x1={x} y1={y1} x2={x} y2={y2} class="slf-ref" marker-end="url(#slf-ref)" />
+            <text x={x + 6} y={(y1 + y2) / 2 + 4} class="slf-ref-text">{r.label}</text>
+          </g>
+        );
+      })}
+
+      {(() => {
+        const x = colX(ghost.col) + 18;
+        const y1 = top(ckpt) - 2;
+        const y2 = end(0) + 4;
+        const mid = (y1 + y2) / 2;
+        return (
+          <g {...show(`${ghost.col + 1}-`)}>
+            <line x1={x} y1={y1} x2={x} y2={y2} class="slf-ghost" />
+            <path d={`M${x - 4} ${mid - 4} L${x + 4} ${mid + 4} M${x + 4} ${mid - 4} L${x - 4} ${mid + 4}`} class="slf-ghost-x" />
+            <text x={x + 9} y={mid + 4} class="slf-ghost-text">{ghost.label}</text>
+          </g>
+        );
+      })()}
+
       {arrows.map((a) => {
-        const cx = colX(a.col) + cellW - 22;
+        const cx = colX(a.col) + cellW - 18;
         return (
           <g {...show(`${a.col + 1}-`)}>
-            <line x1={cx} y1={laneY(a.from) + h / 2 + 2} x2={cx} y2={laneY(a.to) - h / 2 - 4} class="slf-flow" marker-end="url(#slf-arrow)" />
-            <text x={cx - 8} y={(laneY(a.from) + laneY(a.to)) / 2 + 4} class="slf-note" text-anchor="end">{a.label}</text>
+            <line x1={cx} y1={end(a.from) + 2} x2={cx} y2={top(a.to) - 4} class="slf-flow" marker-end="url(#slf-arrow)" />
+            <text x={cx - 8} y={(end(a.to - 1) + top(a.to)) / 2 + 4} class="slf-note" text-anchor="end">{a.label}</text>
           </g>
         );
       })}
@@ -130,6 +184,13 @@ import { frames } from './steps';
   .slf-note { font: italic 12px var(--font-sans); fill: var(--color-ink-3); }
   .slf-arrowhead { fill: var(--color-ink-3); }
   .slf-flow { stroke: var(--color-ink-3); stroke-width: 1.4; }
+
+  .slf-ref { stroke: var(--c); stroke-width: 1.4; stroke-dasharray: 4 3; }
+  .slf-ref-head { fill: #3f7a4f; }
+  .slf-ref-text { font: italic 11px var(--font-sans); fill: var(--color-ink-3); }
+  .slf-ghost { stroke: #b5452f; stroke-width: 1.2; stroke-dasharray: 2 3; opacity: 0.55; }
+  .slf-ghost-x { stroke: #b5452f; stroke-width: 1.6; }
+  .slf-ghost-text { font: italic 11px var(--font-sans); fill: #b5452f; }
 
   .slf-chip { fill: var(--color-ivory); stroke: var(--color-line-strong); }
   .slf-chip-text { font: 12px var(--font-mono); fill: var(--color-ink); }
