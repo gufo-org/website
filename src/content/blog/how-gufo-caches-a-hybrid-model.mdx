@@ -40,7 +40,8 @@ This post explains how that cache is built. The first half is about ideas and do
 6. [Slots, RAM and disk](#6-slots-ram-and-disk)
 7. [Inside the code](#7-inside-the-code)
 8. [Where it stands](#8-where-it-stands)
-9. [References](#references)
+9. [How it compares](#9-how-it-compares)
+10. [References](#references)
 
 ## 1. Why a cache at all
 
@@ -289,6 +290,39 @@ Some questions are still open:
 - **Concurrency.** Qualifying eight simultaneous requests per model, inside each model's memory envelope, is still ahead.
 
 The figures use made-up conversations with 2,048-token chunks to stay readable, except figure 6, which uses Flash-Next's real 256-row chunks. The numbers in the text come from the single measured run described in section 1.
+
+## 9. How it compares
+
+Gufo's cache borrows from the projects in the references, but it targets a different setting: one machine, a few slots and long agent sessions, rather than many GPUs serving many users. The table compares design choices, not quality. Where another project chose differently, its choice usually fits its own setting better.
+
+<div style="overflow-x: auto">
+
+| | Gufo | vLLM | SGLang | llama.cpp |
+| --- | --- | --- | --- | --- |
+| Where recurrent state is saved | Where the next turn, an edit or a shared prompt will likely resume | At block boundaries, at the end of each scheduling step (experimental for GDN models) | At the end of the cached prefix | Up to 32 points per slot, at least 8,192 tokens apart |
+| What gets shared | Rows from the same computation | Blocks with the same tokens | Pages with the same tokens | Matching prompts, per slot |
+| Where state lives | Slots, RAM and disk, in one index | GPU; CPU and disk through add-ons such as LMCache | GPU, host RAM and storage, in one tree | Slots and a RAM cache |
+| Disk | Built in and crash-safe (opt-in) | Through add-ons such as LMCache | Storage backends, shareable between servers | Manual save and restore of a slot |
+| Live memory | One buffer per slot | Paged, shared between requests | Paged, shared between requests | Per slot, optionally one shared buffer |
+| Built for | One machine, a few slots | Many GPUs, many users | Many GPUs, many users | Local use on CPU and GPU |
+
+</div>
+
+Why Gufo made each choice, and what it gets from it:
+
+- **Restore points where work resumes.** An agent mostly continues its last turn, edits a recent message or starts subagents from the same prompt. Gufo saves state at those places instead of at fixed intervals. *Gain:* a handful of checkpoints per request covers the common cases, so memory goes to conversations rather than to restore points nobody uses.
+- **Sharing by provenance.** The same tokens can produce slightly different bytes, and mixing them would give a state that no run produced. *Gain:* a restored conversation continues exactly as the original run would have. The cost is that two independent cold prefills of the same text don't share.
+- **One index for every tier.** Live state, RAM and disk are found by the same lookup. *Gain:* after an eviction or a restart, the next turn still finds its deepest restore point without a separate recovery path.
+- **A crash-safe disk cache.** A local server restarts often, for updates or after a crash, and a long agent session costs about a minute to prefill. *Gain:* the 95,000-token conversation from section 1 comes back in 1.4 s after a restart instead of 58 s, and checkpoints share chunk files instead of storing full copies.
+- **One buffer per slot.** With a few slots, most turns continue in the slot they left, so nothing needs to move. Paging live memory would be a large change to the attention kernels. *Gain:* the cache works without that change, which waits until measurements show it's needed. The cost is that a restore into another slot copies rows, which section 8 lists as an open question.
+
+Gufo is behind where those systems are strongest: paged live memory, many concurrent users and many model families.
+
+<aside class="note">
+
+**As of October 2026.** The comparison reflects each project's documentation in October 2026. These projects change quickly, so check their current docs before relying on any cell.
+
+</aside>
 
 ## References
 
