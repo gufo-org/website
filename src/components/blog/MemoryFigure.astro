@@ -1,0 +1,169 @@
+---
+// An interactive figure: how much RAM a set of checkpoints on one conversation
+// takes with shared rows, next to the same checkpoints stored as full copies
+// and the RAM budget. The server renders the default values, so the figure
+// reads the same without JavaScript.
+interface Props {
+  figure?: number | string;
+  caption?: string;
+}
+
+const { figure, caption } = Astro.props;
+
+// Measured with Gufo f6ca085 on Strix Halo (Flash-Next UD-Q4_K_XL + Q8_0 MTP, one slot, 131,072 context):
+// eleven RAM checkpoints held 1,468,465,152 bytes of private state, and disk chunks held 27,460 bytes per row.
+const perCheckpoint = 133_496_832;
+const perToken = 27_460;
+const spacing = 2048;
+const defaults = { depth: 100_352, count: 8, budget: 9 };
+const scaleGiB = 32;
+
+const number = (t: number) => t.toLocaleString('en-US');
+const gb = (b: number) => `${(b / 1e9).toFixed(b >= 1e10 ? 1 : 2)} GB`;
+
+// Checkpoints sit every `spacing` tokens back from the deepest one.
+const estimate = (depth: number, count: number) => {
+  const states = count * perCheckpoint;
+  const rows = depth * perToken;
+  let copies = states;
+  for (let i = 0; count > i; i++) copies += (depth - i * spacing) * perToken;
+  return { states, rows, shared: states + rows, copies };
+};
+const first = estimate(defaults.depth, defaults.count);
+const pct = (b: number) => `${Math.min(100, (b / (scaleGiB * 2 ** 30)) * 100)}%`;
+---
+<figure class="mef" data-memory data-per-checkpoint={perCheckpoint} data-per-token={perToken} data-spacing={spacing} data-scale={scaleGiB}>
+  <p class="mef-eyebrow"><span class="fig-eyebrow-title"><span class="mef-dot"></span>{figure !== undefined && <>Fig. {figure} · </>}What a set of checkpoints costs</span></p>
+
+  <div class="mef-controls">
+    <label>Depth <output data-out="depth">{number(defaults.depth)} tokens</output>
+      <input type="range" data-in="depth" min="8192" max="151552" step="2048" value={defaults.depth} />
+    </label>
+    <label>Checkpoints kept <output data-out="count">{defaults.count}</output>
+      <input type="range" data-in="count" min="1" max="32" step="1" value={defaults.count} />
+    </label>
+    <label>RAM budget <output data-out="budget">{defaults.budget} GiB</output>
+      <input type="range" data-in="budget" min="1" max="32" step="0.5" value={defaults.budget} />
+    </label>
+  </div>
+
+  <div class="mef-bars" aria-live="polite">
+    <div class="mef-row">
+      <span class="mef-label">Shared rows</span>
+      <div class="mef-track">
+        <i class="mef-rows" data-bar="rows" style={`width: ${pct(first.rows)}`}></i><i class="mef-states" data-bar="states" style={`width: ${pct(first.states)}`}></i>
+        <b class="mef-budget" data-bar="budget" style={`left: ${pct(defaults.budget * 2 ** 30)}`}></b>
+      </div>
+      <span class="mef-value" data-out="shared">{gb(first.shared)}</span>
+    </div>
+    <div class="mef-row">
+      <span class="mef-label">Full copies</span>
+      <div class="mef-track">
+        <i class="mef-copies" data-bar="copies" style={`width: ${pct(first.copies)}`}></i>
+        <b class="mef-budget" data-bar="budget" style={`left: ${pct(defaults.budget * 2 ** 30)}`}></b>
+      </div>
+      <span class="mef-value" data-out="copies">{gb(first.copies)}</span>
+    </div>
+    <p class="mef-legend">
+      <span><i class="mef-rows"></i>rows, stored once <b data-out="rows">{gb(first.rows)}</b></span>
+      <span><i class="mef-states"></i>private states <b data-out="states">{gb(first.states)}</b></span>
+      <span><i class="mef-budget-key"></i>budget</span>
+    </p>
+    <p class="mef-fit" data-out="fit">{first.shared > defaults.budget * 2 ** 30 ? 'Over the budget: some checkpoints would be evicted or refused.' : `Fits, with ${gb(defaults.budget * 2 ** 30 - first.shared)} of the budget left.`}</p>
+  </div>
+
+  <p class="mef-note">Flash-Next, measured: {number(Math.round(perCheckpoint / 1e6))} MB of private state per checkpoint and {number(perToken)} bytes per row. Checkpoints are {number(spacing)} tokens apart on one conversation; the bars stop at {scaleGiB} GiB.</p>
+  {caption && <figcaption>{caption}</figcaption>}
+</figure>
+
+<script>
+  document.querySelectorAll<HTMLElement>('figure[data-memory]').forEach((figure) => {
+    const perCheckpoint = Number(figure.dataset.perCheckpoint);
+    const perToken = Number(figure.dataset.perToken);
+    const spacing = Number(figure.dataset.spacing);
+    const scale = Number(figure.dataset.scale) * 2 ** 30;
+    const input = (name: string) => figure.querySelector<HTMLInputElement>(`[data-in="${name}"]`)!;
+    const out = (name: string) => figure.querySelector<HTMLElement>(`[data-out="${name}"]`)!;
+    const bars = (name: string) => figure.querySelectorAll<HTMLElement>(`[data-bar="${name}"]`);
+    const number = (t: number) => t.toLocaleString('en-US');
+    const gb = (b: number) => `${(b / 1e9).toFixed(b >= 1e10 ? 1 : 2)} GB`;
+    const pct = (b: number) => `${Math.min(100, (b / scale) * 100)}%`;
+    const depth = input('depth');
+    const count = input('count');
+    const budget = input('budget');
+
+    const render = () => {
+      // At most one checkpoint every `spacing` tokens fits under the deepest one.
+      count.max = String(Math.min(32, Number(depth.value) / spacing));
+      if (Number(count.value) > Number(count.max)) count.value = count.max;
+      const d = Number(depth.value);
+      const n = Number(count.value);
+      const b = Number(budget.value) * 2 ** 30;
+      const states = n * perCheckpoint;
+      const rows = d * perToken;
+      let copies = states;
+      for (let i = 0; n > i; i++) copies += (d - i * spacing) * perToken;
+      const shared = states + rows;
+
+      out('depth').textContent = `${number(d)} tokens`;
+      out('count').textContent = String(n);
+      out('budget').textContent = `${Number(budget.value)} GiB`;
+      out('shared').textContent = gb(shared);
+      out('copies').textContent = gb(copies);
+      out('rows').textContent = gb(rows);
+      out('states').textContent = gb(states);
+      out('fit').textContent = shared > b ? 'Over the budget: some checkpoints would be evicted or refused.' : `Fits, with ${gb(b - shared)} of the budget left.`;
+      out('fit').classList.toggle('is-over', shared > b);
+      bars('rows').forEach((el) => (el.style.width = pct(rows)));
+      bars('states').forEach((el) => (el.style.width = pct(states)));
+      bars('copies').forEach((el) => (el.style.width = pct(copies)));
+      bars('budget').forEach((el) => (el.style.left = pct(b)));
+    };
+    [depth, count, budget].forEach((el) => el.addEventListener('input', render));
+    render();
+  });
+</script>
+
+<style>
+  .mef {
+    --rows: #3f7a4f;
+    --states: #9a5c8a;
+    --copies: #c27a2c;
+    margin: 2.5rem 0;
+    padding: 20px;
+    background: var(--color-paper);
+    border: 1px solid var(--color-line-strong);
+    border-radius: 10px;
+    font-family: var(--font-sans);
+  }
+  .mef-eyebrow { display: flex; align-items: center; gap: 8px; font: 12px var(--font-mono); color: var(--color-ink-3); }
+  .mef-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--color-forest); }
+
+  .mef-controls { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 12px 24px; margin: 18px 0 20px; }
+  .mef-controls label { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 4px 8px; font: 10.5px var(--font-mono); letter-spacing: 0.06em; text-transform: uppercase; color: var(--color-ink-4); }
+  .mef-controls output { font: 12px var(--font-mono); letter-spacing: 0; text-transform: none; color: var(--color-ink); }
+  .mef-controls input { width: 100%; accent-color: var(--color-forest); }
+
+  .mef-row { display: grid; grid-template-columns: 7.5em 1fr 5.5em; align-items: center; gap: 12px; margin-bottom: 10px; }
+  .mef-label { font: 12px var(--font-mono); color: var(--color-ink-2); }
+  .mef-value { font: 13px var(--font-mono); color: var(--color-ink); text-align: right; font-variant-numeric: tabular-nums; }
+  .mef-track { position: relative; display: flex; height: 26px; border-radius: 6px; background: var(--color-ivory); border: 1px solid var(--color-line); overflow: hidden; }
+  .mef-track i { display: block; height: 100%; transition: width 0.2s ease; }
+  .mef-rows { background: color-mix(in srgb, var(--rows) 45%, white); }
+  .mef-states { background: color-mix(in srgb, var(--states) 55%, white); }
+  .mef-copies { background: color-mix(in srgb, var(--copies) 40%, white); }
+  .mef-budget { position: absolute; top: -1px; bottom: -1px; width: 0; border-left: 2px dashed var(--color-ink-2); transition: left 0.2s ease; }
+
+  .mef-legend { display: flex; flex-wrap: wrap; gap: 6px 18px; margin: 12px 0 0; font: 12px var(--font-sans); color: var(--color-ink-3); }
+  .mef-legend span { display: inline-flex; align-items: center; gap: 6px; }
+  .mef-legend i { display: inline-block; width: 10px; height: 10px; border-radius: 2px; }
+  .mef-legend b { font: 12px var(--font-mono); color: var(--color-ink-2); font-weight: 400; }
+  .mef-budget-key { border-left: 2px dashed var(--color-ink-2); width: 0 !important; border-radius: 0 !important; height: 12px !important; }
+  .mef-fit { margin: 10px 0 0; font: 14px var(--font-sans); color: var(--color-forest); }
+  .mef-fit.is-over { color: #b8336a; }
+  .mef-note { margin: 14px 0 12px; font: italic 12px/1.5 var(--font-sans); color: var(--color-ink-3); }
+
+  .mef figcaption { font-family: var(--font-serif); font-style: italic; font-size: 14px; line-height: 1.5; color: var(--color-ink-2); }
+  @media (prefers-reduced-motion: reduce) { .mef-track i, .mef-budget { transition: none; } }
+  @media (max-width: 520px) { .mef-row { grid-template-columns: 1fr 5.5em; } .mef-track { grid-column: 1 / -1; grid-row: 2; } }
+</style>

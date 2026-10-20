@@ -1,0 +1,94 @@
+---
+// Why equal tokens aren't equal bytes, in the style of the other blog
+// figures: three runs over the same 6,144 tokens, split into different
+// passes, end with rows that differ in the last bits. The values are
+// illustrative. Inline SVG rendered on the server.
+interface Props {
+  figure?: number | string;
+  caption?: string;
+}
+
+const { figure, caption } = Astro.props;
+
+const total = 6144;
+const number = (t: number) => t.toLocaleString('en-US');
+const left = 160;
+const span = 400;
+const x = (t: number) => left + (t / total) * span;
+const valueX = 600;
+
+// Colours as computation lineages, like the cache figures.
+const runs = [
+  { name: 'run A', c: '#3f7a4f', how: 'one pass', passes: [[0, 6144]], value: ['0.71832', '04'] },
+  { name: 'run B', c: '#4f86b8', how: 'restore, then a short pass', passes: [[0, 4096], [4096, 6144]], restored: true, value: ['0.71831', '97'] },
+  { name: 'run C', c: '#3d8a8a', how: 'stop at 4,096, then carry on', passes: [[0, 4096], [4096, 6144]], value: ['0.71832', '11'] },
+];
+const rowY = (i: number) => 66 + i * 54;
+const bottom = rowY(runs.length - 1) + 30;
+const gap = 1.5;
+---
+<figure class="byf">
+  <p class="byf-eyebrow"><span class="byf-dot"></span>{figure !== undefined && <>Fig. {figure} · </>}Same tokens, different bytes</p>
+  <div class="byf-scroll">
+    <svg viewBox={`0 0 760 ${bottom + 34}`} role="img" aria-label={`Three runs compute the same ${number(total)} tokens: one in a single pass, one by restoring a checkpoint at 4,096 and computing the rest, and one that stops at 4,096 to capture a checkpoint. The same value in their KV rows differs in the last digits.`}>
+      <text x="24" y="26" class="byf-head">Computation</text>
+      <text x={left} y="26" class="byf-head">The same {number(total)} tokens, split into passes</text>
+      <text x={valueX} y="26" class="byf-head">A value at token 6,000</text>
+
+      {runs.map((r, i) => {
+        const y = rowY(i);
+        return (
+          <g style={`--c: ${r.c}`}>
+            <rect x="24" y={y - 14} width="104" height="28" rx="6" class="byf-chip" />
+            <text x="76" y={y + 4.5} class="byf-chip-text" text-anchor="middle">{r.name}</text>
+            {r.passes.map(([from, to], k) => {
+              const x1 = x(from) + (k > 0 ? gap : 0);
+              const x2 = x(to) - (r.passes.length - 1 > k ? gap : 0);
+              const restored = r.restored && k === 0;
+              return (
+                <g>
+                  <rect x={x1} y={y - 14} width={x2 - x1} height="28" rx="6" class={restored ? 'byf-pass is-restored' : 'byf-pass'} />
+                  <text x={(x1 + x2) / 2} y={y + 4.5} class="byf-pass-text" text-anchor="middle">{restored ? `restored · ${number(to - from)}` : number(to - from)}</text>
+                </g>
+              );
+            })}
+            <text x={left} y={y + 28} class="byf-how">{r.how}</text>
+            <text x={valueX} y={y + 4.5} class="byf-value">{r.value[0]}<tspan class="byf-diff">{r.value[1]}</tspan></text>
+          </g>
+        );
+      })}
+
+      <text x="24" y={bottom + 20} class="byf-note">All three are valid. Mixing them, state from one run with rows from another, gives a state no run produced.</text>
+    </svg>
+  </div>
+  {caption && <figcaption>{caption}</figcaption>}
+</figure>
+
+<style>
+  .byf {
+    --diff: #b8336a;
+    margin: 2.5rem 0;
+    padding: 20px;
+    background: var(--color-paper);
+    border: 1px solid var(--color-line-strong);
+    border-radius: 10px;
+    font-family: var(--font-sans);
+  }
+  .byf-eyebrow { display: flex; align-items: center; gap: 8px; font: 12px var(--font-mono); color: var(--color-ink-3); }
+  .byf-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--color-forest); }
+  .byf-scroll { margin: 14px 0; overflow-x: auto; }
+  .byf svg { display: block; width: 100%; min-width: 560px; height: auto; }
+
+  .byf-head { font: 10.5px var(--font-mono); letter-spacing: 0.06em; text-transform: uppercase; fill: var(--color-ink-4); }
+  .byf-note, .byf-how { font: italic 12px var(--font-sans); fill: var(--color-ink-3); }
+
+  .byf-chip { fill: color-mix(in srgb, var(--c) 14%, white); stroke: var(--c); stroke-width: 1.4; }
+  .byf-chip-text { font: 13px var(--font-mono); fill: var(--color-ink); }
+  .byf-pass { fill: color-mix(in srgb, var(--c) 14%, white); stroke: var(--c); stroke-width: 1.4; }
+  .byf-pass.is-restored { fill: var(--color-ivory); stroke: var(--color-line-strong); stroke-dasharray: 3 3; }
+  .byf-pass-text { font: 12px var(--font-mono); fill: var(--color-ink); }
+  .byf-value { font: 15px var(--font-mono); fill: var(--color-ink); }
+  .byf-diff { fill: var(--diff); font-weight: 600; }
+
+  .byf figcaption { font-family: var(--font-serif); font-style: italic; font-size: 14px; line-height: 1.5; color: var(--color-ink-2); }
+</style>

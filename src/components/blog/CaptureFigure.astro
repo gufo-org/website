@@ -1,0 +1,133 @@
+---
+// Where one request leaves checkpoints, in the style of the other blog
+// figures: a 12,000-token prompt that restored 4,096 tokens, and one lane per
+// kind of capture (always, grid, learned), added one step at a time.
+// Inline SVG rendered on the server.
+interface Props {
+  figure?: number | string;
+  caption?: string;
+}
+
+const { figure, caption } = Astro.props;
+
+const number = (t: number) => t.toLocaleString('en-US');
+const total = 12000;
+const restored = 4096;
+const left = 150;
+const width = 560;
+const x = (t: number) => left + (t / total) * width;
+
+const kinds = {
+  always: { name: 'always', c: '#3f7a4f' },
+  grid: { name: 'grid', c: '#4f86b8' },
+  learned: { name: 'learned', c: '#c27a2c' },
+};
+type Kind = keyof typeof kinds;
+const lanes: { kind: Kind; y: number; step: number; points: { at: number; label: string; anchor?: 'end' }[] }[] = [
+  { kind: 'always', y: 66, step: 2, points: [
+    { at: restored, label: `reuse ended · ${number(restored)}` },
+    { at: 9600, label: `stable · ${number(9600)}`, anchor: 'end' },
+    { at: total, label: `end · ${number(total)}`, anchor: 'end' },
+  ] },
+  { kind: 'grid', y: 118, step: 3, points: [
+    { at: 8192, label: number(8192) },
+    { at: 10240, label: number(10240) },
+  ] },
+  { kind: 'learned', y: 170, step: 4, points: [
+    { at: 6000, label: `stopped matching · ${number(6000)}` },
+  ] },
+];
+const barTop = 206;
+const gap = 1.5;
+const segments = [
+  { from: 0, to: restored, c: '#3f7a4f', label: 'restored' },
+  { from: restored, to: total, c: '#4f86b8', label: 'prefilled' },
+];
+
+const palette = ['#3f7a4f', '#4f86b8', '#c27a2c', '#3d8a8a', '#9a5c8a'];
+const cell = 6;
+const block = (cx: number, top: number, seed: number) =>
+  Array.from({ length: 9 }, (_, k) => ({
+    x: cx - 1.5 * cell + (k % 3) * cell,
+    y: top + Math.floor(k / 3) * cell,
+    fill: palette[(k * 2 + seed) % palette.length],
+  }));
+
+const steps = [
+  `A ${number(total)}-token request restores a checkpoint at ${number(restored)} and prefills the rest. Where should it leave new checkpoints?`,
+  'Always: where the reused history ended, the stable boundary the client will send again unchanged, and the end of the prompt.',
+  `Grid points: a few multiples of ${number(2048)}, so that a later edit in the middle has a restore point nearby.`,
+  `A learned point: the cached history matched up to ${number(6000)}, past the restored checkpoint. A checkpoint there lets the next prompt like this one reuse all of it.`,
+];
+const show = frames(steps.length);
+import StepControls from './StepControls.astro';
+import StepText from './StepText.astro';
+import { frames } from './steps';
+---
+<figure class="caf" data-steps={steps.length}>
+  <p class="caf-eyebrow"><span class="fig-eyebrow-title"><span class="caf-dot"></span>{figure !== undefined && <>Fig. {figure} · </>}Where a request leaves checkpoints</span><span class="fig-eyebrow-side"><StepControls count={steps.length} /></span></p>
+  <div class="caf-scroll">
+    <svg viewBox={`0 0 760 ${barTop + 62}`} role="img" aria-label={`A ${number(total)}-token request restored ${number(restored)} tokens and prefills the rest. It always captures where reuse ended at ${number(restored)}, the stable boundary at 9,600 and the end of the prompt at ${number(total)}. It adds grid points at 8,192 and 10,240, and a learned point at 6,000, where the prompt stopped matching the cached history.`}>
+      <text x="24" y="26" class="caf-head">Kind</text>
+      <text x={left} y="26" class="caf-head">Positions in the prompt</text>
+
+      {lanes.map((lane, n) => (
+        <g style={`--c: ${kinds[lane.kind].c}`} {...show(`${lane.step}-`)}>
+          <rect x="24" y={lane.y - 14} width="96" height="28" rx="6" class="caf-chip" />
+          <text x="72" y={lane.y + 4.5} class="caf-chip-text" text-anchor="middle">{kinds[lane.kind].name}</text>
+          {lane.points.map((p) => (
+            <g>
+              <text x={p.anchor === 'end' ? x(p.at) + 4 : x(p.at)} y={lane.y - 14} class="caf-label" text-anchor={p.anchor ?? 'middle'}>{p.label}</text>
+              {block(x(p.at), lane.y - 6, n * 2 + 1).map((s) => <rect x={s.x} y={s.y} width={cell} height={cell} fill={s.fill} class="caf-state" />)}
+              <line x1={x(p.at)} y1={lane.y + 3 * cell - 4} x2={x(p.at)} y2={barTop} class="caf-drop" />
+            </g>
+          ))}
+        </g>
+      ))}
+
+      {segments.map((s, i) => {
+        const x1 = x(s.from) + (i > 0 ? gap : 0);
+        const x2 = x(s.to) - (segments.length - 1 > i ? gap : 0);
+        const mid = (x(s.from) + x(s.to)) / 2;
+        return (
+          <g style={`--c: ${s.c}`}>
+            <rect x={x1} y={barTop} width={x2 - x1} height="28" rx="6" class="caf-seg" />
+            <text x={mid} y={barTop + 18.5} class="caf-seg-count" text-anchor="middle">{number(s.to - s.from)}</text>
+            <text x={mid} y={barTop + 48} class="caf-seg-label" text-anchor="middle">{s.label}</text>
+          </g>
+        );
+      })}
+      <text x="24" y={barTop + 18.5} class="caf-label">request</text>
+    </svg>
+  </div>
+  <StepText steps={steps} />
+  {caption && <figcaption>{caption}</figcaption>}
+</figure>
+
+<style>
+  .caf {
+    margin: 2.5rem 0;
+    padding: 20px;
+    background: var(--color-paper);
+    border: 1px solid var(--color-line-strong);
+    border-radius: 10px;
+    font-family: var(--font-sans);
+  }
+  .caf-eyebrow { display: flex; align-items: center; justify-content: space-between; gap: 8px 12px; font: 12px var(--font-mono); color: var(--color-ink-3); }
+  .caf-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--color-forest); }
+  .caf-scroll { margin: 14px 0; overflow-x: auto; }
+  .caf svg { display: block; width: 100%; min-width: 560px; height: auto; }
+
+  .caf-head { font: 10.5px var(--font-mono); letter-spacing: 0.06em; text-transform: uppercase; fill: var(--color-ink-4); }
+  .caf-label { font: 11px var(--font-mono); fill: var(--color-ink-3); }
+  .caf-chip { fill: color-mix(in srgb, var(--c) 14%, white); stroke: var(--c); stroke-width: 1.4; }
+  .caf-chip-text { font: 12px var(--font-mono); fill: var(--color-ink); }
+  .caf-state { stroke: var(--color-paper); stroke-width: 1; fill-opacity: 0.75; }
+  .caf-drop { stroke: var(--c); stroke-width: 1.2; stroke-dasharray: 3 3; }
+
+  .caf-seg { fill: color-mix(in srgb, var(--c) 14%, white); stroke: var(--c); stroke-width: 1.4; }
+  .caf-seg-count { font: 13px var(--font-mono); fill: var(--color-ink); }
+  .caf-seg-label { font: italic 12px var(--font-sans); fill: color-mix(in srgb, var(--c) 75%, black); }
+
+  .caf figcaption { font-family: var(--font-serif); font-style: italic; font-size: 14px; line-height: 1.5; color: var(--color-ink-2); }
+</style>

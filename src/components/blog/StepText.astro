@@ -1,0 +1,15 @@
+---
+// One sentence per frame of a stepped blog figure, stacked in a single grid
+// cell so the figure keeps the height of the longest one while stepping.
+import { frames } from './steps';
+
+interface Props {
+  steps: string[];
+}
+
+const { steps } = Astro.props;
+const show = frames(steps.length);
+---
+<p class="fig-step-text" aria-live="polite">
+  {steps.map((text, i) => <span {...show(String(i + 1))}><b>{i + 1}.</b> {text}</span>)}
+</p>

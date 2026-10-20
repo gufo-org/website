@@ -1,0 +1,125 @@
+---
+// A static diagram of prefill on a plain transformer: a short prompt split
+// into tokens, the attention layers it passes through, and the KV rows each
+// token leaves behind. Everything is inline SVG rendered on the server.
+interface Props {
+  figure?: number | string;
+  caption?: string;
+}
+
+const { figure, caption } = Astro.props;
+
+const sentence = 'Read the file main.cpp';
+const tokens = ['Read', 'the', 'file', 'main', '.cpp'];
+// The palette the other blog figures reuse for checkpoint state blocks.
+const palette = ['#3f7a4f', '#4f86b8', '#c27a2c', '#3d8a8a', '#9a5c8a'];
+const layers = ['L1', 'L2', 'L3'];
+
+const rowY = (i: number) => 84 + i * 42;
+const ghostY = rowY(tokens.length) + 6;
+const layerX = (l: number) => 220 + l * 70;
+const groupX = (l: number) => 496 + l * 86;
+
+// Causal attention: a position in one layer reads itself and every earlier position from the layer below.
+const edges = layers.slice(1).flatMap((_, l) =>
+  tokens.flatMap((_, from) => tokens.slice(from).map((_, k) => ({ x1: layerX(l), y1: rowY(from), x2: layerX(l + 1), y2: rowY(from + k) }))),
+);
+const lastX = layerX(layers.length - 1);
+---
+<figure class="kvf">
+  <p class="kvf-eyebrow"><span class="kvf-dot"></span>{figure !== undefined && <>Fig. {figure} · </>}Prefill on a transformer</p>
+  <p class="kvf-prompt">Prompt: <q>{sentence}</q></p>
+  <div class="kvf-scroll">
+    <svg viewBox="0 0 760 330" role="img" aria-label={`The prompt "${sentence}" is split into ${tokens.length} tokens. Each token passes through ${layers.length} attention layers, and each leaves one row in the KV cache holding a key and a value per layer.`}>
+      <defs>
+        <marker id="kvf-arrow" viewBox="0 0 8 8" refX="7" refY="4" markerWidth="7" markerHeight="7" orient="auto">
+          <path d="M0 0 L8 4 L0 8 z" class="kvf-arrowhead" />
+        </marker>
+      </defs>
+
+      <text x="24" y="30" class="kvf-head">Tokens</text>
+      <text x="290" y="30" class="kvf-head" text-anchor="middle">Model · attention layers</text>
+      <text x="496" y="30" class="kvf-head">KV cache · one row per token</text>
+
+      <rect x="172" y="50" width="236" height="224" rx="10" class="kvf-model" />
+      {layers.map((name, l) => (
+        <>
+          <text x={layerX(l)} y="63" class="kvf-layer" text-anchor="middle">{name}</text>
+          <text x={groupX(l) + 38} y="63" class="kvf-layer" text-anchor="middle">{name}</text>
+        </>
+      ))}
+
+      {edges.map((e) => <line {...e} class="kvf-edge" />)}
+
+      {tokens.map((token, i) => {
+        const y = rowY(i);
+        const c = palette[i];
+        return (
+          <g style={`--c: ${c}`}>
+            <rect x="24" y={y - 14} width="104" height="28" rx="6" class="kvf-token" />
+            <text x="76" y={y + 4.5} class="kvf-token-text" text-anchor="middle">{token}</text>
+            <line x1="130" y1={y} x2={layerX(0) - 10} y2={y} class="kvf-flow" marker-end="url(#kvf-arrow)" />
+            {layers.map((_, l) => <circle cx={layerX(l)} cy={y} r="7" class="kvf-node" />)}
+            <line x1={lastX + 9} y1={y} x2={groupX(0) - 6} y2={y} class="kvf-flow" marker-end="url(#kvf-arrow)" />
+            {layers.map((_, l) => (
+              <>
+                <rect x={groupX(l)} y={y - 14} width="36" height="28" rx="3" class="kvf-cell" />
+                <text x={groupX(l) + 18} y={y + 4} class="kvf-cell-text" text-anchor="middle">K</text>
+                <rect x={groupX(l) + 40} y={y - 14} width="36" height="28" rx="3" class="kvf-cell" />
+                <text x={groupX(l) + 58} y={y + 4} class="kvf-cell-text" text-anchor="middle">V</text>
+              </>
+            ))}
+          </g>
+        );
+      })}
+
+      <g class="kvf-ghost">
+        <rect x="24" y={ghostY - 14} width="104" height="28" rx="6" />
+        <text x="76" y={ghostY + 4.5} text-anchor="middle">next token</text>
+        <text x="452" y={ghostY + 4} text-anchor="middle">+1 row</text>
+        {layers.map((_, l) => (
+          <>
+            <rect x={groupX(l)} y={ghostY - 14} width="36" height="28" rx="3" />
+            <rect x={groupX(l) + 40} y={ghostY - 14} width="36" height="28" rx="3" />
+          </>
+        ))}
+      </g>
+    </svg>
+  </div>
+  {caption && <figcaption>{caption}</figcaption>}
+</figure>
+
+<style>
+  .kvf {
+    margin: 2.5rem 0;
+    padding: 20px;
+    background: var(--color-paper);
+    border: 1px solid var(--color-line-strong);
+    border-radius: 10px;
+    font-family: var(--font-sans);
+  }
+  .kvf-eyebrow { display: flex; align-items: center; gap: 8px; font: 12px var(--font-mono); color: var(--color-ink-3); }
+  .kvf-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--color-forest); }
+  .kvf-prompt { margin-top: 10px; font-size: 14px; color: var(--color-ink-3); }
+  .kvf-prompt q { font-family: var(--font-mono); font-size: 13px; color: var(--color-ink); }
+  .kvf-scroll { margin: 14px 0; overflow-x: auto; }
+  .kvf svg { display: block; width: 100%; min-width: 560px; height: auto; }
+
+  .kvf-head { font: 10.5px var(--font-mono); letter-spacing: 0.06em; text-transform: uppercase; fill: var(--color-ink-4); }
+  .kvf-layer { font: 11px var(--font-mono); fill: var(--color-ink-3); }
+  .kvf-model { fill: var(--color-ivory); stroke: var(--color-line-strong); }
+  .kvf-edge { stroke: var(--color-ink-4); stroke-opacity: 0.3; stroke-width: 0.8; }
+  .kvf-flow { stroke: var(--c); stroke-width: 1.4; }
+  .kvf-arrowhead { fill: var(--color-ink-3); }
+
+  .kvf-token { fill: color-mix(in srgb, var(--c) 14%, white); stroke: var(--c); stroke-width: 1.4; }
+  .kvf-token-text { font: 13px var(--font-mono); fill: var(--color-ink); }
+  .kvf-node { fill: color-mix(in srgb, var(--c) 30%, white); stroke: var(--c); stroke-width: 1.4; }
+  .kvf-cell { fill: color-mix(in srgb, var(--c) 18%, white); stroke: color-mix(in srgb, var(--c) 60%, white); }
+  .kvf-cell-text { font: 11px var(--font-mono); fill: color-mix(in srgb, var(--c) 75%, black); }
+
+  .kvf-ghost rect { fill: none; stroke: var(--color-ink-4); stroke-dasharray: 3 3; }
+  .kvf-ghost text { font: italic 12px var(--font-sans); fill: var(--color-ink-4); }
+
+  .kvf figcaption { font-family: var(--font-serif); font-style: italic; font-size: 14px; line-height: 1.5; color: var(--color-ink-2); }
+</style>

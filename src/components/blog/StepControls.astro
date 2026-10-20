@@ -1,0 +1,54 @@
+---
+// Previous/next buttons for a stepped blog figure, placed in the figure's eyebrow.
+// The script finds the enclosing [data-steps] figure and shows one frame at a
+// time; see steps.ts for how elements declare the frames they belong to.
+interface Props {
+  count: number;
+}
+
+const { count } = Astro.props;
+---
+<span class="fig-steps-controls" hidden>
+  <button type="button" class="fig-step-btn" data-step-prev aria-label="Previous step">‹</button>
+  <span class="fig-step-count" aria-hidden="true"><span data-step-now>{count}</span> / {count}</span>
+  <button type="button" class="fig-step-btn" data-step-next aria-label="Next step">›</button>
+</span>
+
+<script>
+  const setup = (figure: HTMLElement) => {
+    const count = Number(figure.dataset.steps);
+    const controls = figure.querySelector<HTMLElement>('.fig-steps-controls');
+    const prev = figure.querySelector<HTMLButtonElement>('[data-step-prev]');
+    const next = figure.querySelector<HTMLButtonElement>('[data-step-next]');
+    const now = figure.querySelector<HTMLElement>('[data-step-now]');
+    if (!controls || !prev || !next || !now || !count) return;
+    const parts = [...figure.querySelectorAll<Element>('[data-show]')].map((el) => {
+      const [from, to] = (el.getAttribute('data-show') ?? '').split('-');
+      const lo = Number(from);
+      return { el, lo, hi: to === undefined ? lo : to === '' ? Infinity : Number(to) };
+    });
+
+    const show = (step: number) => {
+      for (const p of parts) p.el.toggleAttribute('data-off', !(step >= p.lo && p.hi >= step));
+      now.textContent = String(step);
+      prev.disabled = step === 1;
+      next.disabled = step === count;
+      figure.dataset.step = String(step);
+    };
+    const current = () => Number(figure.dataset.step);
+    prev.addEventListener('click', () => show(Math.max(1, current() - 1)));
+    next.addEventListener('click', () => show(Math.min(count, current() + 1)));
+    figure.addEventListener('keydown', (event) => {
+      if (event.key === 'ArrowLeft') show(Math.max(1, current() - 1));
+      else if (event.key === 'ArrowRight') show(Math.min(count, current() + 1));
+      else return;
+      event.preventDefault();
+    });
+
+    controls.hidden = false;
+    figure.classList.add('is-stepping');
+    show(1);
+  };
+
+  document.querySelectorAll<HTMLElement>('figure[data-steps]').forEach(setup);
+</script>
