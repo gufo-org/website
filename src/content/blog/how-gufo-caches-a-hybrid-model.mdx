@@ -84,7 +84,7 @@ Everything else in this post follows from that split.
 
 ## 3. Restore points: an edit is not a truncation
 
-If recurrent state can't be wound back, the cache has to save it at the positions where it might be needed. Gufo calls these saved positions **checkpoints**. A checkpoint is a frozen copy of the private state at one exact token position, together with the append-only rows up to that position.
+If recurrent state can't be wound back, the cache has to save it at the positions where it might be needed. Gufo calls these saved positions **checkpoints**. A checkpoint is a frozen copy of the private state at one exact token position, its **depth**, together with the append-only rows up to that position.
 
 When a request arrives, Gufo looks for the deepest checkpoint whose tokens are an exact prefix of the new prompt, restores it, and prefills only the rest. The tokens between the checkpoint and the first difference are recomputed even though they didn't change.
 
@@ -152,7 +152,7 @@ If an extra checkpoint costs only its private state, why not keep one every few 
 
 First, private state still adds up. At about 135 MB per Flash-Next checkpoint, a hundred checkpoints take 13.5 GB, on a machine where the model weights already use most of the memory.
 
-<MemoryFigure figure={9} caption="Rows are stored once, so depth sets most of the cost and each extra checkpoint adds only its private state. Stored as full copies, the same checkpoints outgrow any budget." />
+<MemoryFigure figure={9} caption="Rows are stored once, so the conversation length sets most of the cost and each extra checkpoint adds only its private state. Stored as full copies, the same checkpoints outgrow any budget." />
 
 Second, capturing a checkpoint can slow prefill down. The recurrent state exists only between prefill passes, so a checkpoint at an arbitrary position forces a pass to stop there. Smaller passes run less efficiently on the GPU, and each capture adds synchronisation.
 
