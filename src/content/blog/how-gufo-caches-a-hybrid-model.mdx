@@ -50,10 +50,10 @@ The arithmetic is lopsided. For this post we will use Qwen 3.8 Flash-Next as ref
 
 | How the state was obtained | Time to first token | Of which restoring state |
 | --- | ---: | ---: |
-| Prefill from scratch | 57.8 s | — |
+| Prefill from scratch | 57.8 s | n/a |
 | Restore a checkpoint from disk, after a restart | 1.38 s | 0.86 s |
 | Restore a checkpoint from RAM, after another conversation used the slot | 0.24 s | 38 ms |
-| Continue the state still in memory | 0.19 s | — |
+| Continue the state still in memory | 0.19 s | n/a |
 
 In the cached rows, restoring is only part of the time. The rest is prefilling what the new turn adds: one sentence, 20 to 70 tokens, which takes about 150 ms however short it is. Anything the cache can return is between 40 and 300 times faster than recomputing it. Most of the design is about returning the right state, often, without running out of memory.
 
@@ -212,7 +212,7 @@ When A comes back and its slot is busy, Gufo restores A's checkpoint into anothe
 
 ### One index for live, RAM and disk
 
-Checkpoints can also be written to disk, so they survive RAM eviction and server restarts. The important part is how they're found. All three kinds of state — live frontiers, RAM checkpoints and disk checkpoints — sit in **one prefix index**: a compressed tree of token sequences, one per model configuration.
+Checkpoints can also be written to disk, so they survive RAM eviction and server restarts. The important part is how they're found. Live frontiers, RAM checkpoints and disk checkpoints all sit in **one prefix index**: a compressed tree of token sequences, one per model configuration.
 
 A lookup walks the new prompt down the tree and collects every compatible candidate along the path. It then picks the deepest one. When two candidates are equally deep, it prefers live state, then RAM, then disk.
 
