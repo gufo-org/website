@@ -18,6 +18,7 @@ Gufo targets one machine only and supports only the best model in each class, so
 
 - [Documentation](https://gufo.blog/docs): quickstart with Podman, the OpenAI-compatible API, and building from source with or without Nix
 - [Benchmarks](https://gufo.blog/benchmarks): measured prefill, decode and concurrency results for Qwen3.8 Flash-Next, Qwen3.8 27B and DeepSeek V4 Flash, compared with llama.cpp and antirez/ds4
+- [Extensions](https://gufo.blog/extensions): catalogue of core and community model extensions, with their capabilities, artifact keys, options and build commands
 
 ## Source
 

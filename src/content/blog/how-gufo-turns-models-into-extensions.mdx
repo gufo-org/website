@@ -1,0 +1,347 @@
+---
+title: "How Gufo turns a model into an extension: bring your own model"
+summary: "Adding a model to Gufo used to mean editing the CLI, the core enums, the build, CI and the test registries. This is how a model became one self-contained extension instead, and why Gufo compiles extensions into the binary rather than loading plugins."
+date: 2026-11-02
+kind: Engineering
+tags: [architecture, models, internals, extensions]
+related:
+  - { label: Guide, title: Writing and maintaining a Gufo extension, href: "https://github.com/gufo-org/gufo/blob/main/docs/extensions.md" }
+  - { label: Catalogue, title: Gufo extensions, href: "/extensions" }
+  - { label: RFC, title: The model extensions RFC, href: "https://github.com/gufo-org/gufo/blob/main/docs/model-extensions/RFC.md" }
+---
+import CouplingFigure from '../../components/blog/CouplingFigure.astro';
+import StepLoopFigure from '../../components/blog/StepLoopFigure.astro';
+import AnatomyFigure from '../../components/blog/AnatomyFigure.astro';
+import SelectionFigure from '../../components/blog/SelectionFigure.astro';
+import BoundaryFigure from '../../components/blog/BoundaryFigure.astro';
+
+As of November 2026, Gufo serves eight models on one machine: three text generators, an embedding model, speech recognition, speech synthesis, image generation and video generation. Each one ships kernels hand-tuned for AMD Strix Halo, its own numerical tests and, for the text models, its own speculative decoding and cache integration. Until recently, none of them had a boundary. Adding the eighth model didn't add one directory: it edited the CLI, three core enums, the root build file, the CI workflows, the Nix files and two test registries.
+
+That hurt twice. For the maintainers, every new model was also a review of the core, so anyone who wanted to try a model in Gufo had to wait for us, and we spent our time on other people's models instead of on the engine. For everyone else, the only way around us was a fork, and a fork that edits shared files has to be rebased onto upstream every time upstream moves. With Gufo changing daily, that's a part-time job.
+
+An **extension** is the answer Gufo settled on: a model is one directory with its sources, kernels, tests and a manifest, and the build wires it in without anyone editing a shared file. Maintainers can focus on the core, and anyone can build, share and keep a model working from their own repository, without asking us and without carrying a fork. In short: **bring your own model**.
+
+This post explains how that works. The first half is about ideas and doesn't assume you know Gufo. The second half is more technical and shows the code.
+
+**Contents**
+
+1. [Why extensions at all](#1-why-extensions-at-all)
+2. [What a model is, to Gufo](#2-what-a-model-is-to-gufo)
+3. [One directory per model](#3-one-directory-per-model)
+4. [Picking the code for a file](#4-picking-the-code-for-a-file)
+5. [Compiled in, not loaded](#5-compiled-in-not-loaded)
+6. [What ships, and bringing your own model](#6-what-ships-and-bringing-your-own-model)
+7. [A version you can depend on](#7-a-version-you-can-depend-on)
+8. [Inside the code](#8-inside-the-code)
+9. [Where it stands](#9-where-it-stands)
+10. [How it compares](#10-how-it-compares)
+11. [References](#references)
+
+## 1. Why extensions at all
+
+A server that speaks OpenAI's API has to answer one question for every request: which model code runs it. Gufo used to answer with a chain of branches. The CLI picked a subcommand for the kind of work (`serve llm`, `serve tts` and so on). Take text generation as the example: inside `serve llm`, it read the architecture name from the model file. `deepseek4` took one path, `qwen4exp` another.
+
+The branches were the visible part. Below them, code for specific models lived in shared files that every model touched: every text model's runner sat in one 4,070-line file of the server, the benchmark and prompt commands carried their own per-model paths, and the code that reads tool calls out of a streamed answer knew every model's syntax.
+
+<CouplingFigure figure={1} caption="Adding one model before extensions: its own directory on the left, and the shared code files and hand-maintained build, CI, Nix and registry files that each gained a mention." />
+
+The code wasn't the whole cost. The per-model interface for text, `TextModelRunner`, had 46 virtual methods, and in the 30 days before the work started its class body changed in 12 commits. The boundary between core and model wasn't just implicit: it moved every week. Any promise made across it would have frozen a shape that wasn't finished.
+
+### Maintainers stop being the bottleneck
+
+Gufo has a small maintainer team and a strict rule: only the best model in each class, each with a quality report. That rule is why the core models are good, and it's also why most models people want to try will never be core models. Before extensions, the two goals collided. Trying a new architecture, a different quantization or a research variant meant either landing it upstream, which means maintainer review of core changes for a model we may not want to carry, or not having it in Gufo at all.
+
+Extensions separate the two. A community extension needs nothing from the maintainers: no review, no merge, no release. Its author decides when it's ready and who it's for, and maintainers review only what goes into the core and the official artifacts. The maintainers' time goes back where it has the most effect: the scheduler, the cache, the shared kernels and the public interface every model uses.
+
+### Nobody has to keep a fork alive
+
+A fork is cheap on the first day and expensive every day after. A model added the old way touched a dozen shared files, so every upstream change to the CLI, the runner or the build could conflict with it. The fork's author either merged those conflicts every week, or stayed on an old Gufo and missed every fix and speed-up that landed after it.
+
+An extension doesn't touch upstream files, so there's nothing to merge. The author pins the Gufo revision they test against, raises it when they choose, and rebuilds. If the public interface changed, the compiler says where, and a change record in Gufo explains what changed and why. That's the difference between maintaining a fork and maintaining a dependency.
+
+## 2. What a model is, to Gufo
+
+Before drawing a boundary, Gufo had to say what sits on each side of it. The answer is a **provider**: one implementation of one capability. A capability is a kind of work the server can do, each with its own HTTP endpoints and its own interface: text generation, embeddings, speech recognition, speech synthesis, image generation, video generation and decisions.
+
+A provider brings four things:
+
+- An **ID**, such as `flash-next-q4`, which users and logs can name.
+- **Artifact keys**, which declare what files it means to load: `gguf:qwen4exp` for a GGUF whose architecture is `qwen4exp`, or `safetensors:Qwen3TTSModel` for a safetensors checkpoint.
+- A **probe**, a cheap check that reads a file's metadata and answers, without touching the GPU, whether this provider is the right code to run that file. The core asks the providers when it has to decide which model a file belongs to (section 4).
+- A **factory**, which builds the running model once the probe has said yes.
+
+An **extension** is the directory that holds one or more providers. Most hold one, but others may hold more. For example, the [LFM3 community extension](https://github.com/gufo-org/lfm3-gufo-extension) holds four: text, speech recognition, speech synthesis and decisions, all built on the same backbone, so they share code and ship together.
+
+The split between the two sides follows one rule: the extension provides primitives, the core keeps policy. The extension owns execution, tokenization, chat templates, tool-call syntax, speculative decoding, input preprocessing and its share of the cache identity. The core keeps HTTP and OpenAI semantics, scheduling, cache retention and memory budgets, diagnostics and the test harness.
+
+The line between them sits at the level of a **step**. Generating text is a loop. First the model reads the whole prompt in one pass, called prefill. Then it produces the answer one token at a time, and each new token is one decode step. Other capabilities have loops of the same shape: an embedding model works through batches of texts, a speech model through chunks of audio.
+
+The core owns the loop: it decides when the next step runs and which requests share it. The model owns what happens inside one step. So the interface is a handful of calls like "prefill these 2,000 tokens for this conversation" or "produce the next token for these three conversations", and the model runs all of its layers and GPU kernels behind each call, fused and ordered however it likes.
+
+<StepLoopFigure figure={2} caption="The core runs the loop and decides which conversations share each step; one call per step crosses the interface, and the model runs everything behind it." />
+
+## 3. One directory per model
+
+An extension is a directory:
+
+```text
+src/models/qwen38_flash_next/
+  extension.json      facts: name, version, providers, keys, options, targets
+  extension.cmake     build logic: libraries, sources, HIP flags
+  extension.cpp       entry point for the whole extension
+  provider.cpp        entry point for each provider: probe, factory, drivers
+  ...                 model sources, kernels, cache adapter
+  functional/         fragments for the functional test registries
+```
+
+The directory holds two **manifests**: files that describe the extension to the surrounding tools, the way a package manifest describes a package. There are two because the same facts have two kinds of reader. `extension.json` is plain JSON that anything can read without compiling: CMake at configure time, Nix at evaluation time, CI scripts and the Python test harness. It says:
+
+- which keys the model claims;
+- which command-line options it adds, and to which commands;
+- which libraries it builds, and what each one needs before it can be built (`hip` for GPU code, `testing` for test targets, or a specific platform);
+- which files belong in a production source tree.
+
+`extension.cmake` is where the build logic lives, written with a few helpers that apply the same warnings, sanitizers and HIP settings to every extension.
+
+From those files the build generates two things. The first is a **registry**: one C++ file per executable that calls every built extension's entry point, written out as plain function calls in a fixed order. The second is a **constants header** per extension, carrying its IDs, keys and options as C++ values, so the code and the manifest can't drift apart.
+
+<AnatomyFigure figure={3} caption="One extension directory: extension.json answers CMake, Nix and CI without compiling; the build generates the registry that calls each entry point, and constants that keep code and manifest in step." />
+
+## 4. Picking the code for a file
+
+When you start `gufo serve llm --model model.gguf`, the core has to choose a provider. It does that without loading weights or touching the GPU.
+
+First it reads the file's identity: `general.architecture` from a GGUF, `architectures[0]` from a safetensors config. Then it asks the registered text providers, one at a time, in the registry's fixed order: dependencies first, then by name. Each provider's probe sees metadata only, the architecture and tensor names and shapes, and answers yes or no. The first yes wins, and that provider's factory builds the model.
+
+<SelectionFigure figure={4} caption="Ask each probe in order: the core reads the architecture without the GPU, every registered text provider's probe answers from metadata, and the first yes builds the model. An unshipped extension that claims what a shipped one owns is stopped earlier, at configure time." />
+
+If no probe says yes, the server stops with "No text provider found for model architecture". A model Gufo doesn't know never gets answered by one it does.
+
+"First yes wins" would be a weak rule if two probes could both say yes by accident. Gufo stops that earlier, at configure time, for the case that matters most. Artifact keys are declared in the manifests, so CMake can see every claim before anything is compiled, and it rejects an unshipped extension that claims a key, option name or model ID a shipped extension already owns.
+
+Options follow the same ownership. A single core file, `core_options.def`, reserves the names the server owns: host settings, sampling and command controls. Everything else belongs to a provider. `--mtp-model` exists because Flash-Next's manifest declares it, for `serve`, `bench` and `prompt`. The accepted values of `--speculative` are `off` plus whatever the built providers declare, so a build with DeepSeek offers `dspark` and one without doesn't.
+
+## 5. Compiled in, not loaded
+
+There were four ways to make a model arrive as a separate unit.
+
+**Binary plugins**: the model is compiled on its own into a library file (`.so`), and the server opens that file at start-up with `dlopen`, a system call that loads a library and looks up its functions by name while the program is already running.
+
+- **Pros:** the only option where an official binary accepts a third-party model without a rebuild.
+- **Cons:** the plugin is compiled by someone else, separately from the server, and two separately compiled C++ programs can't safely share objects. The boundary between them has to be a small C-style API, not ordinary C++ code. The plugin also can't carry its own copy of Gufo's internals, because then one process would hold two memory budgets that don't see each other: the core has to be rebuilt as a shared library that server and plugin both use.
+
+**A worker process per model**: the model code doesn't run inside the server at all. The server spawns a second process that owns the model, and the two talk over a pipe or socket: the server sends "run this step", the worker replies.
+
+- **Pros:** crash isolation. A model that segfaults takes down its worker, not the server.
+- **Cons:** the continuation cache, which hands device memory around under strict ownership rules, has to cross a process boundary, and every step becomes a round trip.
+
+**Models as data**: a configuration interpreted by shared kernels, as ggml-style engines do.
+
+- **Pros:** a new model can be a file rather than code, with nothing to compile.
+- **Cons:** it only removes code for models that can be assembled from operations Gufo already has. None of Gufo's models qualify: each one brings GPU code written just for it, or kinds of state no other model uses.
+
+**Build-time source extensions**, the option Gufo chose. An extension is source code plus manifests, compiled with the same compiler, ROCm and flags as the rest of Gufo, and statically linked with one copy of the core.
+
+- **Pros:** no binary interface to freeze, no duplicated singletons, and the boundary adds only a call per step.
+- **Cons:** adding a third-party model to an official artifact means rebuilding it. With one model per server process, you pick the build that has the model you want, which keeps that acceptable.
+
+Compiling someone else's source into the server means deciding what that code is allowed to touch. The answer is the **public interface**: the headers under `include/gufo/ext/`, and the rule that these are the only Gufo code an extension may include. They come in three kinds:
+
+- one header per **capability**: the interfaces a model implements;
+- the **registry**: what the generated registration code calls;
+- the **host services** an extension borrows instead of reimplementing, such as memory allocation under the server's budgets, transfers, sampling state, logging and file formats.
+
+Shared GPU building blocks, such as quantized matrix multiplication, HIP graphs and weight upload, live in an `experimental/` subfolder: an extension may use them, but they carry no compatibility promise.
+
+<BoundaryFigure figure={5} caption="The link graph the build enforces: extensions link down to gufo_ext_runtime and never toward serving; serving, HTTP and the CLI meet models only through the generated registry." />
+
+The boundary is enforced in both directions: no server code may include model code, and no model may include server code. A CI gate fails the build if such an include appears for core extensions, while external ones get the strictest version: they can only see the public headers, and the build fails if they reach for Gufo's internals.
+
+## 6. What ships, and bringing your own model
+
+What gets built depends on who builds it.
+
+If you compile Gufo yourself, you get the models you provide: the build discovers every extension in the tree, plus any extra directories you point it at, and compiles all of them, so a new model directory is built and tested by CI without anyone editing a list.
+
+An official release is the opposite: it ships only the models the maintainers have qualified. The Nix release package, the container images and the Windows ZIP all read one list, `extensions.lock`:
+
+```json
+{
+  "schema": 1,
+  "extensions": ["deepseek_v4_flash", "embedding_gemma2", "minimax_h3", "qwen",
+                 "qwen3_asr", "qwen3_tts", "qwen38_flash_next", "qwen_image_21"]
+}
+```
+
+Adding a directory therefore can't change what users download; shipping a model is a one-line change to the lock. The lock is validated in every build, so a stale name fails a development configure too.
+
+This is where **bring your own model** becomes concrete. Models outside the repository use the same directory layout. Point CMake at one with `GUFO_EXTENSION_DIRS`, or pass it to the Nix package with `gufo.override { extensions = [ ... ]; }`, and it builds with zero changes to Gufo. Everything you can build this way shows up in the [extension catalogue](/extensions), listed the same way as the core models.
+
+Two community extensions show what that buys. [Fish Audio Drama-3](https://github.com/rikaaa0928/fish-drama3-gufo-extension) brings a new speech synthesis model, and [Flash-Next GSQ](https://github.com/codibre/qwen38-flash-next-gsq-gufo-extension) a quantized variant of a core model. Neither needed a maintainer to say yes. Both live in their authors' repositories, and both update against a new Gufo with a rebuild instead of a rebase.
+
+<aside class="warning">
+
+**An extension is native code**, compiled into your binary and running with its full privileges.
+
+</aside>
+
+Official artifacts include only reviewed extensions from the lock, and `gufo diagnose --section extensions` lists everything that was compiled in, with its version and source, so a bug report says exactly what ran.
+
+## 7. A version you can depend on
+
+An extension in someone else's repository survives Gufo releases only if the interface changes predictably. The extension API therefore has its own version, separate from Gufo's, in the form `0.MINOR.REVISION`. A revision may only add things; a minor bump may break extensions. An extension declares the lowest revision it needs, such as `"api_version": ">= 0.1.12"` for LFM3, and must match the host's minor series.
+
+Nobody edits that number by hand. Every change to the public headers, the manifest schema or the CMake helpers needs a short **change record** in `include/gufo/ext/changes/`, and CMake derives the revision from the number of records.
+
+New hooks start in `experimental/`, and new features arrive as optional interfaces with defaults rather than new mandatory methods. The promise is source compatibility: rebuild against a new Gufo, and an extension that uses only stable headers compiles. Binary compatibility isn't promised.
+
+The safety net is the in-tree models. All eight core models are extensions too, using the same public headers, so a change that breaks extensions breaks a core model first, in the maintainers' CI, before it reaches anyone else's repository. The Linux kernel makes a similar bargain: whoever changes an interface fixes its in-tree users in the same change.
+
+## 8. Inside the code
+
+This section is for readers who want to write or change an extension.
+
+```text
+include/gufo/ext/                    public API: capabilities, registry, host services
+cmake/GufoExtension.cmake            manifest validation, target helpers, generated registry
+cmake/GufoExtensionDiscovery.cmake   discovery, lock, external directories, collision gate
+src/models/<name>/                   one extension per model
+src/families/qwen/                   family libraries shared by the Qwen models
+tools/ci/check-extension-*.py        public-surface and isolation gates
+examples/extension_template/         the starting point for a new extension
+```
+
+### The manifest
+
+This is Flash-Next's `extension.json`, trimmed of its production-path filters:
+
+```json
+{
+  "schema": 1,
+  "name": "qwen38_flash_next",
+  "version": "0.1.0",
+  "api_version": ">= 0.1.0",
+  "entry": "qwen38_flash_next_register",
+  "registration_target": "gufo_qwen38_flash_next",
+  "platforms": ["linux", "windows"],
+  "providers": [{
+    "id": "flash-next-q4",
+    "capability": "text_generation",
+    "keys": ["gguf:qwen4exp"],
+    "model_ids": ["flash-next-q4"],
+    "speculative": ["mtp"],
+    "target": "gufo_qwen38_flash_next_hip",
+    "entry": "qwen38_flash_next_provider_register"
+  }],
+  "options": [{
+    "name": "--mtp-model", "type": "path",
+    "commands": ["serve", "bench", "prompt"],
+    "help": "MTP draft model path for speculative decoding"
+  }],
+  "targets": {
+    "gufo_qwen38_flash_next": { "requires": [] },
+    "gufo_qwen38_flash_next_hip": { "requires": ["hip"] }
+  }
+}
+```
+
+The two entries matter. The extension's `entry` lives in a library with no conditions and always runs. Each provider's `entry` lives in that provider's own library, here the HIP one, and the generated registry calls it only when that library was built. Otherwise the registry records the provider as unavailable with a reason, which is how a CPU build can describe a GPU model without linking any of its code.
+
+### The entry point
+
+A provider entry registers the generated metadata and then the provider's functions:
+
+```cpp
+void qwen38_flash_next_provider_register(gufo::ext::Registry& registry) {
+  registry.AddProvider(
+      gufo::ext::generated::extension_qwen38_flash_next::kProvider_flash_next_q4);
+#if defined(ENGINE_ENABLE_HIP)
+  registry.AddTextProvider({
+      .id = "flash-next-q4",
+      .probe = &ProbeFlashNext,
+      .probe_gguf = &ProbeFlashNextGguf,
+      .create = &CreateQwenFlashNextTextRunner,
+      .bench_driver = &RunQwen38FlashNextBenchmark,
+      .prompt_driver = &RunFlashNextPrompt,
+      .chat_driver = &RunFlashNextChat,
+  });
+#endif
+}
+```
+
+The probe is pure and needs no GPU; `create` returns the runner the scheduler drives.
+
+### One configure, end to end
+
+When CMake configures Gufo, the extension machinery runs in this order:
+
+1. **Discover** every `extension.json` under `src/models/` and `src/families/`, plus any directory in `GUFO_EXTENSION_DIRS`.
+2. **Validate** every manifest's structure, names and option types, even for extensions that won't be built, so their metadata can be reported truthfully.
+3. **Select** the set to build: everything the platform supports, an explicit list, or `extensions.lock`, always including dependencies.
+4. **Check collisions** between shipped and unshipped extensions on artifact keys, option names and model IDs, in every mode.
+5. **Build** each selected `extension.cmake` in dependency order, each in its own build directory, and check external targets against the include and link allowlist.
+6. **Generate** the constants headers and one `extension_registry.cpp` per executable, written only when their contents change, so editing one manifest rebuilds one extension.
+
+At start-up, the registry calls each entry point in that fixed order, and from then on the CLI, the server and `diagnose` all see the same list of providers.
+
+### Adding a model
+
+Copy `examples/extension_template/`, rename its extension, provider and key, and follow [the extension guide](https://github.com/gufo-org/gufo/blob/main/docs/extensions.md). The template only registers metadata; the work is in implementing the capability interface and proving it. The [conformance guide](https://github.com/gufo-org/gufo/blob/main/docs/model-extensions/CONFORMANCE.md) lists what that means per capability: independent configuration, tokenizer and operator tests, CPU-against-GPU comparisons, session isolation, streaming, cancellation, and cache histories for models that support continuation. A model that only answers one prompt isn't qualified, and the guide says so.
+
+## 9. Where it stands
+
+The extension system is live. All eight Gufo models are extensions, all eight are in `extensions.lock`, and every official artifact is built from that lock. Eligible community extensions can be found in the [extension catalogue](/extensions).
+
+The rest of this section is what is still missing
+
+- **Tool-call syntax.** The text interface now lets a model provide its tool-call dialect, but the streaming scanner in `openai_chat.cpp` still knows Qwen's and DeepSeek's markers. It's the last large shared file with model knowledge in it.
+- **Speculative decoding.** Moving the model-specific draft backends out of the core is still pending.
+- **API 1.0.** The API stays at 0.x, and a minor bump may still break extensions. What's left is to find the shape worth freezing: the more community extensions build on the current interface, the better we'll know which parts it truly needs, and 1.0 should arrive as an interface people can depend on rather than a box ticked on a schedule.
+
+## 10. How it compares
+
+The table compares design choices, not quality. Gufo's setting is one machine, one model per process, eight hand-tuned models and a small maintainer team, where "whoever changes the interface fixes the in-tree users" is a feature.
+
+<div style="overflow-x: auto">
+
+| | Gufo | vLLM | SGLang | llama.cpp |
+| --- | --- | --- | --- | --- |
+| How a model arrives | Directory with code, manifests and tests | Python package through a plugin entry point | External package exposing `EntryClass` | In-tree C++, edited into shared files |
+| Registration | Generated by the build, fixed order | At runtime, through plugin loading | At runtime, through a registry lookup | Branches on the architecture name |
+| Choosing between two claims | Configure-time collision check, then the first probe that says yes | Registered architecture name | Registered architecture name | First matching branch |
+| Third-party model in an official build | Rebuild | `pip install` | `pip install` | Fork |
+| Compatibility promise | Versioned source API, 0.x | Registration call documented as stable | None stated | None |
+| Binary plugins | Deferred | Out of scope (Python) | Out of scope (Python) | Loadable backends, opt-in |
+
+</div>
+
+Why Gufo made each choice, and what it gets from it:
+
+- **Models outside the core repository.** vLLM and SGLang reached the same conclusion for their Python ecosystems: a new model shouldn't need the maintainers' review to exist. *Gain:* maintainers review the core and the shipped models only, and community authors publish on their own schedule without carrying a fork.
+- **Source, not binary.** The runner interface was still changing weekly, and a binary interface would have frozen that shape. *Gain:* no ABI to maintain, one copy of the core in every process and a boundary that costs a function call per step. The cost is the rebuild, which one model per process makes survivable.
+- **A generated registry, not self-registration.** The clever alternative, where each model signs itself up, fails quietly: a model vanishes from the finished binary, or arrives in an order nobody chose. *Gain:* the list of models is a file anyone can read, always in the same order, and it knows which models were left out.
+- **Collisions caught at configure time.** Modular MAX lets a custom architecture silently replace a built-in one with the same name. Because keys live in the manifests, Gufo checks claims before compiling anything. *Gain:* a community extension can't quietly take over a file a shipped model owns, and an unknown model is an error rather than someone else's answer.
+- **A boundary at the step.** vLLM and SGLang take models written in Python, and their engines call back into that code at every layer of the network. That suits their setting. Gufo's models run each step as one tightly optimized block of GPU work, with no room to stop and chat between layers. *Gain:* the line between server and model is crossed once per step, not once per layer.
+- **A version derived from records.** Triton and ONNX Runtime freeze C interfaces for large ecosystems; Gufo's isn't ready for that. *Gain:* every API change leaves a readable record, and extensions can state exactly which revision they need.
+
+Gufo is behind where the others are strongest: vLLM and SGLang load a new model without a rebuild, in any Python environment, and llama.cpp's ecosystem of forks is exactly the audience binary plugins would serve. Both paths stay open: a C plugin layer and a data-driven decoder could each be built on the same provider interface later.
+
+<aside class="note">
+
+**As of November 2026.** The comparison reflects each project's documentation in November 2026. These projects change quickly, so check their current docs before relying on any cell.
+
+</aside>
+
+## References
+
+The extension system combines prior art from other engines and projects with decisions of its own. Thanks to the authors and maintainers of the work below; each entry says what it contributed.
+
+- [vLLM plugin system](https://docs.vllm.ai/en/latest/design/plugin_system/): registration by architecture name through a small entry point whose stability is promised in writing.
+- [SGLang: support new models](https://docs.sglang.io/docs/supported-models/support_new_models): one discoverable entry symbol per external package.
+- [Modular MAX: serve custom architectures](https://docs.modular.com/stable/develop/serve-custom-model-architectures/): matching on checkpoint identity, and the contrast case of silent override that Gufo's configure-time collision check rules out.
+- [Triton Inference Server C API](https://docs.nvidia.com/deeplearning/triton-inference-server/archives/triton_inference_server_230/user-guide/docs/cpp_api/function_tritonserver_8h_1ad8d9aeefc0090ebff033ab85a64898a9.html): version negotiation and a coarse execute boundary, the shape kept in reserve for a future plugin layer.
+- [ONNX Runtime `OrtApiBase`](https://onnxruntime.ai/docs/api/c/struct_ort_api_base.html): append-only, versioned function tables, the reference pattern for a stable binary interface.
+- [ggml dynamic backend loading (llama.cpp #10469)](https://github.com/ggml-org/llama.cpp/pull/10469) and [llama-cpp-python #2069](https://github.com/abetlen/llama-cpp-python/issues/2069): the "no backends are loaded" failure that decided generated registration over static constructors or runtime discovery.
+- [Godot: what is GDExtension](https://docs.godotengine.org/en/stable/tutorials/scripting/gdextension/what_is_gdextension.html): modules compiled into the engine first, runtime-loaded libraries later, the order Gufo follows.
+- [Zephyr modules](https://docs.zephyrproject.org/latest/develop/modules.html): a declarative metadata file plus CMake build logic per out-of-tree module, proven at large scale.
+- [Linux kernel: stable-api-nonsense](https://docs.kernel.org/process/stable-api-nonsense.html): no stable internal API, with in-tree users fixed in the same change, the bargain behind keeping the core models in-tree as canaries.

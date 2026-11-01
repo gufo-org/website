@@ -2,7 +2,7 @@ import type { APIRoute } from 'astro';
 import { getPosts } from '../lib/posts';
 
 // Hand-rolled rather than @astrojs/sitemap: the site has a handful of pages.
-const pages = ['/', '/docs', '/benchmarks'];
+const pages = ['/', '/docs', '/benchmarks', '/extensions'];
 
 export const GET: APIRoute = async ({ site }) => {
   const posts = await getPosts();

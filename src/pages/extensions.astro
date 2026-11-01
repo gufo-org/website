@@ -1,0 +1,437 @@
+---
+import Layout from '../layouts/Layout.astro';
+import Navbar from '../components/Navbar.astro';
+import Footer from '../components/Footer.astro';
+import { capabilities, extensions, type Capability, type Extension } from '../data/extensions';
+
+const github = 'https://github.com';
+const guide = `${github}/gufo-org/gufo/blob/main/docs/extensions.md`;
+const template = `${github}/gufo-org/gufo/tree/main/examples/extension_template`;
+const search = `${github}/search?q=gufo-extension&type=repositories`;
+
+const capabilityOrder = Object.keys(capabilities) as Capability[];
+const capsOf = (e: Extension) => [...new Set(e.providers.map((p) => p.capability))];
+const chips = capabilityOrder
+  .map((c) => ({ id: c, label: capabilities[c].label, count: extensions.filter((e) => capsOf(e).includes(c)).length }))
+  .filter((c) => c.count > 0);
+const coreCount = extensions.filter((e) => e.tier === 'core').length;
+
+const sourceUrl = (e: Extension) => `${github}/${e.repo}${e.path ? `/tree/main/${e.path}` : ''}`;
+const repoName = (e: Extension) => e.repo.split('/')[1];
+
+// Core extensions are already in every official build: show how to run one.
+// Community ones need a rebuild with their source directory.
+const command = (e: Extension) => {
+  if (e.tier === 'core') {
+    return { label: 'Run', text: `gufo serve ${capabilities[e.providers[0].capability].command} --model /path/to/model` };
+  }
+  const clone = `git clone ${github}/${e.repo}`;
+  if (e.build) return { label: 'Build', text: `${clone}\ncd ${repoName(e)}\n${e.build}` };
+  return {
+    label: 'Build',
+    text: `${clone}\ncmake --preset release -DGUFO_EXTENSION_DIRS=$PWD/${repoName(e)}\ncmake --build --preset release`,
+  };
+};
+
+const cmakeBuild = `cmake --preset release -DGUFO_EXTENSION_DIRS=/absolute/path/to/my-extension
+cmake --build --preset release
+./build/release/gufo diagnose --section extensions --json`;
+
+const nixBuild = `packages.x86_64-linux.default =
+  gufo.packages.x86_64-linux.default.override {
+    extensions = [ my-extension ];
+  };`;
+---
+
+<Layout
+  title="Extensions · Gufo"
+  description="Catalogue of Gufo model extensions: the core models shipped in every build and community extensions you compile in, with their capabilities, artifact keys and options."
+>
+  <Navbar currentPath="/extensions" />
+
+  <main class="flex-1 w-full max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-6">
+    <div class="flex items-center gap-2 text-xs text-ink-3">
+      <a href="/" class="hover:text-ink">Home</a>
+      <span>/</span>
+      <span class="text-ink">Extensions</span>
+    </div>
+
+    <header class="space-y-4 max-w-3xl">
+      <h1 class="text-4xl sm:text-5xl text-ink">Extensions</h1>
+      <div class="admonition admonition-warning">
+        <div class="admonition-title"><span>Community extensions are native code</span></div>
+        <p class="text-xs text-ink-2 leading-relaxed">
+          They compile into your binary and run with its full privileges. Gufo maintainers don't review them, and official
+          artifacts include only extensions listed in <code>extensions.lock</code>. Read the source before you build it;
+          <code>gufo diagnose --section extensions</code> lists everything compiled in.
+        </p>
+      </div>
+    </header>
+
+    <!-- Filters: capability chips, then search, tier and sort -->
+    <div class="sticky top-16 z-40 -mx-4 px-4 sm:mx-0 sm:px-0 py-3 bg-ivory/95 backdrop-blur border-b border-line space-y-3">
+      <div class="flex gap-2 overflow-x-auto pb-1" id="capability-bar" role="group" aria-label="Filter by capability">
+        <button type="button" data-capability="" aria-pressed="true" class="cap-chip is-active shrink-0 px-3.5 py-2 rounded-full text-xs border transition-colors">
+          <span class="font-semibold">All</span><span class="ml-1.5 opacity-60">{extensions.length}</span>
+        </button>
+        {chips.map((c) => (
+          <button type="button" data-capability={c.id} aria-pressed="false" class="cap-chip shrink-0 px-3.5 py-2 rounded-full text-xs border transition-colors">
+            <span class="font-semibold">{c.label}</span><span class="ml-1.5 opacity-60">{c.count}</span>
+          </button>
+        ))}
+      </div>
+
+      <form class="flex flex-col sm:flex-row gap-2" role="search" onsubmit="return false">
+        <label class="sr-only" for="catalog-search">Search extensions</label>
+        <input
+          id="catalog-search"
+          type="search"
+          placeholder="Search by name, artifact key, model ID, option or author"
+          autocomplete="off"
+          class="w-full sm:flex-1 min-w-0 h-10 px-3.5 rounded-md border border-line bg-ivory text-sm text-ink placeholder:text-ink-4 focus:outline-none focus:border-ink-3"
+        />
+        <div class="flex gap-2">
+          <label class="sr-only" for="catalog-tier">Filter by source</label>
+          <select id="catalog-tier" class="flex-1 sm:flex-none h-10 px-3 rounded-md border border-line bg-ivory text-sm text-ink-2 focus:outline-none focus:border-ink-3">
+            <option value="">Core and community</option>
+            <option value="core">Core</option>
+            <option value="community">Community</option>
+          </select>
+          <label class="sr-only" for="catalog-sort">Sort extensions</label>
+          <select id="catalog-sort" class="flex-1 sm:flex-none h-10 px-3 rounded-md border border-line bg-ivory text-sm text-ink-2 focus:outline-none focus:border-ink-3">
+            <option value="default">Core first</option>
+            <option value="community">Community first</option>
+            <option value="name">A–Z</option>
+          </select>
+        </div>
+      </form>
+    </div>
+
+    <p id="catalog-count" class="text-xs text-ink-3 font-mono" aria-live="polite">
+      {extensions.length} extensions · {coreCount} core · {extensions.length - coreCount} community
+    </p>
+
+    <!-- Compact cards; clicking one opens its details in a side panel. -->
+    <div>
+      <div>
+        <div id="catalog" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+          {extensions.map((e, idx) => {
+            const caps = capsOf(e);
+            const text = [
+              e.title,
+              e.name,
+              e.repo,
+              e.summary,
+              ...caps.map((c) => capabilities[c].label),
+              ...e.providers.flatMap((p) => [p.id, ...p.keys, ...p.modelIds, ...(p.speculative ?? [])]),
+              ...e.options,
+            ]
+              .join(' ')
+              .toLowerCase();
+            return (
+              <a
+                href={`#${e.name}`}
+                data-ext={e.name}
+                data-capabilities={caps.join(' ')}
+                data-tier={e.tier}
+                data-search={text}
+                data-title={e.title.toLowerCase()}
+                data-index={idx}
+                aria-controls="detail-panel"
+                class="ext-row flex flex-col gap-2 p-4 rounded-lg border border-line bg-ivory hover:border-line-strong hover:bg-paper-2/40 transition-colors"
+              >
+                <div class="flex items-start justify-between gap-3">
+                  <div class="min-w-0">
+                    <h2 class="font-sans text-base font-semibold tracking-normal text-ink truncate">{e.title}</h2>
+                    <p class="text-[11px] font-mono text-ink-4 truncate">{e.name} · v{e.version}</p>
+                  </div>
+                  <span class={`shrink-0 text-[11px] ${e.tier === 'core' ? 'text-forest' : 'text-ink-3'}`}>
+                    {e.tier === 'core' ? 'Core' : e.repo.split('/')[0]}
+                  </span>
+                </div>
+                <p class="text-sm text-ink-3 leading-relaxed line-clamp-2">{e.summary}</p>
+                <div class="mt-auto pt-1 flex flex-wrap gap-1.5">
+                  {caps.map((c) => (
+                    <span class="text-[11px] px-2 py-0.5 rounded-full bg-paper text-ink-2">{capabilities[c].label}</span>
+                  ))}
+                </div>
+              </a>
+            );
+          })}
+        </div>
+
+        <p id="catalog-empty" class="hidden py-12 text-center text-sm text-ink-3">
+          No extension matches.
+          <button type="button" id="catalog-reset" class="text-ink underline decoration-line-strong hover:decoration-ink">Reset filters</button>
+        </p>
+      </div>
+
+      <div id="detail-scrim" class="fixed inset-0 z-[55] bg-ink/30 hidden" aria-hidden="true"></div>
+
+      <aside
+        id="detail-panel"
+        aria-label="Extension details"
+        class="detail-panel fixed inset-y-0 right-0 z-[60] w-full sm:w-[28rem] overflow-y-auto bg-ivory border-l border-line translate-x-full transition-transform"
+      >
+        {extensions.map((e) => {
+          const cmd = command(e);
+          const caps = capsOf(e);
+          return (
+            <section data-detail={e.name} hidden class="p-5 space-y-4">
+              <div class="flex items-start justify-between gap-3">
+                <div class="min-w-0">
+                  <h2 class="text-2xl text-ink leading-tight">{e.title}</h2>
+                  <p class="mt-1 text-[11px] text-ink-4 font-mono break-all">
+                    {e.name} · v{e.version}{e.tier === 'community' && <> · {e.repo.split('/')[0]}</>}
+                  </p>
+                </div>
+                <div class="shrink-0 flex items-center gap-2">
+                  <span
+                    class={`text-[11px] px-2 py-1 rounded border ${
+                      e.tier === 'core' ? 'border-forest/30 bg-forest/10 text-forest' : 'border-line bg-paper text-ink-2'
+                    }`}
+                  >
+                    {e.tier === 'core' ? 'Core' : 'Community'}
+                  </span>
+                  <button type="button" class="detail-close w-8 h-8 -mr-1 flex items-center justify-center rounded text-ink-2 hover:bg-paper">
+                    <span class="sr-only">Close details</span>
+                    <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
+                      <path stroke-linecap="round" stroke-width="1.75" d="M6 6l12 12M18 6L6 18" />
+                    </svg>
+                  </button>
+                </div>
+              </div>
+
+              <p class="text-sm text-ink-2 leading-relaxed">{e.summary}</p>
+
+              <div class="flex flex-wrap gap-1.5">
+                {caps.map((c) => (
+                  <span class="text-[11px] px-2 py-0.5 rounded-full bg-paper text-ink-2">{capabilities[c].label}</span>
+                ))}
+              </div>
+
+              <dl class="grid grid-cols-[auto_1fr] gap-x-4 gap-y-1.5 text-xs min-w-0">
+                <dt class="text-ink-4">{e.providers.length === 1 ? 'Provider' : 'Providers'}</dt>
+                <dd class="min-w-0 space-y-1">
+                  {e.providers.map((p) => (
+                    <div class="flex flex-wrap gap-x-2 gap-y-0.5">
+                      <code class="text-ink">{p.id}</code>
+                      {e.providers.length > 1 && <span class="text-ink-4">{capabilities[p.capability].label.toLowerCase()}</span>}
+                      {p.speculative && <span class="text-ink-3">+ {p.speculative.join(', ')}</span>}
+                    </div>
+                  ))}
+                </dd>
+                <dt class="text-ink-4">Artifact keys</dt>
+                <dd class="min-w-0 flex flex-wrap gap-x-2 gap-y-0.5">
+                  {[...new Set(e.providers.flatMap((p) => p.keys))].map((k) => <code class="text-ink-2 break-all">{k}</code>)}
+                </dd>
+                <dt class="text-ink-4">Model IDs</dt>
+                <dd class="min-w-0 flex flex-wrap gap-x-2 gap-y-0.5">
+                  {[...new Set(e.providers.flatMap((p) => p.modelIds))].map((m) => <code class="text-ink-2 break-all">{m}</code>)}
+                </dd>
+                {e.options.length > 0 && (
+                  <>
+                    <dt class="text-ink-4">Options</dt>
+                    <dd class="flex flex-wrap gap-x-2">{e.options.map((o) => <code class="text-ink-2">{o}</code>)}</dd>
+                  </>
+                )}
+                <dt class="text-ink-4">Requires</dt>
+                <dd class="text-ink-2">
+                  API <code>{e.apiVersion}</code><span class="mx-1.5 text-ink-4">·</span>{e.platforms.map((p) => (p === 'linux' ? 'Linux' : p === 'windows' ? 'Windows' : p)).join(', ')}
+                </dd>
+                {e.license && (
+                  <>
+                    <dt class="text-ink-4">License</dt>
+                    <dd class="text-ink-2">{e.license}</dd>
+                  </>
+                )}
+              </dl>
+
+              {e.note && <p class="text-xs text-ink-2 leading-relaxed border-l-2 border-amber pl-3">{e.note}</p>}
+
+              <div class="code-block">
+                <div class="code-block-header"><span>{cmd.label}</span><span>sh</span></div>
+                <pre><code>{cmd.text}</code></pre>
+              </div>
+
+              <div class="flex flex-wrap items-center gap-x-4 gap-y-1 text-xs">
+                <a href={sourceUrl(e)} target="_blank" rel="noopener noreferrer" class="text-ink-2 hover:text-ink hover:underline">
+                  {e.tier === 'core' ? 'Source' : 'Repository'}
+                </a>
+                {e.docPath && <a href={`${github}/gufo-org/gufo/tree/main/${e.docPath}`} target="_blank" rel="noopener noreferrer" class="text-ink-2 hover:text-ink hover:underline">Guide</a>}
+                {e.benchmarks && <a href={`/benchmarks#${e.benchmarks}`} class="text-ink-2 hover:text-ink hover:underline">Benchmarks</a>}
+              </div>
+            </section>
+          );
+        })}
+      </aside>
+    </div>
+
+    <!-- Writing one -->
+    <section class="border-t border-line pt-12 pb-4 grid grid-cols-1 lg:grid-cols-3 gap-10">
+      <div class="space-y-3">
+        <p class="eyebrow">Write your own</p>
+        <h2 class="text-3xl text-ink">Add a model to Gufo</h2>
+        <p class="text-[15px] text-ink-2 leading-relaxed">
+          Start from the <a href={template} target="_blank" rel="noopener noreferrer" class="text-ink underline decoration-line-strong hover:decoration-ink">extension template</a>
+          and follow the <a href={guide} target="_blank" rel="noopener noreferrer" class="text-ink underline decoration-line-strong hover:decoration-ink">extension guide</a>.
+          Name the repository <code>&lt;model&gt;-gufo-extension</code> so it shows up in
+          <a href={search} target="_blank" rel="noopener noreferrer" class="text-ink underline decoration-line-strong hover:decoration-ink">the search</a>
+          this catalogue is built from.
+        </p>
+      </div>
+      <div class="lg:col-span-2 grid grid-cols-1 md:grid-cols-2 gap-4 min-w-0">
+        <div class="code-block min-w-0">
+          <div class="code-block-header"><span>CMake</span><span>sh</span></div>
+          <pre><code>{cmakeBuild}</code></pre>
+        </div>
+        <div class="code-block min-w-0">
+          <div class="code-block-header"><span>Nix</span><span>nix</span></div>
+          <pre><code>{nixBuild}</code></pre>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <Footer />
+</Layout>
+
+<style>
+  .cap-chip {
+    background: transparent;
+    color: var(--color-ink-2);
+    border-color: var(--color-line);
+  }
+  .cap-chip:hover {
+    border-color: var(--color-line-strong);
+  }
+  .cap-chip.is-active {
+    background: var(--color-ink);
+    color: var(--color-ivory);
+    border-color: var(--color-ink);
+  }
+  /* `block` on the rows would otherwise beat the hidden attribute. */
+  .ext-row[hidden] {
+    display: none;
+  }
+  .ext-row[aria-current='true'] {
+    border-color: var(--color-forest);
+  }
+  /* Tailwind 4 moves the sheet with `translate`, so opening resets that property. */
+  .detail-panel.is-open {
+    translate: none;
+  }
+</style>
+
+<script>
+  const catalog = document.getElementById('catalog')!;
+  const rows = [...catalog.querySelectorAll<HTMLAnchorElement>('.ext-row')];
+  const details = [...document.querySelectorAll<HTMLElement>('[data-detail]')];
+  const panel = document.getElementById('detail-panel')!;
+  const scrim = document.getElementById('detail-scrim')!;
+  const chips = [...document.querySelectorAll<HTMLButtonElement>('#capability-bar .cap-chip')];
+  const search = document.getElementById('catalog-search') as HTMLInputElement;
+  const tier = document.getElementById('catalog-tier') as HTMLSelectElement;
+  const sort = document.getElementById('catalog-sort') as HTMLSelectElement;
+  const count = document.getElementById('catalog-count')!;
+  const empty = document.getElementById('catalog-empty')!;
+
+  let capability = '';
+
+  function apply() {
+    const terms = search.value.toLowerCase().split(/\s+/).filter(Boolean);
+    let shown = 0;
+    for (const row of rows) {
+      const visible =
+        (!capability || row.dataset.capabilities!.split(' ').includes(capability)) &&
+        (!tier.value || row.dataset.tier === tier.value) &&
+        terms.every((t) => row.dataset.search!.includes(t));
+      row.hidden = !visible;
+      if (visible) shown++;
+    }
+    count.textContent = `${shown} ${shown === 1 ? 'extension' : 'extensions'}`;
+    empty.classList.toggle('hidden', shown > 0);
+  }
+
+  function reorder() {
+    const index = (row: HTMLElement) => Number(row.dataset.index);
+    const sorted = [...rows].sort((a, b) => {
+      if (sort.value === 'name') return a.dataset.title!.localeCompare(b.dataset.title!);
+      if (sort.value === 'community' && a.dataset.tier !== b.dataset.tier) return a.dataset.tier === 'community' ? -1 : 1;
+      return index(a) - index(b);
+    });
+    catalog.append(...sorted);
+  }
+
+  function selectCapability(next: string) {
+    capability = next;
+    chips.forEach((chip) => {
+      const active = chip.dataset.capability === next;
+      chip.classList.toggle('is-active', active);
+      chip.setAttribute('aria-pressed', active ? 'true' : 'false');
+    });
+    apply();
+  }
+
+  function reset() {
+    search.value = '';
+    tier.value = '';
+    selectCapability('');
+  }
+
+  // Keep the closed panel out of the tab order and the page still while it is open.
+  function setOpen(open: boolean) {
+    panel.classList.toggle('is-open', open);
+    scrim.classList.toggle('hidden', !open);
+    panel.inert = !open;
+    document.body.style.overflow = open ? 'hidden' : '';
+    if (!open) rows.forEach((r) => r.setAttribute('aria-current', 'false'));
+  }
+
+  function select(name: string, open: boolean) {
+    const row = rows.find((r) => r.dataset.ext === name);
+    if (!row) return false;
+    if (row.hidden) reset();
+    rows.forEach((r) => r.setAttribute('aria-current', r === row ? 'true' : 'false'));
+    details.forEach((d) => (d.hidden = d.dataset.detail !== name));
+    panel.scrollTop = 0;
+    if (open) {
+      setOpen(true);
+      panel.querySelector<HTMLElement>(`[data-detail="${name}"] .detail-close`)?.focus();
+    }
+    return true;
+  }
+
+  function close() {
+    const opener = rows.find((r) => r.getAttribute('aria-current') === 'true');
+    setOpen(false);
+    opener?.focus();
+    // Drop the hash so reopening the same extension still fires hashchange.
+    history.replaceState(null, '', location.pathname + location.search);
+  }
+
+  rows.forEach((row) =>
+    row.addEventListener('click', (event) => {
+      event.preventDefault();
+      const name = row.dataset.ext!;
+      history.replaceState(null, '', `#${name}`);
+      select(name, true);
+    }),
+  );
+  document.querySelectorAll('.detail-close').forEach((b) => b.addEventListener('click', close));
+  scrim.addEventListener('click', close);
+  document.addEventListener('keydown', (event) => {
+    if (event.key === 'Escape' && panel.classList.contains('is-open')) close();
+  });
+  window.addEventListener('hashchange', () => select(decodeURIComponent(location.hash.slice(1)), true));
+
+  chips.forEach((chip) => chip.addEventListener('click', () => selectCapability(chip.dataset.capability ?? '')));
+  search.addEventListener('input', apply);
+  tier.addEventListener('change', apply);
+  sort.addEventListener('change', reorder);
+  document.getElementById('catalog-reset')?.addEventListener('click', reset);
+
+  // A link to one extension (/extensions#lfm3) opens its panel.
+  setOpen(false);
+  select(decodeURIComponent(location.hash.slice(1)), true);
+</script>

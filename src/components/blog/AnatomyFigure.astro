@@ -1,0 +1,124 @@
+---
+// The anatomy of one extension directory: metadata read by three build
+// systems without compiling, a registration entry point, and the two files
+// the build generates from them. Stepped in four frames.
+import StepControls from './StepControls.astro';
+import StepText from './StepText.astro';
+import { frames } from './steps';
+
+interface Props {
+  figure?: number | string;
+  caption?: string;
+}
+
+const { figure, caption } = Astro.props;
+
+const green = '#3f7a4f';
+const blue = '#4f86b8';
+const orange = '#c27a2c';
+const teal = '#3d8a8a';
+
+const files = [
+  { name: 'extension.json', c: orange, hi: '2-' },
+  { name: 'extension.cmake', c: blue, hi: '1-' },
+  { name: 'extension.cpp', c: teal, hi: '3-' },
+  { name: 'provider.cpp', c: teal, hi: '3-' },
+  { name: 'model sources · kernels · cache', c: green, hi: '1-' },
+  { name: 'functional/', c: green, hi: '1-' },
+];
+
+const readers = ['CMake · configure time', 'Nix · builtins.fromJSON', 'CI + Python harness'];
+
+const steps = [
+  'One directory holds the model: two manifests, the entry points, the model sources and its functional test fragments.',
+  'extension.json states the facts — keys, options, libraries and what each needs, production files — and CMake, Nix and CI read it without compiling anything.',
+  'The build writes one registry per executable: plain calls to every entry point, in a fixed order.',
+  'A generated constants header carries the IDs, keys and options as C++ values, so code and manifest can’t drift apart.',
+];
+const show = frames(steps.length);
+
+const fileY = (i: number) => 84 + i * 32;
+const readerY = (i: number) => 40 + i * 44;
+---
+<figure class="anf" data-steps={steps.length}>
+  <p class="anf-eyebrow"><span class="fig-eyebrow-title"><span class="anf-dot"></span>{figure !== undefined && <>Fig. {figure} · </>}One directory, two manifests</span><span class="fig-eyebrow-side"><StepControls count={steps.length} /></span></p>
+  <div class="anf-scroll">
+    <svg viewBox="0 0 760 312" role="img" aria-label="An extension directory holds extension.json, extension.cmake, extension.cpp, provider.cpp, model sources and functional test fragments. CMake, Nix and CI read extension.json without compiling. The build generates a registry file that calls every entry point in a fixed order, and constants that keep the code in step with the manifest.">
+      <defs>
+        <marker id="anf-arrow" viewBox="0 0 8 8" refX="7" refY="4" markerWidth="7" markerHeight="7" orient="auto">
+          <path d="M0 0 L8 4 L0 8 z" class="anf-arrowhead" />
+        </marker>
+      </defs>
+
+      <text x="24" y="28" class="anf-head">The extension · one directory</text>
+      <text x="430" y="28" class="anf-head">Readers · no compile needed</text>
+
+      <rect x="24" y="44" width="280" height="248" rx="10" class="anf-folder" />
+      {files.map((f, i) => (
+        <g style={`--c: ${f.c}`}>
+          <rect x="44" y={fileY(i)} width="240" height="24" rx="5" class="anf-file" />
+          <text x="56" y={fileY(i) + 16} class="anf-file-text">{f.name}</text>
+          {f.hi !== '1-' && <rect x="44" y={fileY(i)} width="240" height="24" rx="5" class="anf-halo" {...show(f.hi)} />}
+        </g>
+      ))}
+
+      {readers.map((r, i) => (
+        <g {...show('2-')}>
+          <line x1="304" y1={fileY(0) + 12} x2="426" y2={readerY(i) + 17} class="anf-flow" marker-end="url(#anf-arrow)" />
+          <rect x="430" y={readerY(i)} width="300" height="34" rx="6" class="anf-chip" />
+          <text x="442" y={readerY(i) + 21} class="anf-chip-text">{r}</text>
+        </g>
+      ))}
+
+      <g {...show('3-')}>
+        <line x1="304" y1={fileY(2) + 28} x2="426" y2="215" class="anf-flow" marker-end="url(#anf-arrow)" />
+        <rect x="430" y="188" width="300" height="56" rx="8" class="anf-gen" />
+        <text x="442" y="206" class="anf-gen-title">generated extension_registry.cpp</text>
+        <text x="442" y="222" class="anf-gen-line">qwen_register(registry);</text>
+        <text x="442" y="237" class="anf-gen-line">qwen38_flash_next_register(registry);</text>
+      </g>
+
+      <g {...show('4')}>
+        <line x1="304" y1="272" x2="426" y2="272" class="anf-flow" marker-end="url(#anf-arrow)" />
+        <rect x="430" y="258" width="300" height="34" rx="6" class="anf-gen" />
+        <text x="442" y="279" class="anf-gen-title">generated constants · ids · keys · options</text>
+      </g>
+    </svg>
+  </div>
+  <StepText steps={steps} />
+  {caption && <figcaption>{caption}</figcaption>}
+</figure>
+
+<style>
+  .anf {
+    margin: 2.5rem 0;
+    padding: 20px;
+    background: var(--color-paper);
+    border: 1px solid var(--color-line-strong);
+    border-radius: 10px;
+    font-family: var(--font-sans);
+  }
+  .anf-eyebrow { display: flex; justify-content: space-between; align-items: center; gap: 12px; font: 12px var(--font-mono); color: var(--color-ink-3); }
+  .anf-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--color-forest); }
+  .anf-scroll { margin: 14px 0; overflow-x: auto; }
+  .anf svg { display: block; width: 100%; min-width: 560px; height: auto; }
+
+  .anf-head { font: 10.5px var(--font-mono); letter-spacing: 0.06em; text-transform: uppercase; fill: var(--color-ink-4); }
+  .anf-arrowhead { fill: var(--color-ink-3); }
+  .anf-flow { stroke: var(--color-ink-3); stroke-width: 1.2; stroke-opacity: 0.6; }
+
+  .anf-folder { fill: var(--color-ivory); stroke: var(--color-line-strong); }
+  .anf-file { fill: color-mix(in srgb, var(--c) 14%, white); stroke: var(--c); stroke-width: 1.2; }
+  .anf-file-text { font: 11px var(--font-mono); fill: var(--color-ink); }
+  .anf-halo { fill: none; stroke: var(--c); stroke-width: 2.4; stroke-opacity: 0.35; }
+
+  .anf-chip { fill: var(--color-paper); stroke: var(--color-line-strong); }
+  .anf-chip-text { font: 11px var(--font-mono); fill: var(--color-ink-2); }
+
+  .anf-gen { fill: color-mix(in srgb, #3d8a8a 10%, white); stroke: #3d8a8a; stroke-width: 1.3; stroke-dasharray: 5 3; }
+  .anf-gen-title { font: 11px var(--font-mono); fill: color-mix(in srgb, #3d8a8a 85%, black); }
+  .anf-gen-line { font: 10px var(--font-mono); fill: var(--color-ink-3); }
+  .anf-mut { font-style: italic; fill: var(--color-ink-4); }
+
+  .anf figcaption { font-family: var(--font-serif); font-style: italic; font-size: 14px; line-height: 1.5; color: var(--color-ink-2); }
+</style>
