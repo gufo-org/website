@@ -20,16 +20,16 @@ const teal = '#3d8a8a';
 
 const steps = [
   'The core reads the artifact identity without touching the GPU: general.architecture = qwen4exp.',
-  'Every registered text provider is a candidate, asked in the registry’s fixed order: dependencies first, then by name.',
+  'Every registered text provider is a candidate, asked in the registry’s fixed order.',
   'Each probe answers from metadata alone. deepseek4 and qwen27-q4 say no; flash-next-q4 says yes, and the first yes wins.',
-  'No yes at all is an error. An unshipped extension that claims a key, option or model ID a shipped one owns is stopped earlier, at configure time.',
+  'No yes at all is an error. A community extension that claims a key, option or model ID an official one owns is stopped earlier, at configure time.',
 ];
 const show = frames(steps.length);
 ---
 <figure class="slf" data-steps={steps.length}>
   <p class="slf-eyebrow"><span class="fig-eyebrow-title"><span class="slf-dot"></span>{figure !== undefined && <>Fig. {figure} · </>}Selection: ask each probe in order</span><span class="fig-eyebrow-side"><StepControls count={steps.length} /></span></p>
   <div class="slf-scroll">
-    <svg viewBox="0 0 760 306" role="img" aria-label="The core reads the architecture qwen4exp from the model file without the GPU. It asks each registered text provider's probe in registry order: deepseek4 and qwen27-q4 say no, flash-next-q4 says yes and its factory builds the model. No yes is an error; an unshipped extension claiming what a shipped one owns is rejected at configure time.">
+    <svg viewBox="0 0 760 306" role="img" aria-label="The core reads the architecture qwen4exp from the model file without the GPU. It asks each registered text provider's probe in registry order: deepseek4 and qwen27-q4 say no, flash-next-q4 says yes and its factory builds the model. No yes is an error; a community extension claiming what an official one owns is rejected at configure time.">
       <defs>
         <marker id="slf-arrow" viewBox="0 0 8 8" refX="7" refY="4" markerWidth="7" markerHeight="7" orient="auto">
           <path d="M0 0 L8 4 L0 8 z" class="slf-arrowhead" />
@@ -86,7 +86,7 @@ const show = frames(steps.length);
       <g {...show('4')} style={`--c: ${rose}`}>
         <rect x="24" y="242" width="712" height="48" rx="8" class="slf-band" />
         <text x="40" y="261" class="slf-band-line">no yes → “No text provider found for model architecture”</text>
-        <text x="40" y="279" class="slf-band-line">unshipped extension claims a shipped key, option or model ID → rejected at configure time</text>
+        <text x="40" y="279" class="slf-band-line">community extension reuses an official key, option or model ID → rejected at configure time</text>
       </g>
     </svg>
   </div>
