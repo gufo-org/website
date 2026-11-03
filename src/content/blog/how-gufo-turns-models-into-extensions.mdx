@@ -15,13 +15,15 @@ import AnatomyFigure from '../../components/blog/AnatomyFigure.astro';
 import SelectionFigure from '../../components/blog/SelectionFigure.astro';
 import BoundaryFigure from '../../components/blog/BoundaryFigure.astro';
 
-As of November 2026, Gufo serves eight models on one machine: three text generators, an embedding model, speech recognition, speech synthesis, image generation and video generation. Each one ships kernels hand-tuned for AMD Strix Halo, its own numerical tests and, for the text models, its own speculative decoding and cache integration. Until recently, none of them had a boundary. Adding the eighth model didn't add one directory: it edited the CLI, three core enums, the root build file, the CI workflows, the Nix files and two test registries.
+As of November 2026, Gufo serves eight models on one machine: three text generators, an embedding model, speech recognition, speech synthesis, image generation, and video generation. Each one ships kernels hand-tuned for AMD Strix Halo, its own numerical tests and, for the text models, its own speculative decoding and cache integration. Until recently, none of them had an enforced boundary.
 
-That hurt twice. For the maintainers, every new model was also a review of the core, so anyone who wanted to try a model in Gufo had to wait for us, and we spent our time on other people's models instead of on the engine. For everyone else, the only way around us was a fork, and a fork that edits shared files has to be rebased onto upstream every time upstream moves. With Gufo changing daily, that's a part-time job.
+For maintainers, every new model consisted also in a review of Gufo core components, a bottleneck for people that want to
+experiment fast with more models. So far, the only solution consisted in maintaining a fork, including the painful rebases onto upstream at every update. With Gufo changing daily, that's a part-time job.
 
-An **extension** is the answer Gufo settled on: a model is one directory with its sources, kernels, tests and a manifest, and the build wires it in without anyone editing a shared file. Maintainers can focus on the core, and anyone can build, share and keep a model working from their own repository, without asking us and without carrying a fork. In short: **bring your own model**.
+An **extension** is the answer Gufo settled on: a model is one directory with its sources, kernels, tests and a manifest, and the build wires it in without anyone editing a shared file. While maintainers can focus on the core, anyone can build, experiment, and share their models and quants from their own extension repository. In short: **bring your own model**.
 
-This post explains how that works. The first half is about ideas and doesn't assume you know Gufo. The second half is more technical and shows the code.
+This post explains how that works. The first half is about ideas and doesn't assume you know Gufo. The second half explains 
+how it works with the code.
 
 **Contents**
 
@@ -49,15 +51,22 @@ The code wasn't the whole cost. The per-model interface for text, `TextModelRunn
 
 ### Maintainers stop being the bottleneck
 
-Gufo has a small maintainer team and a strict rule: only the best model in each class, each with a quality report. That rule is why the core models are good, and it's also why most models people want to try will never be core models. Before extensions, the two goals collided. Trying a new architecture, a different quantization or a research variant meant either landing it upstream, which means maintainer review of core changes for a model we may not want to carry, or not having it in Gufo at all.
+Gufo has a small team and a opinionated principle: support only the best model that Strix Halo can run for each use-case.
+Enforcing this rule enables core models to have such a high bar; unfortunately, this is also why a few models or
+quantizations requested by the community have not been upstream to the core. 
 
-Extensions separate the two. A community extension needs nothing from the maintainers: no review, no merge, no release. Its author decides when it's ready and who it's for, and maintainers review only what goes into the core and the official artifacts. The maintainers' time goes back where it has the most effect: the scheduler, the cache, the shared kernels and the public interface every model uses.
+Gufo extensions can solve this friction. A community extension is independent from upstream Gufo and its mantainers.
+Its author can independently publish and promote it. This means that maintainers can focus more on improving the common
+layers of the inference enginer (caching, scheduling, etc.) and the supported core models.
 
 ### Nobody has to keep a fork alive
 
-A fork is cheap on the first day and expensive every day after. A model added the old way touched a dozen shared files, so every upstream change to the CLI, the runner or the build could conflict with it. The fork's author either merged those conflicts every week, or stayed on an old Gufo and missed every fix and speed-up that landed after it.
+A fork is cheap on the first day but gets expensive every day after. The fork's author either keeps resolving conflicts
+or sticks with an old Gufo missing subsequent updates.
 
-An extension doesn't touch upstream files, so there's nothing to merge. The author pins the Gufo revision they test against, raises it when they choose, and rebuilds. If the public interface changed, the compiler says where, and a change record in Gufo explains what changed and why. That's the difference between maintaining a fork and maintaining a dependency.
+An extension consists of a standalone repository, which doesn't require to upstream files. To implement this abstraction,
+we introduced in Gufo a versioned extension API. Your extensions can explicitly pin specified Gufo versions that are
+supported.
 
 ## 2. What a model is, to Gufo
 
