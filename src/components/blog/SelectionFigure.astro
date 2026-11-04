@@ -1,0 +1,129 @@
+---
+// Provider selection as shipped: the core reads the architecture without the
+// GPU, asks each text provider's HIP-free probe in registry order, and the
+// first yes wins. Stepped in four frames.
+import StepControls from './StepControls.astro';
+import StepText from './StepText.astro';
+import { frames } from './steps';
+
+interface Props {
+  figure?: number | string;
+  caption?: string;
+}
+
+const { figure, caption } = Astro.props;
+
+const green = '#3f7a4f';
+const blue = '#4f86b8';
+const rose = '#b8336a';
+const teal = '#3d8a8a';
+
+const steps = [
+  'The core reads the artifact identity without touching the GPU: general.architecture = qwen4exp.',
+  'Every registered text provider is a candidate, asked in the registry’s fixed order.',
+  'Each probe answers from metadata alone. deepseek4 and qwen27-q4 say no; flash-next-q4 says yes, and the first yes wins.',
+  'No yes at all is an error. A community extension that claims a key, option or model ID an official one owns is stopped earlier, at configure time.',
+];
+const show = frames(steps.length);
+---
+<figure class="slf" data-steps={steps.length}>
+  <p class="slf-eyebrow"><span class="fig-eyebrow-title"><span class="slf-dot"></span>{figure !== undefined && <>Fig. {figure} · </>}Selection: ask each probe in order</span><span class="fig-eyebrow-side"><StepControls count={steps.length} /></span></p>
+  <div class="slf-scroll">
+    <svg viewBox="0 0 760 306" role="img" aria-label="The core reads the architecture qwen4exp from the model file without the GPU. It asks each registered text provider's probe in registry order: deepseek4 and qwen27-q4 say no, flash-next-q4 says yes and its factory builds the model. No yes is an error; a community extension claiming what an official one owns is rejected at configure time.">
+      <defs>
+        <marker id="slf-arrow" viewBox="0 0 8 8" refX="7" refY="4" markerWidth="7" markerHeight="7" orient="auto">
+          <path d="M0 0 L8 4 L0 8 z" class="slf-arrowhead" />
+        </marker>
+      </defs>
+
+      <text x="24" y="28" class="slf-head">The artifact</text>
+      <text x="214" y="28" class="slf-head">Architecture</text>
+      <text x="404" y="28" class="slf-head">Providers · registry order</text>
+      <text x="634" y="28" class="slf-head">Run</text>
+
+      <g style={`--c: ${green}`}>
+        <rect x="24" y="118" width="150" height="44" rx="8" class="slf-box" />
+        <text x="99" y="138" class="slf-title" text-anchor="middle">model.gguf</text>
+        <text x="99" y="153" class="slf-sub" text-anchor="middle">general.architecture</text>
+      </g>
+
+      <g {...show('2-')} style={`--c: ${blue}`}>
+        <line x1="174" y1="140" x2="210" y2="140" class="slf-flow" marker-end="url(#slf-arrow)" />
+        <rect x="214" y="126" width="150" height="28" rx="6" class="slf-key" />
+        <text x="289" y="144" class="slf-key-text" text-anchor="middle">qwen4exp</text>
+      </g>
+
+      {/* The provider that says yes. */}
+      <g {...show('3-')} style={`--c: ${teal}`}>
+        <line x1="364" y1="140" x2="400" y2="88" class="slf-flow" marker-end="url(#slf-arrow)" />
+        <rect x="404" y="56" width="196" height="64" rx="8" class="slf-box" />
+        <text x="416" y="76" class="slf-title">flash-next-q4</text>
+        <text x="416" y="92" class="slf-sub">third in order · first yes</text>
+        <g {...show('3-')}>
+          <text x="416" y="110" class="slf-ok">probe ✓ · metadata matches</text>
+        </g>
+      </g>
+      <g {...show('3-')} style={`--c: ${rose}`}>
+        <line x1="600" y1="88" x2="630" y2="126" class="slf-flow" marker-end="url(#slf-arrow)" />
+      </g>
+
+      {/* The providers asked before it. */}
+      <g {...show('3-')} style={`--c: ${teal}`}>
+        <line x1="364" y1="140" x2="400" y2="192" class="slf-flow" marker-end="url(#slf-arrow)" />
+        <rect x="404" y="160" width="196" height="64" rx="8" class="slf-box" />
+        <text x="416" y="180" class="slf-title">deepseek4 · qwen27-q4</text>
+        <text x="416" y="196" class="slf-sub">asked first</text>
+        <g {...show('3-')}>
+          <text x="416" y="214" class="slf-no">probe ✗ · other architecture</text>
+        </g>
+      </g>
+
+      <g {...show('3-')} style={`--c: ${green}`}>
+        <rect x="634" y="118" width="102" height="44" rx="8" class="slf-box" />
+        <text x="685" y="144" class="slf-title" text-anchor="middle">factory()</text>
+      </g>
+
+      <g {...show('4')} style={`--c: ${rose}`}>
+        <rect x="24" y="242" width="712" height="48" rx="8" class="slf-band" />
+        <text x="40" y="261" class="slf-band-line">no yes → “No text provider found for model architecture”</text>
+        <text x="40" y="279" class="slf-band-line">community extension reuses an official key, option or model ID → rejected at configure time</text>
+      </g>
+    </svg>
+  </div>
+  <StepText steps={steps} />
+  {caption && <figcaption>{caption}</figcaption>}
+</figure>
+
+<style>
+  .slf {
+    margin: 2.5rem 0;
+    padding: 20px;
+    background: var(--color-paper);
+    border: 1px solid var(--color-line-strong);
+    border-radius: 10px;
+    font-family: var(--font-sans);
+  }
+  .slf-eyebrow { display: flex; justify-content: space-between; align-items: center; gap: 12px; font: 12px var(--font-mono); color: var(--color-ink-3); }
+  .slf-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--color-forest); }
+  .slf-scroll { margin: 14px 0; overflow-x: auto; }
+  .slf svg { display: block; width: 100%; min-width: 560px; height: auto; }
+
+  .slf-head { font: 10.5px var(--font-mono); letter-spacing: 0.06em; text-transform: uppercase; fill: var(--color-ink-4); }
+  .slf-arrowhead { fill: var(--color-ink-3); }
+  .slf-flow { stroke: var(--color-ink-3); stroke-width: 1.2; stroke-opacity: 0.6; }
+
+  .slf-box { fill: color-mix(in srgb, var(--c) 12%, white); stroke: var(--c); stroke-width: 1.4; }
+  .slf-title { font: 11.5px var(--font-mono); fill: var(--color-ink); }
+  .slf-sub { font: italic 10.5px var(--font-sans); fill: var(--color-ink-3); }
+
+  .slf-key { fill: color-mix(in srgb, var(--c) 16%, white); stroke: var(--c); stroke-width: 1.4; }
+  .slf-key-text { font: 11.5px var(--font-mono); fill: var(--color-ink); }
+
+  .slf-ok { font: 10.5px var(--font-mono); fill: #3f7a4f; }
+  .slf-no { font: 10.5px var(--font-mono); fill: #b8336a; }
+
+  .slf-band { fill: color-mix(in srgb, var(--c) 7%, white); stroke: var(--c); stroke-width: 1.2; stroke-dasharray: 5 3; }
+  .slf-band-line { font: 11px var(--font-mono); fill: color-mix(in srgb, var(--c) 80%, black); }
+
+  .slf figcaption { font-family: var(--font-serif); font-style: italic; font-size: 14px; line-height: 1.5; color: var(--color-ink-2); }
+</style>

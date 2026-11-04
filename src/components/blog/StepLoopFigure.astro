@@ -1,0 +1,117 @@
+---
+// Where the core/model boundary sits: the core owns the generation loop
+// (when each step runs, which conversations share it), the model owns one
+// step, and one call crosses the interface per step. Stepped in four frames.
+import StepControls from './StepControls.astro';
+import StepText from './StepText.astro';
+import { frames } from './steps';
+
+interface Props {
+  figure?: number | string;
+  caption?: string;
+}
+
+const { figure, caption } = Astro.props;
+
+const green = '#3f7a4f';
+const blue = '#4f86b8';
+const plum = '#9a5c8a';
+
+const decodes = ['A', 'A · B', 'A · B · C', 'A · B · C', 'B · C', 'B · C · D'];
+const decodeX = (i: number) => 236 + i * 84;
+const layers = ['embed', 'layer 1', 'layer 2', '…', 'layer N', 'logits'];
+
+const steps = [
+  'Generating text is a loop: one prefill pass over the whole prompt, then one decode step for every new token.',
+  'The core owns the loop: it decides when the next step runs and which conversations share it.',
+  'Each step is one call across the interface: “prefill these 2,000 tokens for A”, “produce the next token for A, B and C”.',
+  'Behind each call the model runs all of its layers and GPU kernels, fused and ordered however it likes.',
+];
+const show = frames(steps.length);
+---
+<figure class="stf" data-steps={steps.length}>
+  <p class="stf-eyebrow"><span class="fig-eyebrow-title"><span class="stf-dot"></span>{figure !== undefined && <>Fig. {figure} · </>}The boundary sits at the step</span><span class="fig-eyebrow-side"><StepControls count={steps.length} /></span></p>
+  <div class="stf-scroll">
+    <svg viewBox="0 0 760 326" role="img" aria-label="The core runs the generation loop: one prefill step for the prompt, then decode steps shared by conversations A, B, C and D. Each step is one call across the interface. Behind each call the model runs all of its layers and kernels, fused however it likes.">
+      <defs>
+        <marker id="stf-arrow" viewBox="0 0 8 8" refX="7" refY="4" markerWidth="7" markerHeight="7" orient="auto">
+          <path d="M0 0 L8 4 L0 8 z" class="stf-arrowhead" />
+        </marker>
+      </defs>
+
+      <text x="24" y="28" class="stf-head">Core · owns the loop</text>
+
+      <g style={`--c: ${blue}`}>
+        <rect x="24" y="40" width="196" height="46" rx="8" class="stf-box" />
+        <text x="122" y="59" class="stf-title" text-anchor="middle">prefill</text>
+        <text x="122" y="76" class="stf-sub" text-anchor="middle">the whole prompt · A</text>
+      </g>
+      {decodes.map((who, i) => (
+        <g style={`--c: ${blue}`}>
+          <rect x={decodeX(i)} y="40" width="72" height="46" rx="8" class="stf-box" />
+          <text x={decodeX(i) + 36} y="59" class="stf-title" text-anchor="middle">decode</text>
+          <text x={decodeX(i) + 36} y="76" class="stf-sub" text-anchor="middle" {...show('2-')}>{who}</text>
+        </g>
+      ))}
+
+      <text x="24" y="106" class="stf-note" {...show('2-')}>the core decides when each step runs · which conversations share it</text>
+
+      <g {...show('3-')} style={`--c: ${plum}`}>
+        <line x1="122" y1="112" x2="122" y2="142" class="stf-flow" marker-end="url(#stf-arrow)" />
+        <line x1={decodeX(2) + 36} y1="112" x2={decodeX(2) + 36} y2="142" class="stf-flow" marker-end="url(#stf-arrow)" />
+        <rect x="24" y="146" width="300" height="32" rx="6" class="stf-call" />
+        <text x="174" y="166" class="stf-call-text" text-anchor="middle">“prefill these 2,000 tokens for A”</text>
+        <rect x="340" y="146" width="396" height="32" rx="6" class="stf-call" />
+        <text x="538" y="166" class="stf-call-text" text-anchor="middle">“produce the next token for A, B and C”</text>
+        <line x1="24" y1="198" x2="736" y2="198" class="stf-line" />
+        <text x="24" y="214" class="stf-head">interface · one call per step</text>
+      </g>
+
+      <g {...show('4')} style={`--c: ${green}`}>
+        <line x1="538" y1="178" x2="538" y2="242" class="stf-flow" marker-end="url(#stf-arrow)" />
+        <text x="24" y="238" class="stf-head">Model · owns one step</text>
+        <rect x="24" y="246" width="712" height="66" rx="10" class="stf-box" />
+        {layers.map((l, i) => (
+          <g>
+            <rect x={40 + i * 116} y="256" width="104" height="26" rx="5" class="stf-layer" />
+            <text x={92 + i * 116} y="273" class="stf-title" text-anchor="middle">{l}</text>
+          </g>
+        ))}
+        <text x="380" y="302" class="stf-sub" text-anchor="middle">all of its layers and GPU kernels · fused and ordered however the model likes</text>
+      </g>
+    </svg>
+  </div>
+  <StepText steps={steps} />
+  {caption && <figcaption>{caption}</figcaption>}
+</figure>
+
+<style>
+  .stf {
+    margin: 2.5rem 0;
+    padding: 20px;
+    background: var(--color-paper);
+    border: 1px solid var(--color-line-strong);
+    border-radius: 10px;
+    font-family: var(--font-sans);
+  }
+  .stf-eyebrow { display: flex; justify-content: space-between; align-items: center; gap: 12px; font: 12px var(--font-mono); color: var(--color-ink-3); }
+  .stf-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--color-forest); }
+  .stf-scroll { margin: 14px 0; overflow-x: auto; }
+  .stf svg { display: block; width: 100%; min-width: 560px; height: auto; }
+
+  .stf-head { font: 10.5px var(--font-mono); letter-spacing: 0.06em; text-transform: uppercase; fill: var(--color-ink-4); }
+  .stf-arrowhead { fill: var(--color-ink-3); }
+  .stf-flow { stroke: var(--color-ink-3); stroke-width: 1.2; stroke-opacity: 0.6; }
+
+  .stf-box { fill: color-mix(in srgb, var(--c) 12%, white); stroke: var(--c); stroke-width: 1.4; }
+  .stf-layer { fill: var(--color-ivory); stroke: var(--color-line-strong); }
+  .stf-title { font: 11px var(--font-mono); fill: var(--color-ink); }
+  .stf-sub { font: italic 10.5px var(--font-sans); fill: var(--color-ink-3); }
+  .stf-note { font: italic 11px var(--font-sans); fill: var(--color-ink-2); }
+
+  .stf-call { fill: color-mix(in srgb, var(--c) 10%, white); stroke: var(--c); stroke-width: 1.2; }
+  .stf-call-text { font: 11px var(--font-mono); fill: color-mix(in srgb, var(--c) 80%, black); }
+  .stf-line { stroke: #9a5c8a; stroke-width: 1.3; stroke-dasharray: 5 3; }
+
+  .stf figcaption { font-family: var(--font-serif); font-style: italic; font-size: 14px; line-height: 1.5; color: var(--color-ink-2); }
+</style>
