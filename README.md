@@ -52,3 +52,27 @@ permission to create pull requests. Locally:
 ```sh
 node scripts/sync-docs.mjs --source ../gufo --version development --ref main
 ```
+
+## Extensions
+
+`/extensions` lists two tiers. Core extensions are written by hand in
+`src/data/extensions.ts`. Community extensions are the reviewed entries of the
+[extension registry](https://github.com/gufo-org/gufo-extension):
+`src/data/registry.json` holds every entry of its `index.json`, with the
+providers and options of each newest release read from its `extension.json` at
+the reviewed commit, plus the extension API version of Gufo's newest releases
+and `main`, which drives the "Works with Gufo" filter.
+
+Don't edit `registry.json` by hand. The **Sync reviewed extensions** workflow
+(`.github/workflows/sync-extensions.yml`) rewrites it with
+`scripts/sync-extensions.mjs` when the registry's `website.yml` sends
+`gufo-extensions` after a push to its `main`, when Gufo sends `gufo-release`, or
+on a manual run, then checks, builds and merges it like the docs. Only display
+titles live in `extensions.ts`; a new entry shows its registry name until one
+is added. Locally:
+
+```sh
+git clone --filter=blob:none --no-checkout https://github.com/gufo-org/gufo /tmp/gufo-tags
+node scripts/sync-extensions.mjs --registry ../gufo-extension \
+  --ref "$(git -C ../gufo-extension rev-parse HEAD)" --gufo /tmp/gufo-tags
+```
