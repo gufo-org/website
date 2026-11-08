@@ -200,7 +200,7 @@ const core: Omit<Extension, 'worksWith'>[] = [
     name: 'qwen_image_21',
     title: 'Qwen-Image-2.1',
     tier: 'core',
-    summary: 'Image generation and editing with reference images. In progress.',
+    summary: 'Image generation and editing with reference images, including the Qwen Image 2.1 and the Turbo checkpoints.',
     version: '0.1.0',
     apiVersion: '>= 0.1.0',
     platforms: ['linux', 'windows'],
