@@ -1,4 +1,4 @@
-# gufo Website
+# Gufo Website
 
 Official documentation and benchmarks website for the [gufo](https://github.com/gufo-org) inference engine, built with [Astro](https://astro.build).
 
