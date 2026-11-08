@@ -99,4 +99,4 @@ jobs:
           gh pr create --base main --head "$branch" \
             --title "chore(extensions): sync reviewed extensions from gufo-extension ${REVISION:0:7}" \
             --body "Synced by the \`Sync reviewed extensions\` workflow from gufo-org/gufo-extension \`$REVISION\`. The site checked and built in [the workflow run]($GITHUB_SERVER_URL/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID)."
-          gh pr merge "$branch" --squash --delete-branch
+          gh pr merge "$branch" --auto --squash --delete-branch
