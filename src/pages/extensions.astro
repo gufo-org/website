@@ -93,7 +93,7 @@ cmake --build --preset release`;
 >
   <Navbar currentPath="/extensions" />
 
-  <main class="flex-1 w-full max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-6">
+  <main id="main-content" class="flex-1 w-full max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-6">
     <div class="flex items-center gap-2 text-xs text-ink-3">
       <a href="/" class="hover:text-ink">Home</a>
       <span>/</span>
@@ -157,7 +157,7 @@ cmake --build --preset release`;
             class="flex-1 min-w-0 h-10 px-3.5 rounded-md border border-line bg-ivory text-sm text-ink placeholder:text-ink-4 focus:outline-none focus:border-ink-3"
           />
           <label class="sr-only" for="catalog-sort">Sort extensions</label>
-          <select id="catalog-sort" class="h-10 px-3 rounded-md border border-line bg-ivory text-sm text-ink-2 focus:outline-none focus:border-ink-3">
+          <select id="catalog-sort" class="select-control h-10 px-3 rounded-md border border-line bg-ivory text-sm text-ink-2 focus:outline-none focus:border-ink-3">
             <option value="tier">By source</option>
             <option value="name">A–Z</option>
           </select>
@@ -395,12 +395,12 @@ cmake --build --preset release`;
           once a release is listed, it appears here and installs by name.
         </p>
       </div>
-      <div class="lg:col-span-2 grid grid-cols-1 md:grid-cols-2 gap-4 min-w-0">
-        <div class="code-block min-w-0">
+      <div class="lg:col-span-2 grid grid-cols-1 gap-4 min-w-0">
+        <div class="code-block min-w-0 extension-build-code">
           <div class="code-block-header"><span>Module</span><span>sh</span></div>
           <pre><code>{moduleBuild}</code></pre>
         </div>
-        <div class="code-block min-w-0">
+        <div class="code-block min-w-0 extension-build-code">
           <div class="code-block-header"><span>Compiled in</span><span>sh</span></div>
           <pre><code>{cmakeBuild}</code></pre>
         </div>
@@ -412,6 +412,12 @@ cmake --build --preset release`;
 </Layout>
 
 <style>
+  /* Wrap long commands within their card without changing copied text. */
+  .extension-build-code pre {
+    white-space: pre-wrap;
+    overflow-wrap: anywhere;
+  }
+
   /* Each tier and capability sets --accent inline; these tint from it. */
   .tier-badge {
     display: inline-flex;

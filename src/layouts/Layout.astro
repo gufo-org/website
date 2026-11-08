@@ -68,6 +68,7 @@ import '../styles/global.css';
     ></script>
   </head>
   <body class="min-h-screen flex flex-col bg-ivory text-ink selection:bg-forest/20">
+    <a href="#main-content" class="skip-link">Skip to main content</a>
     <slot />
   </body>
 </html>
@@ -89,7 +90,7 @@ import '../styles/global.css';
         await navigator.clipboard.writeText(pre.innerText.trimEnd());
         button.textContent = 'Copied';
       } catch {
-        button.textContent = 'Press Ctrl+C';
+        button.textContent = 'Copy failed';
       }
       setTimeout(() => (button.textContent = 'Copy'), 1500);
     });
