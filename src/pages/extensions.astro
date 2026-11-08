@@ -258,7 +258,7 @@ const nixBuild = `packages.x86_64-linux.default =
                 <a href={sourceUrl(e)} target="_blank" rel="noopener noreferrer" class="text-ink-2 hover:text-ink hover:underline">
                   {e.tier === 'core' ? 'Source' : 'Repository'}
                 </a>
-                {e.docPath && <a href={`${github}/gufo-org/gufo/tree/main/${e.docPath}`} target="_blank" rel="noopener noreferrer" class="text-ink-2 hover:text-ink hover:underline">Guide</a>}
+                {e.docPath && <a href={`/${e.docPath.replace(/\.md$/, '')}`} class="text-ink-2 hover:text-ink hover:underline">Guide</a>}
                 {e.benchmarks && <a href={`/benchmarks#${e.benchmarks}`} class="text-ink-2 hover:text-ink hover:underline">Benchmarks</a>}
               </div>
             </section>

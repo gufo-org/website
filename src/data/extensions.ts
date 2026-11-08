@@ -4,7 +4,7 @@
 // repository root for community ones. Core means listed in extensions.lock and
 // shipped in official artifacts. Community extensions are the repositories a
 // GitHub search for "gufo-extension" finds; re-check their manifests when
-// updating this file. Summaries come from docs/models/ and each README.
+// updating this file. Summaries come from docs/models/<model>.md and each README.
 
 export type Capability = 'text' | 'embeddings' | 'asr' | 'tts' | 'image' | 'video' | 'decision';
 
@@ -74,7 +74,7 @@ export const extensions: Extension[] = [
     options: ['--dflash-model'],
     repo: gufo,
     path: 'src/models/qwen',
-    docPath: 'docs/models/qwen3.8-27b',
+    docPath: 'docs/models/qwen3.8-27b.md',
     benchmarks: 'qwen3.8-27b',
     license: 'MIT',
   },
@@ -90,7 +90,7 @@ export const extensions: Extension[] = [
     options: ['--mtp-model'],
     repo: gufo,
     path: 'src/models/qwen38_flash_next',
-    docPath: 'docs/models/qwen3.8-flash-next',
+    docPath: 'docs/models/qwen3.8-flash-next.md',
     benchmarks: 'qwen3.8-flash-next',
     license: 'MIT',
   },
@@ -106,7 +106,7 @@ export const extensions: Extension[] = [
     options: ['--dspark-model'],
     repo: gufo,
     path: 'src/models/deepseek_v4_flash',
-    docPath: 'docs/models/deepseek-v4-flash',
+    docPath: 'docs/models/deepseek-v4-flash.md',
     benchmarks: 'deepseek-v4-flash',
     license: 'MIT',
   },
@@ -143,7 +143,7 @@ export const extensions: Extension[] = [
     options: [],
     repo: gufo,
     path: 'src/models/qwen3_asr',
-    docPath: 'docs/models/qwen3-asr',
+    docPath: 'docs/models/qwen3-asr.md',
     license: 'MIT',
   },
   {
@@ -158,7 +158,7 @@ export const extensions: Extension[] = [
     options: [],
     repo: gufo,
     path: 'src/models/qwen3_tts',
-    docPath: 'docs/models/qwen3-tts',
+    docPath: 'docs/models/qwen3-tts.md',
     license: 'MIT',
   },
   {
@@ -180,7 +180,7 @@ export const extensions: Extension[] = [
     options: [],
     repo: gufo,
     path: 'src/models/qwen_image_21',
-    docPath: 'docs/models/qwen-image-2.1',
+    docPath: 'docs/models/qwen-image-2.1.md',
     license: 'MIT',
   },
   {
@@ -195,7 +195,7 @@ export const extensions: Extension[] = [
     options: [],
     repo: gufo,
     path: 'src/models/minimax_h3',
-    docPath: 'docs/models/minimax-h3',
+    docPath: 'docs/models/minimax-h3.md',
     license: 'MIT',
   },
   {

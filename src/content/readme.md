@@ -69,7 +69,7 @@ curl http://localhost:8080/v1/chat/completions \
 For Open WebUI, VS Code, OpenAI SDK and Responses-API clients (for example
 Codex), set the API base URL to `http://localhost:8080/v1`. Chat Completions and
 Responses support text, images, function tools, structured output and streaming.
-See the [API contract](https://github.com/gufo-org/gufo/blob/main/docs/SERVER.md).
+See the [API contract](https://github.com/gufo-org/gufo/blob/main/docs/server.md).
 
 The text server uses the model's native context by default and generates until
 EOS or the context is full. `--context N` sets context capacity per session;
@@ -95,8 +95,8 @@ nix build
 model-download and independent evaluation tools; these are not runtime
 requirements. Optional benchmark baselines are selected separately with
 `nix shell .#ds4-reference`, `.#llama-cpp-reference` or
-`.#llama-cpp-mtp-reference`; see [benchmarking](https://github.com/gufo-org/gufo/blob/main/docs/BENCHMARKS.md).
-See [testing](https://github.com/gufo-org/gufo/blob/main/docs/TESTING.md) for the small hosted CI suite and
+`.#llama-cpp-mtp-reference`; see [benchmarking](https://github.com/gufo-org/gufo/blob/main/docs/internal/benchmarks.md).
+See [testing](https://github.com/gufo-org/gufo/blob/main/docs/internal/testing.md) for the small hosted CI suite and
 explicit local quality checks.
 
 ### Without Nix

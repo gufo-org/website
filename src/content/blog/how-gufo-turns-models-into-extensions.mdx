@@ -5,9 +5,9 @@ date: 2026-11-02
 kind: Engineering
 tags: [architecture, models, internals, extensions]
 related:
-  - { label: Guide, title: Writing and maintaining a Gufo extension, href: "https://github.com/gufo-org/gufo/blob/main/docs/extensions.md" }
+  - { label: Guide, title: Writing and maintaining a Gufo extension, href: "/docs/writing-extensions" }
   - { label: Catalogue, title: Gufo extensions, href: "/extensions" }
-  - { label: RFC, title: The model extensions RFC, href: "https://github.com/gufo-org/gufo/blob/main/docs/model-extensions/RFC.md" }
+  - { label: RFC, title: The model extensions RFC, href: "https://github.com/gufo-org/gufo/blob/main/docs/internal/design/model-extensions/RFC.md" }
 ---
 import CouplingFigure from '../../components/blog/CouplingFigure.astro';
 import StepLoopFigure from '../../components/blog/StepLoopFigure.astro';
@@ -190,7 +190,7 @@ The safety net is the official extensions. All eight live in the Gufo repository
 
 ## 8. Writing an extension
 
-This section is for readers who want to write or change an extension. It sketches the shape of the work; the [extension guide](https://github.com/gufo-org/gufo/blob/main/docs/extensions.md) has the current details.
+This section is for readers who want to write or change an extension. It sketches the shape of the work; the [extension guide](/docs/writing-extensions) has the current details.
 
 ### From manifest to running server
 
@@ -230,7 +230,7 @@ A provider entry is short: it registers the metadata generated from the manifest
 
 ### Adding a model
 
-Start from the extension template in the Gufo repository, rename its extension, provider and key, and follow the extension guide. The template only registers metadata; the work is in implementing the capability interface and proving it. The [conformance guide](https://github.com/gufo-org/gufo/blob/main/docs/model-extensions/CONFORMANCE.md) lists what that means for each capability: independent tests for configuration, tokenizer and operators, CPU-against-GPU comparisons, session isolation, streaming, cancellation, and cache histories for models that support continuation. A model that only answers one prompt isn't qualified.
+Start from the extension template in the Gufo repository, rename its extension, provider and key, and follow the extension guide. The template only registers metadata; the work is in implementing the capability interface and proving it. The [conformance guide](https://github.com/gufo-org/gufo/blob/main/docs/internal/extension-conformance.md) lists what that means for each capability: independent tests for configuration, tokenizer and operators, CPU-against-GPU comparisons, session isolation, streaming, cancellation, and cache histories for models that support continuation. A model that only answers one prompt isn't qualified.
 
 ## 9. How it compares
 

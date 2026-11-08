@@ -1,6 +1,6 @@
 // Model catalogue derived from the Gufo repository documentation:
-// docs/models/README.md, docs/models/<model>/README.md and
-// docs/models/<model>/BENCHMARKS.md. Keep every number traceable to a table
+// docs/models/README.md, docs/models/<model>.md and
+// docs/internal/models/<model>/BENCHMARKS.md. Keep every number traceable to a table
 // there; do not add figures the repository does not measure.
 
 export interface CatalogueModel {
@@ -22,7 +22,7 @@ export const catalogue: CatalogueModel[] = [
     name: 'Qwen3.8 27B',
     role: 'Dense text and images',
     sourceDir: 'src/models/qwen',
-    docPath: 'docs/models/qwen3.8-27b',
+    docPath: 'docs/models/qwen3.8-27b.md',
     weights: 'GGUF UD-Q4_K_XL / UD-Q8_K_XL',
     footprint: '16.35 GiB (Q4) · 29.30 GiB (Q8)',
     modes: 'AR, DFlash2',
@@ -34,7 +34,7 @@ export const catalogue: CatalogueModel[] = [
     name: 'Qwen3.8 Flash-Next',
     role: 'MoE text and images',
     sourceDir: 'src/models/qwen38_flash_next',
-    docPath: 'docs/models/qwen3.8-flash-next',
+    docPath: 'docs/models/qwen3.8-flash-next.md',
     weights: 'GGUF UD-Q4_K_XL (four shards) + shared-Q8_0 MTP',
     footprint: '85.56 GiB peak, pp2048 + tg128 at C1',
     modes: 'AR, MTP',
@@ -46,7 +46,7 @@ export const catalogue: CatalogueModel[] = [
     name: 'DeepSeek V4 Flash',
     role: 'MoE text',
     sourceDir: 'src/models/deepseek_v4_flash',
-    docPath: 'docs/models/deepseek-v4-flash',
+    docPath: 'docs/models/deepseek-v4-flash.md',
     weights: 'Flash 0731 mixed IQ2/Q2/Q8 GGUF + DSpark sidecar',
     footprint: '80.76 GiB weights, 93.09 GiB peak at C1',
     modes: 'AR, DSpark',
@@ -58,7 +58,7 @@ export const catalogue: CatalogueModel[] = [
     name: 'Qwen3-ASR 1.7B',
     role: 'Speech recognition',
     sourceDir: 'src/models/qwen3_asr',
-    docPath: 'docs/models/qwen3-asr',
+    docPath: 'docs/models/qwen3-asr.md',
     weights: 'BF16 safetensors',
     footprint: 'Audio-tower weights excluded from the decoder: 606 MiB saved',
     modes: 'Greedy decoding, file and realtime streaming',
@@ -70,7 +70,7 @@ export const catalogue: CatalogueModel[] = [
     name: 'Qwen3-TTS 12Hz 1.7B',
     role: 'Speech synthesis and voice cloning',
     sourceDir: 'src/models/qwen3_tts',
-    docPath: 'docs/models/qwen3-tts',
+    docPath: 'docs/models/qwen3-tts.md',
     weights: 'BF16 safetensors: CustomVoice, VoiceDesign, Base',
     footprint: '215–238 MiB of unused encoder weights excluded from uploads',
     modes: 'Buffered WAV, PCM, SSE, WebSocket',
@@ -82,7 +82,7 @@ export const catalogue: CatalogueModel[] = [
     name: 'Qwen-Image-2.1',
     role: 'Image generation and editing',
     sourceDir: 'src/models/qwen_image_21',
-    docPath: 'docs/models/qwen-image-2.1',
+    docPath: 'docs/models/qwen-image-2.1.md',
     weights: 'BF16 safetensors, about 33.1 GB',
     footprint: 'Vision and VAE-encoder weights load only for editing',
     modes: 'Generation, edit with references',
@@ -94,7 +94,7 @@ export const catalogue: CatalogueModel[] = [
     name: 'MiniMax H3 FL2VA',
     role: 'Text to video and audio',
     sourceDir: 'src/models/minimax_h3',
-    docPath: 'docs/models/minimax-h3',
+    docPath: 'docs/models/minimax-h3.md',
     weights: 'Pinned BF16 safetensors, operator-supplied',
     footprint: '40.01 GiB peak for one full-resolution denoiser evaluation',
     modes: 'exact, exact-1344x768, fast, aggressive, dev',

@@ -1,5 +1,5 @@
 // Benchmark data transcribed from the Gufo repository:
-// docs/models/<model>/BENCHMARKS.md. Every row here exists in those tables.
+// docs/internal/models/<model>/BENCHMARKS.md. Every row here exists in those tables.
 // Pending cells are TODO and comparisons a reference cannot run are N/A,
 // exactly as the repository reports them.
 
