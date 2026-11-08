@@ -1,0 +1,185 @@
+{
+  "registry": {
+    "repository": "gufo-org/gufo-extension",
+    "revision": "c5d48d273cd94feb6da27fa15099e50acc63d916"
+  },
+  "gufo": [
+    {
+      "version": "0.31.0",
+      "api": "0.2.7"
+    },
+    {
+      "version": "0.30.0",
+      "api": "0.1.20"
+    },
+    {
+      "version": "0.29.0",
+      "api": "0.1.18"
+    },
+    {
+      "version": "development",
+      "api": "0.2.16"
+    }
+  ],
+  "extensions": [
+    {
+      "name": "deepseek41flash",
+      "description": "DeepSeek V4.1 Flash on Strix Halo: DSpark drafting, vision, tool calls and SSD expert streaming",
+      "homepage": "https://github.com/franzmoca/ds41-gufo-extension",
+      "source": "https://github.com/franzmoca/ds41-gufo-extension",
+      "license": "MIT",
+      "maintainers": [
+        "@franzmoca"
+      ],
+      "releases": [
+        {
+          "version": "0.1.0",
+          "revision": "ab48afcab3390f781db703a9c09c2fd52c29fc24",
+          "digest": "sha256:a531ab549fd4525c995b71e6aa2ee8c2692b5167f73a611753a6f29ca30b842c",
+          "apiVersion": ">= 0.2.14",
+          "platforms": [
+            "linux"
+          ]
+        }
+      ],
+      "providers": [
+        {
+          "id": "deepseek41",
+          "capability": "text",
+          "keys": [
+            "gguf:deepseek41"
+          ],
+          "modelIds": [
+            "DeepSeek V4.1 Flash"
+          ],
+          "speculative": [
+            "dspark"
+          ]
+        }
+      ],
+      "options": [
+        {
+          "name": "--dspark-model",
+          "help": "DSpark drafter GGUF for --speculative dspark"
+        },
+        {
+          "name": "--prefill-batch",
+          "help": "Most prompt tokens per prefill batch, 16 to 4096 (default: 2048)"
+        },
+        {
+          "name": "--exact-prefill",
+          "help": "Run every decoder layer over every prompt token instead of each prompt's last 140"
+        },
+        {
+          "name": "--stream-experts",
+          "help": "Keep dense weights resident and stream routed experts from the SSD through a bounded cache"
+        },
+        {
+          "name": "--expert-cache-bytes",
+          "help": "With --stream-experts: streamed expert cache bytes (default: what the sessions leave)"
+        }
+      ]
+    },
+    {
+      "name": "flint",
+      "description": "Flint 40B MoE text generation",
+      "homepage": "https://github.com/brunobarbosaux-ai/flint-gufo-extension",
+      "source": "https://github.com/brunobarbosaux-ai/flint-gufo-extension",
+      "license": "MIT",
+      "maintainers": [
+        "@brunobarbosaux-ai"
+      ],
+      "releases": [
+        {
+          "version": "0.1.0",
+          "revision": "efacf0e2f0e8e30f67bccff56dede129928a9f7f",
+          "digest": "sha256:6b35a930b4f2f73236be6af94149e4332131162e11e03bfbe88ec0687c1540b0",
+          "apiVersion": ">= 0.2.7",
+          "platforms": [
+            "linux"
+          ]
+        }
+      ],
+      "providers": [
+        {
+          "id": "flint",
+          "capability": "text",
+          "keys": [
+            "gguf:flint"
+          ],
+          "modelIds": [
+            "flint-40b",
+            "flint"
+          ]
+        }
+      ],
+      "options": []
+    },
+    {
+      "name": "lfm3",
+      "description": "LFM3 1.7B text, LFM3-VL 2B, LFM3-Audio 2B and d1-Omni 2B on Strix Halo",
+      "homepage": "https://github.com/gufo-org/lfm3-gufo-extension",
+      "source": "https://github.com/gufo-org/lfm3-gufo-extension",
+      "license": "MIT",
+      "maintainers": [
+        "@fedeizzo"
+      ],
+      "releases": [
+        {
+          "version": "0.4.0",
+          "revision": "7a531b8280298eb05b3441395cf45c5d2b68a32d",
+          "digest": "sha256:aa515243c5ada69468527a4b836a2da0b7dd978da08e787f58d41b4feb5ca489",
+          "apiVersion": ">= 0.2.6",
+          "platforms": [
+            "linux"
+          ],
+          "notes": "Text, VL, audio (ASR/TTS) and decision providers."
+        }
+      ],
+      "providers": [
+        {
+          "id": "lfm3",
+          "capability": "text",
+          "keys": [
+            "gguf:lfm3"
+          ],
+          "modelIds": [
+            "LFM3-1.7B",
+            "LFM3-VL-2B"
+          ]
+        },
+        {
+          "id": "lfm3-audio-asr",
+          "capability": "asr",
+          "keys": [
+            "gguf:lfm3"
+          ],
+          "modelIds": [
+            "LFM3-Audio-2B"
+          ]
+        },
+        {
+          "id": "lfm3-audio-tts",
+          "capability": "tts",
+          "keys": [
+            "gguf:lfm3"
+          ],
+          "modelIds": [
+            "LFM3-Audio-2B"
+          ]
+        },
+        {
+          "id": "d1",
+          "capability": "decision",
+          "keys": [
+            "gguf:lfm3"
+          ],
+          "modelIds": [
+            "d1-Omni-2B"
+          ]
+        }
+      ],
+      "options": []
+    }
+  ]
+}

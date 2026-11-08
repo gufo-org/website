@@ -2,50 +2,94 @@
 import Layout from '../layouts/Layout.astro';
 import Navbar from '../components/Navbar.astro';
 import Footer from '../components/Footer.astro';
-import { capabilities, extensions, type Capability, type Extension } from '../data/extensions';
+import { capabilities, extensions, gufoVersions, registryRevision, tiers, type Capability, type Extension, type Tier } from '../data/extensions';
 
 const github = 'https://github.com';
-const guide = `${github}/gufo-org/gufo/blob/main/docs/extensions.md`;
+const guide = '/docs/development/writing-extensions';
+const usage = '/docs/development/extensions';
 const template = `${github}/gufo-org/gufo/tree/main/examples/extension_template`;
-const search = `${github}/search?q=gufo-extension&type=repositories`;
+const registryRepo = `${github}/gufo-org/gufo-extension`;
 
 const capabilityOrder = Object.keys(capabilities) as Capability[];
 const capsOf = (e: Extension) => [...new Set(e.providers.map((p) => p.capability))];
-const chips = capabilityOrder
-  .map((c) => ({ id: c, label: capabilities[c].label, count: extensions.filter((e) => capsOf(e).includes(c)).length }))
-  .filter((c) => c.count > 0);
-const coreCount = extensions.filter((e) => e.tier === 'core').length;
+const tierOrder = Object.keys(tiers) as Tier[];
+const platformName = (p: string) => (p === 'linux' ? 'Linux' : p === 'windows' ? 'Windows' : p);
+const unique = (values: string[]) => [...new Set(values)];
 
-const sourceUrl = (e: Extension) => `${github}/${e.repo}${e.path ? `/tree/main/${e.path}` : ''}`;
-const repoName = (e: Extension) => e.repo.split('/')[1];
-
-// Core extensions are already in every official build: show how to run one.
-// Community ones need a rebuild with their source directory.
-const command = (e: Extension) => {
-  if (e.tier === 'core') {
-    return { label: 'Run', text: `gufo serve ${capabilities[e.providers[0].capability].command} --model /path/to/model` };
-  }
-  const clone = `git clone ${github}/${e.repo}`;
-  if (e.build) return { label: 'Build', text: `${clone}\ncd ${repoName(e)}\n${e.build}` };
-  return {
-    label: 'Build',
-    text: `${clone}\ncmake --preset release -DGUFO_EXTENSION_DIRS=$PWD/${repoName(e)}\ncmake --build --preset release`,
-  };
+// Facets filter on the row attribute data-<name>, a '|'-separated list. Options
+// within a facet widen the match; facets narrow it.
+interface FacetOption {
+  value: string;
+  label: string;
+  color?: string;
+}
+const facetValues = {
+  tier: (e: Extension) => [e.tier],
+  capability: (e: Extension) => capsOf(e),
+  gufo: (e: Extension) => e.worksWith,
+  platform: (e: Extension) => e.platforms,
+  license: (e: Extension) => (e.license ? [e.license] : []),
 };
+type FacetName = keyof typeof facetValues;
+const facets: { name: FacetName; legend: string; note?: string; options: FacetOption[] }[] = [
+  {
+    name: 'tier',
+    legend: 'Source',
+    options: tierOrder.map((t) => ({ value: t, label: tiers[t].label, color: tiers[t].color })),
+  },
+  {
+    name: 'capability',
+    legend: 'Capability',
+    options: capabilityOrder.map((c) => ({ value: c, label: capabilities[c].label, color: capabilities[c].color })),
+  },
+  {
+    name: 'gufo',
+    legend: 'Works with Gufo',
+    note: 'Core extensions ship inside Gufo.',
+    options: gufoVersions.map((g) => ({ value: g.version, label: g.version === 'development' ? 'development' : `v${g.version}` })),
+  },
+  {
+    name: 'platform',
+    legend: 'Platform',
+    options: unique(extensions.flatMap((e) => e.platforms))
+      .sort()
+      .map((p) => ({ value: p, label: platformName(p) })),
+  },
+  {
+    name: 'license',
+    legend: 'License',
+    options: unique(extensions.flatMap(facetValues.license))
+      .sort()
+      .map((l) => ({ value: l, label: l })),
+  },
+];
+const facetCount = (name: FacetName, value: string) => extensions.filter((e) => facetValues[name](e).includes(value)).length;
+const facetAttributes = (e: Extension) =>
+  Object.fromEntries(Object.entries(facetValues).map(([name, values]) => [`data-${name}`, values(e).join('|')]));
+
+const repoUrl = (e: Extension) => (/^https?:/.test(e.repo) ? e.repo : `${github}/${e.repo}`);
+const sourceUrl = (e: Extension) => `${repoUrl(e)}${e.path ? `/tree/main/${e.path}` : ''}`;
+const owner = (e: Extension) => e.repo.split('/').slice(-2, -1)[0];
+const short = (revision: string) => revision.slice(0, 7);
+const serve = (e: Extension) => `gufo serve ${capabilities[e.providers[0].capability].command} --model /path/to/model`;
+
+// Core extensions are in every official build: show how to run one. Community
+// ones install by name from the registry first.
+const command = (e: Extension) =>
+  e.tier === 'core'
+    ? { label: 'Run', text: serve(e) }
+    : { label: 'Install and run', text: `gufo extension install ${e.name}\n${serve(e)}` };
+
+const moduleBuild = `gufo extension install ./my-extension
+gufo extension list`;
 
 const cmakeBuild = `cmake --preset release -DGUFO_EXTENSION_DIRS=/absolute/path/to/my-extension
-cmake --build --preset release
-./build/release/gufo diagnose --section extensions --json`;
-
-const nixBuild = `packages.x86_64-linux.default =
-  gufo.packages.x86_64-linux.default.override {
-    extensions = [ my-extension ];
-  };`;
+cmake --build --preset release`;
 ---
 
 <Layout
   title="Extensions · Gufo"
-  description="Catalogue of Gufo model extensions: the core models shipped in every build and community extensions you compile in, with their capabilities, artifact keys and options."
+  description="Catalogue of Gufo model extensions: core models shipped in every build and reviewed community extensions you install by name, with their capabilities, artifact keys and options."
 >
   <Navbar currentPath="/extensions" />
 
@@ -56,65 +100,73 @@ const nixBuild = `packages.x86_64-linux.default =
       <span class="text-ink">Extensions</span>
     </div>
 
-    <header class="space-y-4 max-w-3xl">
+    <header class="max-w-3xl space-y-2">
       <h1 class="text-4xl sm:text-5xl text-ink">Extensions</h1>
-      <div class="admonition admonition-warning">
-        <div class="admonition-title"><span>Community extensions are native code</span></div>
-        <p class="text-xs text-ink-2 leading-relaxed">
-          They compile into your binary and run with its full privileges. Gufo maintainers don't review them, and official
-          artifacts include only extensions listed in <code>extensions.lock</code>. Read the source before you build it;
-          <code>gufo diagnose --section extensions</code> lists everything compiled in.
-        </p>
-      </div>
+      <p class="text-[15px] text-ink-2 leading-relaxed">
+        Every model in Gufo is an extension. Core ones ship with Gufo; community ones live in their authors' repositories,
+        and a maintainer reviewed each listed release.
+        <a href={usage} class="text-ink underline decoration-line-strong hover:decoration-ink">Install one</a> or
+        <a href={guide} class="text-ink underline decoration-line-strong hover:decoration-ink">write your own</a>.
+      </p>
     </header>
 
-    <!-- Filters: capability chips, then search, tier and sort -->
-    <div class="sticky top-16 z-40 -mx-4 px-4 sm:mx-0 sm:px-0 py-3 bg-ivory/95 backdrop-blur border-b border-line space-y-3">
-      <div class="flex gap-2 overflow-x-auto pb-1" id="capability-bar" role="group" aria-label="Filter by capability">
-        <button type="button" data-capability="" aria-pressed="true" class="cap-chip is-active shrink-0 px-3.5 py-2 rounded-full text-xs border transition-colors">
-          <span class="font-semibold">All</span><span class="ml-1.5 opacity-60">{extensions.length}</span>
+    <div class="grid grid-cols-1 lg:grid-cols-[13rem_minmax(0,1fr)] gap-4 lg:gap-8 items-start">
+      <!-- Facets: a sidebar on wide screens, a collapsible box above the list on narrow ones. -->
+      <aside class="lg:sticky lg:top-24 rounded-lg border border-line lg:border-0 bg-ivory" aria-label="Filters">
+        <button
+          type="button"
+          id="facet-toggle"
+          aria-expanded="false"
+          aria-controls="facet-body"
+          class="lg:hidden w-full flex items-center justify-between px-4 h-11 text-sm text-ink"
+        >
+          <span class="font-semibold">Filters <span id="facet-active" class="ml-1 font-mono text-xs text-ink-3"></span></span>
+          <svg class="facet-chevron w-4 h-4 text-ink-3 transition-transform" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.75" d="M6 9l6 6 6-6" />
+          </svg>
         </button>
-        {chips.map((c) => (
-          <button type="button" data-capability={c.id} aria-pressed="false" class="cap-chip shrink-0 px-3.5 py-2 rounded-full text-xs border transition-colors">
-            <span class="font-semibold">{c.label}</span><span class="ml-1.5 opacity-60">{c.count}</span>
-          </button>
-        ))}
-      </div>
 
-      <form class="flex flex-col sm:flex-row gap-2" role="search" onsubmit="return false">
-        <label class="sr-only" for="catalog-search">Search extensions</label>
-        <input
-          id="catalog-search"
-          type="search"
-          placeholder="Search by name, artifact key, model ID, option or author"
-          autocomplete="off"
-          class="w-full sm:flex-1 min-w-0 h-10 px-3.5 rounded-md border border-line bg-ivory text-sm text-ink placeholder:text-ink-4 focus:outline-none focus:border-ink-3"
-        />
-        <div class="flex gap-2">
-          <label class="sr-only" for="catalog-tier">Filter by source</label>
-          <select id="catalog-tier" class="flex-1 sm:flex-none h-10 px-3 rounded-md border border-line bg-ivory text-sm text-ink-2 focus:outline-none focus:border-ink-3">
-            <option value="">Core and community</option>
-            <option value="core">Core</option>
-            <option value="community">Community</option>
-          </select>
+        <div id="facet-body" class="hidden lg:block px-4 pb-4 lg:p-0 space-y-6">
+          {facets.map((f) => (
+            <fieldset class="space-y-1">
+              <legend class="facet-legend">{f.legend}</legend>
+              {f.options.map((o) => (
+                <label class="facet-option" style={`--accent: ${o.color ?? 'var(--color-ink-2)'}`}>
+                  <input type="checkbox" name={f.name} value={o.value} class="facet-check" />
+                  <span class="facet-box" aria-hidden="true"></span>
+                  <span class="flex-1">{o.label}</span>
+                  <span class="facet-count">{facetCount(f.name, o.value)}</span>
+                </label>
+              ))}
+              {f.note && <p class="pt-1 text-[11px] text-ink-4 leading-relaxed">{f.note}</p>}
+            </fieldset>
+          ))}
+
+          <button type="button" id="facet-clear" class="hidden text-xs text-ink-2 underline decoration-line-strong hover:decoration-ink">Clear filters</button>
+        </div>
+      </aside>
+
+      <div class="min-w-0 space-y-4">
+        <form class="sticky top-16 z-40 -mx-4 px-4 sm:mx-0 sm:px-0 py-3 bg-ivory/95 backdrop-blur flex gap-2" role="search" onsubmit="return false">
+          <label class="sr-only" for="catalog-search">Search extensions</label>
+          <input
+            id="catalog-search"
+            type="search"
+            placeholder="Search by name, artifact key, model ID, option or author"
+            autocomplete="off"
+            class="flex-1 min-w-0 h-10 px-3.5 rounded-md border border-line bg-ivory text-sm text-ink placeholder:text-ink-4 focus:outline-none focus:border-ink-3"
+          />
           <label class="sr-only" for="catalog-sort">Sort extensions</label>
-          <select id="catalog-sort" class="flex-1 sm:flex-none h-10 px-3 rounded-md border border-line bg-ivory text-sm text-ink-2 focus:outline-none focus:border-ink-3">
-            <option value="default">Core first</option>
-            <option value="community">Community first</option>
+          <select id="catalog-sort" class="h-10 px-3 rounded-md border border-line bg-ivory text-sm text-ink-2 focus:outline-none focus:border-ink-3">
+            <option value="tier">By source</option>
             <option value="name">A–Z</option>
           </select>
-        </div>
-      </form>
-    </div>
+        </form>
 
-    <p id="catalog-count" class="text-xs text-ink-3 font-mono" aria-live="polite">
-      {extensions.length} extensions · {coreCount} core · {extensions.length - coreCount} community
-    </p>
+        <p id="catalog-count" class="text-xs text-ink-3 font-mono" aria-live="polite">{extensions.length} extensions</p>
 
-    <!-- Compact cards; clicking one opens its details in a side panel. -->
-    <div>
-      <div>
-        <div id="catalog" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+        <!-- Compact cards; clicking one opens its details in a side panel. -->
+        <div id="catalog" class="grid grid-cols-1 sm:grid-cols-2 gap-4">
           {extensions.map((e, idx) => {
             const caps = capsOf(e);
             const text = [
@@ -122,6 +174,8 @@ const nixBuild = `packages.x86_64-linux.default =
               e.name,
               e.repo,
               e.summary,
+              tiers[e.tier].label,
+              ...(e.maintainers ?? []),
               ...caps.map((c) => capabilities[c].label),
               ...e.providers.flatMap((p) => [p.id, ...p.keys, ...p.modelIds, ...(p.speculative ?? [])]),
               ...e.options,
@@ -132,28 +186,34 @@ const nixBuild = `packages.x86_64-linux.default =
               <a
                 href={`#${e.name}`}
                 data-ext={e.name}
-                data-capabilities={caps.join(' ')}
-                data-tier={e.tier}
+                {...facetAttributes(e)}
                 data-search={text}
                 data-title={e.title.toLowerCase()}
                 data-index={idx}
                 aria-controls="detail-panel"
-                class="ext-row flex flex-col gap-2 p-4 rounded-lg border border-line bg-ivory hover:border-line-strong hover:bg-paper-2/40 transition-colors"
+                style={`--accent: ${tiers[e.tier].color}`}
+                class="ext-row flex flex-col gap-2 p-4 rounded-lg border border-line bg-ivory transition-colors"
               >
                 <div class="flex items-start justify-between gap-3">
                   <div class="min-w-0">
                     <h2 class="font-sans text-base font-semibold tracking-normal text-ink truncate">{e.title}</h2>
-                    <p class="text-[11px] font-mono text-ink-4 truncate">{e.name} · v{e.version}</p>
+                    <p class="text-[11px] font-mono text-ink-4 truncate">
+                      {e.name} · v{e.version}{e.tier !== 'core' && <> · {owner(e)}</>}
+                    </p>
                   </div>
-                  <span class={`shrink-0 text-[11px] ${e.tier === 'core' ? 'text-forest' : 'text-ink-3'}`}>
-                    {e.tier === 'core' ? 'Core' : e.repo.split('/')[0]}
+                  <span class="tier-badge shrink-0">
+                    <span class="tier-dot" aria-hidden="true"></span>{tiers[e.tier].label}
                   </span>
                 </div>
                 <p class="text-sm text-ink-3 leading-relaxed line-clamp-2">{e.summary}</p>
                 <div class="mt-auto pt-1 flex flex-wrap gap-1.5">
                   {caps.map((c) => (
-                    <span class="text-[11px] px-2 py-0.5 rounded-full bg-paper text-ink-2">{capabilities[c].label}</span>
+                    <span class="cap-pill" style={`--accent: ${capabilities[c].color}`}>{capabilities[c].label}</span>
                   ))}
+                  {e.providers.some((p) => p.speculative) && <span class="cap-pill" style="--accent: var(--color-ink-3)">Speculative</span>}
+                  {e.worksWith.every((v) => v === 'development') && (
+                    <span class="cap-pill" style="--accent: var(--color-amber)">{e.worksWith.length ? 'Needs development Gufo' : 'No compatible Gufo'}</span>
+                  )}
                 </div>
               </a>
             );
@@ -164,8 +224,17 @@ const nixBuild = `packages.x86_64-linux.default =
           No extension matches.
           <button type="button" id="catalog-reset" class="text-ink underline decoration-line-strong hover:decoration-ink">Reset filters</button>
         </p>
-      </div>
 
+        <p class="pt-2 text-xs text-ink-3">
+          Community extensions come from the
+          <a href={registryRepo} target="_blank" rel="noopener noreferrer" class="text-ink-2 underline decoration-line-strong hover:text-ink hover:decoration-ink">extension registry</a>,
+          synced at
+          <a href={`${registryRepo}/tree/${registryRevision}`} target="_blank" rel="noopener noreferrer" class="font-mono text-ink-2 underline decoration-line-strong hover:text-ink hover:decoration-ink">{short(registryRevision)}</a>.
+        </p>
+      </div>
+    </div>
+
+    <div>
       <div id="detail-scrim" class="fixed inset-0 z-[55] bg-ink/30 hidden" aria-hidden="true"></div>
 
       <aside
@@ -177,21 +246,17 @@ const nixBuild = `packages.x86_64-linux.default =
           const cmd = command(e);
           const caps = capsOf(e);
           return (
-            <section data-detail={e.name} hidden class="p-5 space-y-4">
+            <section data-detail={e.name} hidden style={`--accent: ${tiers[e.tier].color}`} class="detail-section p-5 space-y-4">
               <div class="flex items-start justify-between gap-3">
                 <div class="min-w-0">
                   <h2 class="text-2xl text-ink leading-tight">{e.title}</h2>
                   <p class="mt-1 text-[11px] text-ink-4 font-mono break-all">
-                    {e.name} · v{e.version}{e.tier === 'community' && <> · {e.repo.split('/')[0]}</>}
+                    {e.name} · v{e.version}{e.tier !== 'core' && <> · {owner(e)}</>}
                   </p>
                 </div>
                 <div class="shrink-0 flex items-center gap-2">
-                  <span
-                    class={`text-[11px] px-2 py-1 rounded border ${
-                      e.tier === 'core' ? 'border-forest/30 bg-forest/10 text-forest' : 'border-line bg-paper text-ink-2'
-                    }`}
-                  >
-                    {e.tier === 'core' ? 'Core' : 'Community'}
+                  <span class="tier-badge">
+                    <span class="tier-dot" aria-hidden="true"></span>{tiers[e.tier].label}
                   </span>
                   <button type="button" class="detail-close w-8 h-8 -mr-1 flex items-center justify-center rounded text-ink-2 hover:bg-paper">
                     <span class="sr-only">Close details</span>
@@ -206,7 +271,7 @@ const nixBuild = `packages.x86_64-linux.default =
 
               <div class="flex flex-wrap gap-1.5">
                 {caps.map((c) => (
-                  <span class="text-[11px] px-2 py-0.5 rounded-full bg-paper text-ink-2">{capabilities[c].label}</span>
+                  <span class="cap-pill" style={`--accent: ${capabilities[c].color}`}>{capabilities[c].label}</span>
                 ))}
               </div>
 
@@ -229,35 +294,85 @@ const nixBuild = `packages.x86_64-linux.default =
                 <dd class="min-w-0 flex flex-wrap gap-x-2 gap-y-0.5">
                   {[...new Set(e.providers.flatMap((p) => p.modelIds))].map((m) => <code class="text-ink-2 break-all">{m}</code>)}
                 </dd>
-                {e.options.length > 0 && (
-                  <>
-                    <dt class="text-ink-4">Options</dt>
-                    <dd class="flex flex-wrap gap-x-2">{e.options.map((o) => <code class="text-ink-2">{o}</code>)}</dd>
-                  </>
-                )}
                 <dt class="text-ink-4">Requires</dt>
                 <dd class="text-ink-2">
-                  API <code>{e.apiVersion}</code><span class="mx-1.5 text-ink-4">·</span>{e.platforms.map((p) => (p === 'linux' ? 'Linux' : p === 'windows' ? 'Windows' : p)).join(', ')}
+                  API <code>{e.apiVersion}</code><span class="mx-1.5 text-ink-4">·</span>{e.platforms.map(platformName).join(', ')}
                 </dd>
+                {e.tier === 'community' && (
+                  <>
+                    <dt class="text-ink-4">Works with</dt>
+                    <dd class="text-ink-2">
+                      {e.worksWith.length > 0
+                        ? e.worksWith.map((v) => (v === 'development' ? 'development' : `v${v}`)).join(', ')
+                        : 'No recent Gufo yet'}
+                    </dd>
+                  </>
+                )}
                 {e.license && (
                   <>
                     <dt class="text-ink-4">License</dt>
                     <dd class="text-ink-2">{e.license}</dd>
                   </>
                 )}
+                {e.maintainers && e.maintainers.length > 0 && (
+                  <>
+                    <dt class="text-ink-4">{e.maintainers.length === 1 ? 'Maintainer' : 'Maintainers'}</dt>
+                    <dd class="flex flex-wrap gap-x-2">
+                      {e.maintainers.map((m) => (
+                        <a href={`${github}/${m.replace(/^@/, '')}`} target="_blank" rel="noopener noreferrer" class="text-ink-2 hover:text-ink hover:underline">{m}</a>
+                      ))}
+                    </dd>
+                  </>
+                )}
               </dl>
 
-              {e.note && <p class="text-xs text-ink-2 leading-relaxed border-l-2 border-amber pl-3">{e.note}</p>}
+              {e.options.length > 0 && (
+                <div class="space-y-1.5">
+                  <h3 class="text-[11px] font-sans font-semibold tracking-normal text-ink-4 uppercase">Options</h3>
+                  <ul class="space-y-1.5 text-xs">
+                    {e.options.map((o) => (
+                      <li>
+                        <code class="text-ink">{o}</code>
+                        {e.optionHelp?.[o] && <span class="block text-ink-3 leading-relaxed">{e.optionHelp[o]}</span>}
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              )}
 
               <div class="code-block">
                 <div class="code-block-header"><span>{cmd.label}</span><span>sh</span></div>
                 <pre><code>{cmd.text}</code></pre>
               </div>
 
+              {e.releases && (
+                <div class="space-y-2">
+                  <h3 class="text-[11px] font-sans font-semibold tracking-normal text-ink-4 uppercase">Reviewed releases</h3>
+                  <ol class="release-list space-y-3">
+                    {e.releases.map((r, i) => (
+                      <li class={`relative pl-5 text-xs ${i === 0 ? 'is-latest' : ''}`}>
+                        <span class="release-dot" aria-hidden="true"></span>
+                        <div class="flex flex-wrap items-baseline gap-x-2">
+                          <span class="font-mono font-semibold text-ink">v{r.version}</span>
+                          {i === 0 && <span class="text-[10px] px-1.5 rounded bg-paper text-ink-2">latest</span>}
+                          <a href={`${repoUrl(e)}/tree/${r.revision}`} target="_blank" rel="noopener noreferrer" class="font-mono text-ink-3 hover:text-ink hover:underline">{short(r.revision)}</a>
+                          <span class="text-ink-4">API <code>{r.apiVersion}</code><span class="mx-1.5">·</span>{r.platforms.map(platformName).join(', ')}</span>
+                        </div>
+                        {r.notes && <p class="mt-0.5 text-ink-3 leading-relaxed">{r.notes}</p>}
+                        <p class="mt-0.5 font-mono text-[10px] text-ink-4 break-all" title="Tree digest Gufo checks before building">{r.digest}</p>
+                      </li>
+                    ))}
+                  </ol>
+                </div>
+              )}
+
               <div class="flex flex-wrap items-center gap-x-4 gap-y-1 text-xs">
                 <a href={sourceUrl(e)} target="_blank" rel="noopener noreferrer" class="text-ink-2 hover:text-ink hover:underline">
                   {e.tier === 'core' ? 'Source' : 'Repository'}
                 </a>
+                {e.tier === 'community' && (
+                  <a href={`${registryRepo}/blob/main/extensions/${e.name}.json`} target="_blank" rel="noopener noreferrer" class="text-ink-2 hover:text-ink hover:underline">Registry entry</a>
+                )}
                 {e.docPath && <a href={`/${e.docPath.replace(/\.md$/, '')}`} class="text-ink-2 hover:text-ink hover:underline">Guide</a>}
                 {e.benchmarks && <a href={`/benchmarks#${e.benchmarks}`} class="text-ink-2 hover:text-ink hover:underline">Benchmarks</a>}
               </div>
@@ -274,20 +389,20 @@ const nixBuild = `packages.x86_64-linux.default =
         <h2 class="text-3xl text-ink">Add a model to Gufo</h2>
         <p class="text-[15px] text-ink-2 leading-relaxed">
           Start from the <a href={template} target="_blank" rel="noopener noreferrer" class="text-ink underline decoration-line-strong hover:decoration-ink">extension template</a>
-          and follow the <a href={guide} target="_blank" rel="noopener noreferrer" class="text-ink underline decoration-line-strong hover:decoration-ink">extension guide</a>.
-          Name the repository <code>&lt;model&gt;-gufo-extension</code> so it shows up in
-          <a href={search} target="_blank" rel="noopener noreferrer" class="text-ink underline decoration-line-strong hover:decoration-ink">the search</a>
-          this catalogue is built from.
+          and follow the <a href={guide} class="text-ink underline decoration-line-strong hover:decoration-ink">extension guide</a>.
+          Then ask for a review in the
+          <a href={registryRepo} target="_blank" rel="noopener noreferrer" class="text-ink underline decoration-line-strong hover:decoration-ink">extension registry</a>:
+          once a release is listed, it appears here and installs by name.
         </p>
       </div>
       <div class="lg:col-span-2 grid grid-cols-1 md:grid-cols-2 gap-4 min-w-0">
         <div class="code-block min-w-0">
-          <div class="code-block-header"><span>CMake</span><span>sh</span></div>
-          <pre><code>{cmakeBuild}</code></pre>
+          <div class="code-block-header"><span>Module</span><span>sh</span></div>
+          <pre><code>{moduleBuild}</code></pre>
         </div>
         <div class="code-block min-w-0">
-          <div class="code-block-header"><span>Nix</span><span>nix</span></div>
-          <pre><code>{nixBuild}</code></pre>
+          <div class="code-block-header"><span>Compiled in</span><span>sh</span></div>
+          <pre><code>{cmakeBuild}</code></pre>
         </div>
       </div>
     </section>
@@ -297,26 +412,154 @@ const nixBuild = `packages.x86_64-linux.default =
 </Layout>
 
 <style>
-  .cap-chip {
-    background: transparent;
+  /* Each tier and capability sets --accent inline; these tint from it. */
+  .tier-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.375rem;
+    font-size: 11px;
+    font-weight: 600;
+    padding: 0.125rem 0.5rem;
+    border-radius: 9999px;
+    color: color-mix(in srgb, var(--accent) 80%, var(--color-ink));
+    background: color-mix(in srgb, var(--accent) 12%, transparent);
+  }
+  .tier-dot {
+    width: 0.4375rem;
+    height: 0.4375rem;
+    border-radius: 9999px;
+    background: var(--accent);
+    flex-shrink: 0;
+  }
+  .cap-pill {
+    font-size: 11px;
+    padding: 0.125rem 0.5rem;
+    border-radius: 9999px;
+    color: color-mix(in srgb, var(--accent) 75%, var(--color-ink));
+    background: color-mix(in srgb, var(--accent) 10%, var(--color-ivory));
+    box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--accent) 18%, transparent);
+  }
+
+  .facet-legend {
+    margin-bottom: 0.375rem;
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    color: var(--color-ink-4);
+  }
+  /* A checkbox row: the native input stays for keyboard and screen readers,
+     drawn as a box in the facet's accent. */
+  .facet-option {
+    position: relative;
+    display: flex;
+    align-items: center;
+    gap: 0.625rem;
+    padding: 0.375rem 0.5rem;
+    margin: 0 -0.5rem;
+    border-radius: 6px;
+    font-size: 13px;
     color: var(--color-ink-2);
-    border-color: var(--color-line);
+    cursor: pointer;
   }
-  .cap-chip:hover {
-    border-color: var(--color-line-strong);
+  .facet-option:hover {
+    background: color-mix(in srgb, var(--accent) 7%, var(--color-ivory));
   }
-  .cap-chip.is-active {
-    background: var(--color-ink);
-    color: var(--color-ivory);
-    border-color: var(--color-ink);
+  .facet-check {
+    position: absolute;
+    opacity: 0;
+    pointer-events: none;
   }
-  /* `block` on the rows would otherwise beat the hidden attribute. */
+  .facet-box {
+    width: 0.875rem;
+    height: 0.875rem;
+    border-radius: 4px;
+    flex-shrink: 0;
+    box-shadow: inset 0 0 0 1.5px color-mix(in srgb, var(--accent) 55%, var(--color-line));
+    background: color-mix(in srgb, var(--accent) 8%, var(--color-ivory));
+    transition: background 0.1s ease;
+  }
+  .facet-check:checked + .facet-box {
+    background: var(--accent)
+      url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16' fill='none' stroke='%23f7f8f3' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M4 8.5l2.5 2.5L12 5.5'/%3E%3C/svg%3E")
+      center / 100% no-repeat;
+    box-shadow: none;
+  }
+  .facet-check:focus-visible + .facet-box {
+    outline: 2px solid var(--accent);
+    outline-offset: 2px;
+  }
+  .facet-option:has(.facet-check:checked) {
+    color: var(--color-ink);
+    font-weight: 600;
+  }
+  .facet-count {
+    font-family: var(--font-mono);
+    font-size: 11px;
+    color: var(--color-ink-4);
+  }
+  .facet-option.is-empty {
+    opacity: 0.45;
+  }
+
+  #facet-toggle[aria-expanded='true'] .facet-chevron {
+    rotate: 180deg;
+  }
+
+  .ext-row {
+    border-left: 3px solid var(--accent);
+  }
+  .ext-row:hover {
+    border-color: color-mix(in srgb, var(--accent) 45%, var(--color-line));
+    border-left-color: var(--accent);
+    background: color-mix(in srgb, var(--accent) 4%, var(--color-ivory));
+    transform: translateY(-1px);
+    box-shadow: 0 6px 18px -12px color-mix(in srgb, var(--accent) 60%, transparent);
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .ext-row:hover {
+      transform: none;
+    }
+  }
+  /* `flex` on the rows would otherwise beat the hidden attribute. */
   .ext-row[hidden] {
     display: none;
   }
   .ext-row[aria-current='true'] {
-    border-color: var(--color-forest);
+    border-color: var(--accent);
+    box-shadow: 0 0 0 1px var(--accent);
   }
+
+  .detail-section {
+    border-top: 4px solid var(--accent);
+  }
+  .release-list li::before {
+    content: '';
+    position: absolute;
+    left: 0.21875rem;
+    top: 1rem;
+    bottom: -0.75rem;
+    width: 1px;
+    background: var(--color-line);
+  }
+  .release-list li:last-child::before {
+    display: none;
+  }
+  .release-dot {
+    position: absolute;
+    left: 0;
+    top: 0.3rem;
+    width: 0.5rem;
+    height: 0.5rem;
+    border-radius: 9999px;
+    background: var(--color-ivory);
+    box-shadow: inset 0 0 0 1.5px var(--color-line-strong);
+  }
+  .release-list li.is-latest .release-dot {
+    background: var(--accent);
+    box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent) 20%, transparent);
+  }
+
   /* Tailwind 4 moves the sheet with `translate`, so opening resets that property. */
   .detail-panel.is-open {
     translate: none;
@@ -329,54 +572,73 @@ const nixBuild = `packages.x86_64-linux.default =
   const details = [...document.querySelectorAll<HTMLElement>('[data-detail]')];
   const panel = document.getElementById('detail-panel')!;
   const scrim = document.getElementById('detail-scrim')!;
-  const chips = [...document.querySelectorAll<HTMLButtonElement>('#capability-bar .cap-chip')];
+  const checks = [...document.querySelectorAll<HTMLInputElement>('.facet-check')];
+  const facetToggle = document.getElementById('facet-toggle')!;
+  const facetBody = document.getElementById('facet-body')!;
+  const facetActive = document.getElementById('facet-active')!;
+  const facetClear = document.getElementById('facet-clear')!;
   const search = document.getElementById('catalog-search') as HTMLInputElement;
-  const tier = document.getElementById('catalog-tier') as HTMLSelectElement;
   const sort = document.getElementById('catalog-sort') as HTMLSelectElement;
   const count = document.getElementById('catalog-count')!;
   const empty = document.getElementById('catalog-empty')!;
 
-  let capability = '';
+  // Each facet reads the row's data-<facet>, a '|'-separated list.
+  const facets = [...new Set(checks.map((c) => c.name))];
+  type Facet = string;
+
+  const selected = (facet: Facet) => checks.filter((c) => c.name === facet && c.checked).map((c) => c.value);
+  const values = (row: HTMLElement, facet: Facet) => (row.dataset[facet] ?? '').split('|');
+
+  // Options within a facet widen the match; facets narrow it.
+  function matches(row: HTMLElement, terms: string[], skip?: Facet) {
+    return (
+      facets.every((f) => {
+        if (f === skip) return true;
+        const wanted = selected(f);
+        return wanted.length === 0 || wanted.some((v) => values(row, f).includes(v));
+      }) && terms.every((t) => row.dataset.search!.includes(t))
+    );
+  }
 
   function apply() {
     const terms = search.value.toLowerCase().split(/\s+/).filter(Boolean);
     let shown = 0;
     for (const row of rows) {
-      const visible =
-        (!capability || row.dataset.capabilities!.split(' ').includes(capability)) &&
-        (!tier.value || row.dataset.tier === tier.value) &&
-        terms.every((t) => row.dataset.search!.includes(t));
-      row.hidden = !visible;
-      if (visible) shown++;
+      row.hidden = !matches(row, terms);
+      if (!row.hidden) shown++;
     }
     count.textContent = `${shown} ${shown === 1 ? 'extension' : 'extensions'}`;
     empty.classList.toggle('hidden', shown > 0);
+
+    // Each option counts what checking it would show, given the other facets.
+    for (const check of checks) {
+      const facet = check.name;
+      const n = rows.filter((r) => matches(r, terms, facet) && values(r, facet).includes(check.value)).length;
+      const option = check.closest('.facet-option')!;
+      option.querySelector('.facet-count')!.textContent = String(n);
+      option.classList.toggle('is-empty', n === 0 && !check.checked);
+    }
+    const active = checks.filter((c) => c.checked).length;
+    facetActive.textContent = active ? String(active) : '';
+    facetClear.classList.toggle('hidden', active === 0);
   }
 
   function reorder() {
     const index = (row: HTMLElement) => Number(row.dataset.index);
-    const sorted = [...rows].sort((a, b) => {
-      if (sort.value === 'name') return a.dataset.title!.localeCompare(b.dataset.title!);
-      if (sort.value === 'community' && a.dataset.tier !== b.dataset.tier) return a.dataset.tier === 'community' ? -1 : 1;
-      return index(a) - index(b);
-    });
+    const sorted = [...rows].sort((a, b) =>
+      sort.value === 'name' ? a.dataset.title!.localeCompare(b.dataset.title!) : index(a) - index(b),
+    );
     catalog.append(...sorted);
   }
 
-  function selectCapability(next: string) {
-    capability = next;
-    chips.forEach((chip) => {
-      const active = chip.dataset.capability === next;
-      chip.classList.toggle('is-active', active);
-      chip.setAttribute('aria-pressed', active ? 'true' : 'false');
-    });
+  function clearFacets() {
+    checks.forEach((c) => (c.checked = false));
     apply();
   }
 
   function reset() {
     search.value = '';
-    tier.value = '';
-    selectCapability('');
+    clearFacets();
   }
 
   // Keep the closed panel out of the tab order and the page still while it is open.
@@ -425,9 +687,14 @@ const nixBuild = `packages.x86_64-linux.default =
   });
   window.addEventListener('hashchange', () => select(decodeURIComponent(location.hash.slice(1)), true));
 
-  chips.forEach((chip) => chip.addEventListener('click', () => selectCapability(chip.dataset.capability ?? '')));
+  checks.forEach((c) => c.addEventListener('change', apply));
+  facetClear.addEventListener('click', clearFacets);
+  facetToggle.addEventListener('click', () => {
+    const open = facetToggle.getAttribute('aria-expanded') !== 'true';
+    facetToggle.setAttribute('aria-expanded', String(open));
+    facetBody.classList.toggle('hidden', !open);
+  });
   search.addEventListener('input', apply);
-  tier.addEventListener('change', apply);
   sort.addEventListener('change', reorder);
   document.getElementById('catalog-reset')?.addEventListener('click', reset);
 

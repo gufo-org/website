@@ -1,0 +1,102 @@
+name: Sync reviewed extensions
+
+# The extension registry sends `gufo-extensions` after each push to its main
+# branch, and Gufo's `gufo-release` adds a release to the compatibility facet.
+# A manual run syncs any registry ref, main by default.
+on:
+  repository_dispatch:
+    types: [gufo-extensions, gufo-release]
+  workflow_dispatch:
+    inputs:
+      ref:
+        description: gufo-extension branch, tag or commit
+        default: main
+
+# The release app's token pushes, opens and merges the pull request, so its
+# merge triggers the Pages deploy like any other push to main.
+permissions:
+  contents: read
+
+concurrency:
+  group: sync-extensions
+  cancel-in-progress: false
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Create app token
+        id: app-token
+        uses: actions/create-github-app-token@bcd2ba49218906704ab6c1aa796996da409d3eb1 # v3.2.0
+        with:
+          client-id: ${{ vars.RELEASE_APP_CLIENT_ID }}
+          private-key: ${{ secrets.RELEASE_APP_PRIVATE_KEY }}
+          owner: ${{ github.repository_owner }}
+          repositories: website
+          permission-contents: write
+          permission-pull-requests: write
+
+      - uses: actions/checkout@v4
+        with:
+          token: ${{ steps.app-token.outputs.token }}
+
+      - name: Check out the registry
+        uses: actions/checkout@v4
+        with:
+          repository: gufo-org/gufo-extension
+          ref: ${{ github.event.action == 'gufo-extensions' && github.event.client_payload.ref || inputs.ref || 'main' }}
+          path: registry-src
+          fetch-depth: 1
+          persist-credentials: false
+
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 10
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+
+      # Each extension's manifest is read from its source at the reviewed commit;
+      # Gufo's tags give the extension API version of each release.
+      - name: Read the reviewed extensions
+        id: sync
+        run: |
+          set -euo pipefail
+          revision="$(git -C registry-src rev-parse HEAD)"
+          git clone --quiet --filter=blob:none --no-checkout https://github.com/gufo-org/gufo gufo-src
+          node scripts/sync-extensions.mjs --registry registry-src --ref "$revision" --gufo gufo-src
+          rm -rf registry-src gufo-src
+          echo "revision=$revision" >> "$GITHUB_OUTPUT"
+
+      - name: Check and build the site
+        run: |
+          pnpm install --frozen-lockfile
+          pnpm astro check
+          pnpm build
+
+      - name: Merge the catalogue through a pull request
+        env:
+          GH_TOKEN: ${{ steps.app-token.outputs.token }}
+          APP_SLUG: ${{ steps.app-token.outputs.app-slug }}
+          REVISION: ${{ steps.sync.outputs.revision }}
+        run: |
+          set -euo pipefail
+          if [[ -z "$(git status --porcelain -- src/data/registry.json)" ]]; then
+            echo "The catalogue already matches the registry at $REVISION."
+            exit 0
+          fi
+          bot="${APP_SLUG}[bot]"
+          bot_id="$(gh api "/users/${bot}" --jq .id)"
+          git config user.name "$bot"
+          git config user.email "${bot_id}+${bot}@users.noreply.github.com"
+          branch="extensions/sync-$GITHUB_RUN_ID"
+          git switch -c "$branch"
+          git add src/data/registry.json
+          git commit -m "chore(extensions): sync reviewed extensions from gufo-extension ${REVISION:0:7}"
+          git push origin "$branch"
+          gh pr create --base main --head "$branch" \
+            --title "chore(extensions): sync reviewed extensions from gufo-extension ${REVISION:0:7}" \
+            --body "Synced by the \`Sync reviewed extensions\` workflow from gufo-org/gufo-extension \`$REVISION\`. The site checked and built in [the workflow run]($GITHUB_SERVER_URL/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID)."
+          gh pr merge "$branch" --squash --delete-branch

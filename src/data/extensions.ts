@@ -1,10 +1,12 @@
-// Extension catalogue. Every manifest field (name, version, api_version,
-// platforms, providers, options) is copied from the extension's extension.json:
-// src/models/<name>/extension.json in gufo-org/gufo for core extensions, the
-// repository root for community ones. Core means listed in extensions.lock and
-// shipped in official artifacts. Community extensions are the repositories a
-// GitHub search for "gufo-extension" finds; re-check their manifests when
-// updating this file. Summaries come from docs/models/<model>.md and each README.
+// Extension catalogue, in two tiers:
+// - core: listed in gufo-org/gufo extensions.lock and shipped in official
+//   artifacts; fields copied by hand from src/models/<name>/extension.json, and
+//   summaries from docs/models/<model>.md.
+// - community: the reviewed extensions of the gufo-org/gufo-extension registry,
+//   which live in their authors' repositories. Generated from registry.json,
+//   which scripts/sync-extensions.mjs rewrites on every registry merge; only
+//   their display titles live here.
+import registry from './registry.json';
 
 export type Capability = 'text' | 'embeddings' | 'asr' | 'tts' | 'image' | 'video' | 'decision';
 
@@ -12,16 +14,18 @@ export interface CapabilityInfo {
   label: string;
   /** `gufo serve` subcommand for this capability. */
   command: string;
+  /** Accent for its chips and pills. */
+  color: string;
 }
 
 export const capabilities: Record<Capability, CapabilityInfo> = {
-  text: { label: 'Text generation', command: 'llm' },
-  embeddings: { label: 'Embeddings', command: 'embedding' },
-  asr: { label: 'Speech recognition', command: 'asr' },
-  tts: { label: 'Speech synthesis', command: 'tts' },
-  image: { label: 'Image generation', command: 'image' },
-  video: { label: 'Video generation', command: 'video' },
-  decision: { label: 'Decisions', command: 'decision' },
+  text: { label: 'Text generation', command: 'llm', color: '#2f5d3a' },
+  embeddings: { label: 'Embeddings', command: 'embedding', color: '#4f7fae' },
+  asr: { label: 'Speech recognition', command: 'asr', color: '#2e817c' },
+  tts: { label: 'Speech synthesis', command: 'tts', color: '#80559e' },
+  image: { label: 'Image generation', command: 'image', color: '#c06f12' },
+  video: { label: 'Video generation', command: 'video', color: '#bf4d43' },
+  decision: { label: 'Decisions', command: 'decision', color: '#6b6a24' },
 };
 
 export interface Provider {
@@ -32,11 +36,38 @@ export interface Provider {
   speculative?: string[];
 }
 
+export type Tier = 'core' | 'community';
+
+export interface TierInfo {
+  label: string;
+  color: string;
+}
+
+export const tiers: Record<Tier, TierInfo> = {
+  core: {
+    label: 'Core',
+    color: '#2f5d3a',
+  },
+  community: {
+    label: 'Community',
+    color: '#4f7fae',
+  },
+};
+
+export interface Release {
+  version: string;
+  revision: string;
+  digest: string;
+  apiVersion: string;
+  platforms: string[];
+  notes?: string;
+}
+
 export interface Extension {
   /** Manifest `name`; also the anchor on the catalogue page. */
   name: string;
   title: string;
-  tier: 'core' | 'community';
+  tier: Tier;
   summary: string;
   version: string;
   apiVersion: string;
@@ -44,6 +75,8 @@ export interface Extension {
   providers: Provider[];
   /** Manifest `options`, by canonical name. */
   options: string[];
+  /** Manifest help text of each option, when synced. */
+  optionHelp?: Record<string, string>;
   /** GitHub repository holding the manifest. */
   repo: string;
   /** Directory of the manifest inside `repo`; empty for a repository root. */
@@ -53,15 +86,17 @@ export interface Extension {
   /** Section of /benchmarks, when the model is measured there. */
   benchmarks?: string;
   license?: string;
-  /** Build command when the default GUFO_EXTENSION_DIRS one doesn't apply. */
-  build?: string;
-  /** Caveat shown on the card. */
-  note?: string;
+  /** Registry maintainers, as GitHub handles. */
+  maintainers?: string[];
+  /** Reviewed releases, newest first. */
+  releases?: Release[];
+  /** Gufo versions (`gufoVersions`) that can run it. */
+  worksWith: string[];
 }
 
 const gufo = 'gufo-org/gufo';
 
-export const extensions: Extension[] = [
+const core: Omit<Extension, 'worksWith'>[] = [
   {
     name: 'qwen',
     title: 'Qwen3.8 27B',
@@ -198,60 +233,54 @@ export const extensions: Extension[] = [
     docPath: 'docs/models/minimax-h3.md',
     license: 'MIT',
   },
-  {
-    name: 'lfm3',
-    title: 'LFM3',
+];
+
+/** Display titles of community extensions; the registry name is the fallback. */
+const communityTitles: Record<string, string> = {
+  deepseek41flash: 'DeepSeek V4.1 Flash',
+  flint: 'Flint 40B',
+  lfm3: 'LFM3',
+};
+
+export const registryRevision = registry.registry.revision;
+
+/** Recent Gufo releases, newest first, then `development` (main), with their extension API version. */
+export const gufoVersions: { version: string; api: string }[] = registry.gufo;
+
+// Registry rule: same MAJOR.MINOR series, and a revision at least the requested one.
+function satisfies(api: string, requirement: string) {
+  const want = requirement.match(/^>=\s*(\d+)\.(\d+)\.(\d+)$/);
+  const have = api.match(/^(\d+)\.(\d+)\.(\d+)$/);
+  if (!want || !have) return false;
+  return want[1] === have[1] && want[2] === have[2] && Number(have[3]) >= Number(want[3]);
+}
+
+// Core extensions ship inside Gufo; a community one runs where any reviewed release fits.
+const worksWith = (requirements: string[]) =>
+  gufoVersions.filter((g) => requirements.some((r) => satisfies(g.api, r))).map((g) => g.version);
+
+const community: Extension[] = registry.extensions.map((r) => {
+  const [latest] = r.releases;
+  return {
+    name: r.name,
+    title: communityTitles[r.name] ?? r.name,
     tier: 'community',
-    summary:
-      'LiquidAI LFM3-1.7B text, plus the checkpoints on the same backbone: LFM3-VL-2B images, LFM3-Audio-2B speech recognition and synthesis, and d1-Omni-2B decisions.',
-    version: '0.4.0',
-    apiVersion: '>= 0.1.12',
-    platforms: ['linux'],
-    providers: [
-      { id: 'lfm3', capability: 'text', keys: ['gguf:lfm3'], modelIds: ['LFM3-1.7B', 'LFM3-VL-2B'] },
-      { id: 'lfm3-audio-asr', capability: 'asr', keys: ['gguf:lfm3'], modelIds: ['LFM3-Audio-2B'] },
-      { id: 'lfm3-audio-tts', capability: 'tts', keys: ['gguf:lfm3'], modelIds: ['LFM3-Audio-2B'] },
-      { id: 'd1', capability: 'decision', keys: ['gguf:lfm3'], modelIds: ['d1-Omni-2B'] },
-    ],
-    options: [],
-    repo: 'gufo-org/lfm3-gufo-extension',
-  },
-  {
-    name: 'fish_drama3',
-    title: 'Fish Audio Drama-3',
-    tier: 'community',
-    summary: 'Text-to-speech and zero-shot voice cloning for fishaudio/drama-3, with a native C++ DAC codec and cached reference voices.',
-    version: '0.1.0',
-    apiVersion: '>= 0.1.0',
-    platforms: ['linux', 'windows'],
-    providers: [
-      {
-        id: 'fish-drama3-tts',
-        capability: 'tts',
-        keys: ['safetensors:fish_omni', 'safetensors:FishOmniModel', 'safetensors:fish_qwen3_omni', 'safetensors:FishQwen3OmniForCausalLM'],
-        modelIds: ['fish-drama-3'],
-      },
-    ],
-    options: [],
-    repo: 'rikaaa0928/fish-drama3-gufo-extension',
-    license: 'MIT',
-  },
-  {
-    name: 'qwen38_flash_next_gsq',
-    title: 'Qwen3.8 Flash-Next GSQ',
-    tier: 'community',
-    summary:
-      'Pruned 256-expert Qwen3.8-Flash-Next GSQ-RCO checkpoints with native IQ-codebook quants and the MTP draft handshake. A fork of the core Flash-Next extension.',
-    version: '0.1.0',
-    apiVersion: '>= 0.1.16',
-    platforms: ['linux'],
-    providers: [
-      { id: 'flash-next-gsq-coder', capability: 'text', keys: ['gguf:qwen4exp'], modelIds: ['flash-next-gsq-coder'], speculative: ['mtp'] },
-    ],
-    options: ['--mtp-model'],
-    repo: 'codibre/qwen38-flash-next-gsq-gufo-extension',
-    license: 'MIT',
-    build: './scripts/build.sh',
-    note: 'Replaces the core Flash-Next in the binary and needs a pinned Gufo with an unmerged loader fix (gufo#939); its script handles both.',
-  },
+    summary: r.description,
+    version: latest.version,
+    apiVersion: latest.apiVersion,
+    platforms: latest.platforms,
+    providers: r.providers.map((p) => ({ ...p, capability: p.capability as Capability })),
+    options: r.options.map((o) => o.name),
+    optionHelp: Object.fromEntries(r.options.flatMap((o) => ('help' in o && o.help ? [[o.name, o.help]] : []))),
+    repo: r.source.replace(/^https:\/\/github\.com\//, '').replace(/\.git$/, ''),
+    license: r.license,
+    maintainers: r.maintainers,
+    releases: r.releases,
+    worksWith: worksWith(r.releases.map((release) => release.apiVersion)),
+  };
+});
+
+export const extensions: Extension[] = [
+  ...core.map((e) => ({ ...e, worksWith: gufoVersions.map((g) => g.version) })),
+  ...community,
 ];
