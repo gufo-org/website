@@ -33,5 +33,5 @@ pages explain how to install it, run models, and extend it with your own.
 ## Contribute
 
 Developer documentation, design records and per-model evidence live in
-[`internal/`](https://github.com/gufo-org/gufo/blob/cf86cb2717ef1275ddbf1506ff3ab7a6df88785c/docs/internal/development.md), in the repository only. Start with
-[development](https://github.com/gufo-org/gufo/blob/cf86cb2717ef1275ddbf1506ff3ab7a6df88785c/docs/internal/development.md) and [testing](https://github.com/gufo-org/gufo/blob/cf86cb2717ef1275ddbf1506ff3ab7a6df88785c/docs/internal/testing.md).
+[`internal/`](https://github.com/gufo-org/gufo/blob/main/docs/internal/development.md), in the repository only. Start with
+[development](https://github.com/gufo-org/gufo/blob/main/docs/internal/development.md) and [testing](https://github.com/gufo-org/gufo/blob/main/docs/internal/testing.md).

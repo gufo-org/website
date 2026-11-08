@@ -109,7 +109,7 @@ cmake --install build/release
   needs only its own libraries.
 - If CMake can't find ROCm, pass `-DCMAKE_PREFIX_PATH=/opt/rocm`, and
   `-DCMAKE_HIP_COMPILER=/opt/rocm/llvm/bin/clang++` if it picks a system Clang.
-- The Nix build applies a [ROCm runtime patch](https://github.com/gufo-org/gufo/blob/cf86cb2717ef1275ddbf1506ff3ab7a6df88785c/.devops/nix/patches/rocr-fixed-cwsr-rocm10.patch)
+- The Nix build applies a [ROCm runtime patch](https://github.com/gufo-org/gufo/blob/main/.devops/nix/patches/rocr-fixed-cwsr-rocm10.patch)
   that keeps GPU queues resident under memory pressure on Strix Halo. Apply it
   to your ROCm for the same behavior.
 
@@ -121,7 +121,7 @@ published numbers use the Nix toolchain.
 Windows x86-64 is a development target. Each release attaches
 `gufo-vX.Y.Z-windows-x86_64.zip`. Extract the whole ZIP and keep `gufo.exe`
 next to its DLLs and kernel folders. To build it yourself, see
-[building on Windows](https://github.com/gufo-org/gufo/blob/cf86cb2717ef1275ddbf1506ff3ab7a6df88785c/BUILD-WINDOWS.md).
+[building on Windows](https://github.com/gufo-org/gufo/blob/main/BUILD-WINDOWS.md).
 
 ## Model files
 

@@ -1,11 +1,12 @@
 name: Sync Gufo docs
 
-# Gufo's release workflow sends `gufo-release` with the new tag. A manual run can
-# sync any tag, branch or commit; anything but a vX.Y.Z tag lands as a
-# non-release version (default name "development") that the next release replaces.
+# Gufo sends `gufo-release` with each new tag, which becomes a release version,
+# and `gufo-docs` when a push to main changes its public docs, which refreshes
+# the "development" version. A manual run syncs any ref: a vX.Y.Z tag as a
+# release, anything else under the version name given (default development).
 on:
   repository_dispatch:
-    types: [gufo-release]
+    types: [gufo-release, gufo-docs]
   workflow_dispatch:
     inputs:
       ref:
@@ -15,10 +16,11 @@ on:
         description: Version name for a ref that is not a release tag
         default: development
 
+# The release app's token pushes, opens and merges the pull request, so the
+# repository never has to let GITHUB_TOKEN create pull requests, and its merge
+# triggers the Pages deploy like any other push to main.
 permissions:
-  contents: write
-  pull-requests: write
-  actions: write
+  contents: read
 
 concurrency:
   group: sync-docs
@@ -31,23 +33,50 @@ jobs:
       - name: Resolve the Gufo ref
         id: ref
         env:
-          REF: ${{ github.event.client_payload.tag || inputs.ref }}
-          VERSION: ${{ inputs.version || 'development' }}
+          EVENT: ${{ github.event_name == 'repository_dispatch' && github.event.action || 'manual' }}
+          TAG: ${{ github.event.client_payload.tag }}
+          PUSHED: ${{ github.event.client_payload.ref }}
+          INPUT_REF: ${{ inputs.ref }}
+          INPUT_VERSION: ${{ inputs.version || 'development' }}
         run: |
           set -euo pipefail
-          if [[ "$REF" =~ ^v(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)$ ]]; then
-            echo "version=${REF#v}" >> "$GITHUB_OUTPUT"
-            echo "release=true" >> "$GITHUB_OUTPUT"
-          elif [[ "$VERSION" =~ ^[0-9A-Za-z][0-9A-Za-z.-]*$ && ! "$VERSION" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
-            echo "version=$VERSION" >> "$GITHUB_OUTPUT"
-            echo "release=false" >> "$GITHUB_OUTPUT"
+          case "$EVENT" in
+            gufo-release) ref="$TAG"; version="" ;;
+            gufo-docs) ref="$PUSHED"; version=development ;;
+            *) ref="$INPUT_REF"; version="$INPUT_VERSION" ;;
+          esac
+          if [[ "$ref" =~ ^v(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)$ ]]; then
+            version="${ref#v}"
+            release=true
+          elif [[ "$EVENT" == gufo-release ]]; then
+            echo "Expected a vX.Y.Z tag, got: $ref" >&2
+            exit 1
+          elif [[ "$version" =~ ^[0-9A-Za-z][0-9A-Za-z.-]*$ && ! "$version" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+            release=false
           else
-            echo "Invalid version name for a non-release ref: $VERSION" >&2
+            echo "Invalid version name for a non-release ref: $version" >&2
             exit 1
           fi
-          echo "ref=$REF" >> "$GITHUB_OUTPUT"
+          {
+            echo "ref=$ref"
+            echo "version=$version"
+            echo "release=$release"
+          } >> "$GITHUB_OUTPUT"
+
+      - name: Create app token
+        id: app-token
+        uses: actions/create-github-app-token@bcd2ba49218906704ab6c1aa796996da409d3eb1 # v3.2.0
+        with:
+          client-id: ${{ vars.RELEASE_APP_CLIENT_ID }}
+          private-key: ${{ secrets.RELEASE_APP_PRIVATE_KEY }}
+          owner: ${{ github.repository_owner }}
+          repositories: website
+          permission-contents: write
+          permission-pull-requests: write
 
       - uses: actions/checkout@v4
+        with:
+          token: ${{ steps.app-token.outputs.token }}
 
       - name: Check out Gufo
         uses: actions/checkout@v4
@@ -56,7 +85,7 @@ jobs:
           ref: ${{ steps.ref.outputs.ref }}
           path: gufo-src
           fetch-depth: 1
-          lfs: false
+          persist-credentials: false
 
       - uses: pnpm/action-setup@v4
         with:
@@ -72,13 +101,17 @@ jobs:
           VERSION: ${{ steps.ref.outputs.version }}
           RELEASE: ${{ steps.ref.outputs.release }}
           REF: ${{ steps.ref.outputs.ref }}
+          EVENT: ${{ github.event.action }}
         run: |
           set -euo pipefail
-          # Release links point at the tag; other syncs pin the exact commit.
+          # Releases link GitHub at their tag and development at main, so an
+          # unchanged page stays unchanged; other refs pin the exact commit.
           release_flag=()
           if [[ "$RELEASE" == true ]]; then
             link_ref="$REF"
             release_flag=(--release)
+          elif [[ "$EVENT" == gufo-docs || "$REF" == main ]]; then
+            link_ref=main
           else
             link_ref="$(git -C gufo-src rev-parse HEAD)"
           fi
@@ -93,21 +126,22 @@ jobs:
           pnpm build
 
       - name: Merge the docs through a pull request
-        id: merge
         env:
-          GH_TOKEN: ${{ github.token }}
+          GH_TOKEN: ${{ steps.app-token.outputs.token }}
+          APP_SLUG: ${{ steps.app-token.outputs.app-slug }}
           VERSION: ${{ steps.ref.outputs.version }}
           REF: ${{ steps.ref.outputs.ref }}
         run: |
           set -euo pipefail
           if [[ -z "$(git status --porcelain -- src/content/docs)" ]]; then
             echo "Docs for $VERSION are already up to date."
-            echo "changed=false" >> "$GITHUB_OUTPUT"
             exit 0
           fi
+          bot="${APP_SLUG}[bot]"
+          bot_id="$(gh api "/users/${bot}" --jq .id)"
+          git config user.name "$bot"
+          git config user.email "${bot_id}+${bot}@users.noreply.github.com"
           branch="docs/sync-$VERSION-$GITHUB_RUN_ID"
-          git config user.name "github-actions[bot]"
-          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git switch -c "$branch"
           git add src/content/docs
           git commit -m "docs: sync Gufo $VERSION docs from $REF"
@@ -116,11 +150,3 @@ jobs:
             --title "docs: sync Gufo $VERSION docs" \
             --body "Synced by the \`Sync Gufo docs\` workflow from gufo-org/gufo \`$REF\`. The site checked and built in [the workflow run]($GITHUB_SERVER_URL/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID)."
           gh pr merge "$branch" --squash --delete-branch
-          echo "changed=true" >> "$GITHUB_OUTPUT"
-
-      # Pushes made with GITHUB_TOKEN don't trigger workflows, so start the deploy here.
-      - name: Deploy the site
-        if: ${{ steps.merge.outputs.changed == 'true' }}
-        env:
-          GH_TOKEN: ${{ github.token }}
-        run: gh workflow run pages.yml --ref main

@@ -77,7 +77,7 @@ gufo serve llm --model "$MODEL" --cache-ram-bytes 17179869184   # 16 GiB
 
 `--cache-ram-bytes` takes a byte count; `0` means automatic and `off` turns the
 RAM cache off. When the cache is full, Gufo drops the checkpoints it ranks as
-least useful; the [cache reference](https://github.com/gufo-org/gufo/blob/cf86cb2717ef1275ddbf1506ff3ab7a6df88785c/docs/internal/cache.md#what-gets-retained)
+least useful; the [cache reference](https://github.com/gufo-org/gufo/blob/main/docs/internal/cache.md#what-gets-retained)
 describes the order. More RAM keeps more conversations warm; the startup log
 reports the budget it settled on.
 
@@ -119,5 +119,5 @@ the cache and `timings.prompt_n` were processed. In Prometheus,
 
 When `cache_n` is lower than you expect, start the server with
 `--log-level debug`: each skipped checkpoint is logged with the reason it
-didn't match. The [cache reference](https://github.com/gufo-org/gufo/blob/cf86cb2717ef1275ddbf1506ff3ab7a6df88785c/docs/internal/cache.md) explains every log line
+didn't match. The [cache reference](https://github.com/gufo-org/gufo/blob/main/docs/internal/cache.md) explains every log line
 and the design behind the cache.

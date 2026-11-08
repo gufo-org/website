@@ -120,5 +120,5 @@ A request for another model ID returns 404 `model_not_found`;
 
 As of October 23, 2026, on Strix Halo, Gufo embeds up to **41.5k tokens/s**
 over HTTP and answers a 404-token request in **13.0 ms**. Loading takes about
-2 seconds. See the [full benchmarks](https://github.com/gufo-org/gufo/blob/cf86cb2717ef1275ddbf1506ff3ab7a6df88785c/docs/internal/models/embeddinggemma-2/BENCHMARKS.md)
-and the [quality report](https://github.com/gufo-org/gufo/blob/cf86cb2717ef1275ddbf1506ff3ab7a6df88785c/docs/internal/models/embeddinggemma-2/QUALITY.md).
+2 seconds. See the [full benchmarks](https://github.com/gufo-org/gufo/blob/main/docs/internal/models/embeddinggemma-2/BENCHMARKS.md)
+and the [quality report](https://github.com/gufo-org/gufo/blob/main/docs/internal/models/embeddinggemma-2/QUALITY.md).

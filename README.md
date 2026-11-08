@@ -28,19 +28,27 @@ pnpm dev
 
 `/docs` is Gufo's public documentation (`docs/*.md`, `docs/models/*.md` and
 `docs/figures/` in [gufo-org/gufo](https://github.com/gufo-org/gufo)), kept
-here as one copy per release under `src/content/docs/<version>/`.
-`src/content/docs/versions.json` lists the versions, newest first, with the
+here as one copy per release, plus `development` for Gufo `main`, under
+`src/content/docs/<version>/`.
+`src/content/docs/versions.json` lists them, releases newest first, with the
 navigation taken from Gufo's `docs/README.md`. `/docs/<page>` redirects to the
-newest version.
+newest release.
 
 Don't edit those files by hand: change the docs in Gufo. The
-**Sync Gufo docs** workflow (`.github/workflows/sync-docs.yml`) runs when Gufo
-publishes a release (`gufo-release` dispatch), copies the docs at that tag with
-`scripts/sync-docs.mjs`, checks and builds the site, merges the result through
-a pull request and deploys. It keeps the 10 newest releases. Run it by hand
-with any Gufo ref, for example `main`, to publish a non-release `development`
-version until the next release replaces it. Locally:
+**Sync Gufo docs** workflow (`.github/workflows/sync-docs.yml`) copies them with
+`scripts/sync-docs.mjs`, checks and builds the site, and merges the result
+through a pull request, whose push deploys the site:
+
+- `gufo-release`, sent by Gufo's release workflow with the new tag, adds that
+  release. The 10 newest releases are kept, and `/docs` shows the newest.
+- `gufo-docs`, sent by Gufo's `docs-website.yml` when a push to `main` changes
+  the public docs, refreshes the `development` version.
+- A manual run syncs any Gufo ref.
+
+It uses the `gufo-release-bot` app token (org variable `RELEASE_APP_CLIENT_ID`,
+secret `RELEASE_APP_PRIVATE_KEY`), so Actions in this repository don't need
+permission to create pull requests. Locally:
 
 ```sh
-node scripts/sync-docs.mjs --source ../gufo --version development --ref "$(git -C ../gufo rev-parse HEAD)"
+node scripts/sync-docs.mjs --source ../gufo --version development --ref main
 ```

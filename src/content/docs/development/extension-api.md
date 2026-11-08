@@ -25,7 +25,7 @@ The promise is source compatibility: rebuild against a new Gufo and your
 extension compiles. Binaries built for one Gufo don't load into another.
 
 Every change to the API adds a record under
-[`include/gufo/ext/changes/`](https://github.com/gufo-org/gufo/blob/cf86cb2717ef1275ddbf1506ff3ab7a6df88785c/include/gufo/ext/changes/README.md), and the
+[`include/gufo/ext/changes/`](https://github.com/gufo-org/gufo/blob/main/include/gufo/ext/changes/README.md), and the
 revision is the number of records, so the records are the changelog.
 
 ## The boundary
@@ -127,7 +127,7 @@ streamed:
 - `markers`, `reasoning_markers`, `closers` and `scan_tool_calls` let Gufo find
   calls in the text, including an unfinished call while streaming.
 
-`ToolDialect` in [`text.hpp`](https://github.com/gufo-org/gufo/blob/cf86cb2717ef1275ddbf1506ff3ab7a6df88785c/include/gufo/ext/text.hpp) states the rules.
+`ToolDialect` in [`text.hpp`](https://github.com/gufo-org/gufo/blob/main/include/gufo/ext/text.hpp) states the rules.
 Runners that use a built-in format (`json`, `qwen`, `deepseek`) need nothing.
 
 ## Options

@@ -29,7 +29,7 @@ print(reply.choices[0].message.content)
 
 Gufo ignores API keys. Supported fields behave as documented here; fields Gufo
 can't honor return 400 instead of being silently dropped. The
-[server reference](https://github.com/gufo-org/gufo/blob/cf86cb2717ef1275ddbf1506ff3ab7a6df88785c/docs/internal/server.md) lists every field.
+[server reference](https://github.com/gufo-org/gufo/blob/main/docs/internal/server.md) lists every field.
 
 ## Endpoints
 

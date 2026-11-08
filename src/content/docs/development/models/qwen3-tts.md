@@ -65,7 +65,7 @@ controls:
 
 `top_k: 0` turns that filter off, and `seed` makes a request repeatable. Greedy
 generation can fail to stop, so cap it with `max_new_tokens`; see the
-[known limitations](https://github.com/gufo-org/gufo/blob/cf86cb2717ef1275ddbf1506ff3ab7a6df88785c/docs/internal/models/qwen3-tts/QUALITY.md#known-limitations).
+[known limitations](https://github.com/gufo-org/gufo/blob/main/docs/internal/models/qwen3-tts/QUALITY.md#known-limitations).
 
 ## Streaming
 
@@ -115,5 +115,5 @@ one URL.
 
 As of September 20, 2026, on Strix Halo, CustomVoice speaks at up to **2.54×
 real time** and starts playing after **201 ms**. See the
-[full benchmarks](https://github.com/gufo-org/gufo/blob/cf86cb2717ef1275ddbf1506ff3ab7a6df88785c/docs/internal/models/qwen3-tts/BENCHMARKS.md) and the
-[quality report](https://github.com/gufo-org/gufo/blob/cf86cb2717ef1275ddbf1506ff3ab7a6df88785c/docs/internal/models/qwen3-tts/QUALITY.md).
+[full benchmarks](https://github.com/gufo-org/gufo/blob/main/docs/internal/models/qwen3-tts/BENCHMARKS.md) and the
+[quality report](https://github.com/gufo-org/gufo/blob/main/docs/internal/models/qwen3-tts/QUALITY.md).

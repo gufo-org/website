@@ -15,7 +15,7 @@ Starting from an image, first or last frames, reference videos (Ref2VA) and
 > **Warning:** You obtain the checkpoint and accept the MiniMax H3 Community
 > License Agreement yourself. Gufo ships no H3 weights or tokenizer, and never
 > downloads the model. See the
-> [third-party notices](https://github.com/gufo-org/gufo/blob/cf86cb2717ef1275ddbf1506ff3ab7a6df88785c/THIRD_PARTY_NOTICES.md).
+> [third-party notices](https://github.com/gufo-org/gufo/blob/main/THIRD_PARTY_NOTICES.md).
 
 | Item | Pinned identity |
 | --- | --- |
@@ -101,5 +101,5 @@ Saved job status keeps a hash of the prompt, never the prompt itself.
 ## Performance
 
 As of November 2026, complete-video timings are still being measured. See the
-[benchmarks and memory notes](https://github.com/gufo-org/gufo/blob/cf86cb2717ef1275ddbf1506ff3ab7a6df88785c/docs/internal/models/minimax-h3/BENCHMARKS.md) and
-the [quality report](https://github.com/gufo-org/gufo/blob/cf86cb2717ef1275ddbf1506ff3ab7a6df88785c/docs/internal/models/minimax-h3/QUALITY.md).
+[benchmarks and memory notes](https://github.com/gufo-org/gufo/blob/main/docs/internal/models/minimax-h3/BENCHMARKS.md) and
+the [quality report](https://github.com/gufo-org/gufo/blob/main/docs/internal/models/minimax-h3/QUALITY.md).

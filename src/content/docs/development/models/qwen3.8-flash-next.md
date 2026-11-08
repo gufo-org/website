@@ -93,7 +93,7 @@ As of October 18, 2026, on Strix Halo:
 | Decode, one user, MTP | up to 116.93 tokens/s |
 | Decode, 8 concurrent users, MTP | 245.81 tokens/s in total |
 
-The [full benchmarks](https://github.com/gufo-org/gufo/blob/cf86cb2717ef1275ddbf1506ff3ab7a6df88785c/docs/internal/models/qwen3.8-flash-next/BENCHMARKS.md)
+The [full benchmarks](https://github.com/gufo-org/gufo/blob/main/docs/internal/models/qwen3.8-flash-next/BENCHMARKS.md)
 compare with llama.cpp. The
-[quality report](https://github.com/gufo-org/gufo/blob/cf86cb2717ef1275ddbf1506ff3ab7a6df88785c/docs/internal/models/qwen3.8-flash-next/QUALITY.md) covers
+[quality report](https://github.com/gufo-org/gufo/blob/main/docs/internal/models/qwen3.8-flash-next/QUALITY.md) covers
 accuracy against the reference and between modes.

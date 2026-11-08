@@ -10,7 +10,7 @@ Images API.
 
 > **Warning:** The weights use the non-commercial Qwen Research License, not
 > Gufo's MIT license. See the
-> [pinned sources and model contract](https://github.com/gufo-org/gufo/blob/cf86cb2717ef1275ddbf1506ff3ab7a6df88785c/src/models/qwen_image_21/UPSTREAM.md).
+> [pinned sources and model contract](https://github.com/gufo-org/gufo/blob/main/src/models/qwen_image_21/UPSTREAM.md).
 
 ## Files
 
@@ -99,5 +99,5 @@ As of November 1, 2026, on Strix Halo, one 1024 × 1024 image takes:
 | Qwen-Image-2.1, editing one reference | 40 | 130.2 s |
 | Qwen-Image-2.1-Turbo | 8 | 18.6 s |
 
-See the [full benchmarks](https://github.com/gufo-org/gufo/blob/cf86cb2717ef1275ddbf1506ff3ab7a6df88785c/docs/internal/models/qwen-image-2.1/BENCHMARKS.md) and
-the [quality report](https://github.com/gufo-org/gufo/blob/cf86cb2717ef1275ddbf1506ff3ab7a6df88785c/docs/internal/models/qwen-image-2.1/QUALITY.md).
+See the [full benchmarks](https://github.com/gufo-org/gufo/blob/main/docs/internal/models/qwen-image-2.1/BENCHMARKS.md) and
+the [quality report](https://github.com/gufo-org/gufo/blob/main/docs/internal/models/qwen-image-2.1/QUALITY.md).

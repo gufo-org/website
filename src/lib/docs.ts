@@ -12,9 +12,10 @@ export interface DocsVersion {
   nav: NavGroup[];
 }
 
-/** Synced versions, newest first; the first is what /docs shows. */
+/** Synced versions: releases newest first, then non-release versions such as development. */
 export const versions = versionsJson as DocsVersion[];
-export const latest = versions[0];
+/** What /docs shows: the newest release, or development before the first release sync. */
+export const latest = versions.find((v) => v.release) ?? versions[0];
 
 /** Entry id `0.32.0/models/qwen3-asr` splits into its version and page slug ('' for the docs home). */
 export function splitId(id: string) {

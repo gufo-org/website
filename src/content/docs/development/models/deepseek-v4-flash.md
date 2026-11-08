@@ -61,7 +61,7 @@ per request.
 - As of October 2026, Gufo's arithmetic hasn't been fully compared with the
   original model, so treat agreement between AR and DSpark as consistency, not
   as proof of quality. The
-  [quality report](https://github.com/gufo-org/gufo/blob/cf86cb2717ef1275ddbf1506ff3ab7a6df88785c/docs/internal/models/deepseek-v4-flash/QUALITY.md) lists what
+  [quality report](https://github.com/gufo-org/gufo/blob/main/docs/internal/models/deepseek-v4-flash/QUALITY.md) lists what
   is checked.
 
 ## Performance
@@ -74,5 +74,5 @@ As of October 30, 2026, on Strix Halo:
 | Decode, one user, DSpark | up to 29.57 tokens/s |
 | Decode, 8 concurrent users, AR | 77.12 tokens/s in total |
 
-The [full benchmarks](https://github.com/gufo-org/gufo/blob/cf86cb2717ef1275ddbf1506ff3ab7a6df88785c/docs/internal/models/deepseek-v4-flash/BENCHMARKS.md)
+The [full benchmarks](https://github.com/gufo-org/gufo/blob/main/docs/internal/models/deepseek-v4-flash/BENCHMARKS.md)
 compare with antirez/ds4.

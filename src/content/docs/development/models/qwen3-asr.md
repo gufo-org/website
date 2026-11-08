@@ -82,5 +82,5 @@ aliases. Speech synthesis runs as a separate server, `gufo serve tts`.
 
 As of September 21, 2026, on Strix Halo, transcription runs at **15.27×
 real time** once the model is loaded. See the
-[full benchmarks](https://github.com/gufo-org/gufo/blob/cf86cb2717ef1275ddbf1506ff3ab7a6df88785c/docs/internal/models/qwen3-asr/BENCHMARKS.md) and the
-[quality report](https://github.com/gufo-org/gufo/blob/cf86cb2717ef1275ddbf1506ff3ab7a6df88785c/docs/internal/models/qwen3-asr/QUALITY.md).
+[full benchmarks](https://github.com/gufo-org/gufo/blob/main/docs/internal/models/qwen3-asr/BENCHMARKS.md) and the
+[quality report](https://github.com/gufo-org/gufo/blob/main/docs/internal/models/qwen3-asr/QUALITY.md).
