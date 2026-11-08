@@ -33,7 +33,7 @@ capability. A provider has:
 
 ## Start from the template
 
-Copy [examples/extension_template](https://github.com/gufo-org/gufo/blob/cf86cb2717ef1275ddbf1506ff3ab7a6df88785c/examples/extension_template/README.md)
+Copy [examples/extension_template](https://github.com/gufo-org/gufo/blob/main/examples/extension_template/README.md)
 into a new repository:
 
 | File | Purpose |
@@ -81,13 +81,13 @@ Pick the interface for your capability:
 
 | Capability | Header |
 | --- | --- |
-| Text generation | [`text.hpp`](https://github.com/gufo-org/gufo/blob/cf86cb2717ef1275ddbf1506ff3ab7a6df88785c/include/gufo/ext/text.hpp) |
-| Embeddings | [`embeddings.hpp`](https://github.com/gufo-org/gufo/blob/cf86cb2717ef1275ddbf1506ff3ab7a6df88785c/include/gufo/ext/embeddings.hpp) |
-| Speech recognition | [`asr.hpp`](https://github.com/gufo-org/gufo/blob/cf86cb2717ef1275ddbf1506ff3ab7a6df88785c/include/gufo/ext/asr.hpp) |
-| Speech synthesis | [`tts.hpp`](https://github.com/gufo-org/gufo/blob/cf86cb2717ef1275ddbf1506ff3ab7a6df88785c/include/gufo/ext/tts.hpp) |
-| Images | [`image.hpp`](https://github.com/gufo-org/gufo/blob/cf86cb2717ef1275ddbf1506ff3ab7a6df88785c/include/gufo/ext/image.hpp) |
-| Video | [`video.hpp`](https://github.com/gufo-org/gufo/blob/cf86cb2717ef1275ddbf1506ff3ab7a6df88785c/include/gufo/ext/video.hpp) |
-| Decisions | [`decision.hpp`](https://github.com/gufo-org/gufo/blob/cf86cb2717ef1275ddbf1506ff3ab7a6df88785c/include/gufo/ext/decision.hpp) |
+| Text generation | [`text.hpp`](https://github.com/gufo-org/gufo/blob/main/include/gufo/ext/text.hpp) |
+| Embeddings | [`embeddings.hpp`](https://github.com/gufo-org/gufo/blob/main/include/gufo/ext/embeddings.hpp) |
+| Speech recognition | [`asr.hpp`](https://github.com/gufo-org/gufo/blob/main/include/gufo/ext/asr.hpp) |
+| Speech synthesis | [`tts.hpp`](https://github.com/gufo-org/gufo/blob/main/include/gufo/ext/tts.hpp) |
+| Images | [`image.hpp`](https://github.com/gufo-org/gufo/blob/main/include/gufo/ext/image.hpp) |
+| Video | [`video.hpp`](https://github.com/gufo-org/gufo/blob/main/include/gufo/ext/video.hpp) |
+| Decisions | [`decision.hpp`](https://github.com/gufo-org/gufo/blob/main/include/gufo/ext/decision.hpp) |
 
 Read the interface and an existing provider of the same capability first.
 Include only `<gufo/ext/...>` headers and link `gufo_ext_runtime`; the build
@@ -124,7 +124,7 @@ unavailable, with a reason.
 ## Validate before publishing
 
 A model that answers one prompt isn't done. The
-[conformance guide](https://github.com/gufo-org/gufo/blob/cf86cb2717ef1275ddbf1506ff3ab7a6df88785c/docs/internal/extension-conformance.md) lists
+[conformance guide](https://github.com/gufo-org/gufo/blob/main/docs/internal/extension-conformance.md) lists
 what each capability must prove. In short:
 
 1. Test configuration, tokenizer and operators against an independent
@@ -163,5 +163,5 @@ For each Gufo update:
 If your model fits Gufo's goal, the best model for each use case on Strix
 Halo, you can ask for it to become official. That needs a named maintainer and
 the evidence above; the
-[support policy](https://github.com/gufo-org/gufo/blob/cf86cb2717ef1275ddbf1506ff3ab7a6df88785c/docs/internal/extension-distribution.md#support-states)
+[support policy](https://github.com/gufo-org/gufo/blob/main/docs/internal/extension-distribution.md#support-states)
 describes the process.

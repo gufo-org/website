@@ -88,7 +88,7 @@ As of October 19, 2026, on Strix Halo with the Q4 target:
 | Decode, one user, DFlash2 | up to 71.55 tokens/s |
 | Decode, 8 concurrent users, DFlash2 | 128.42 tokens/s in total |
 
-The [full benchmarks](https://github.com/gufo-org/gufo/blob/cf86cb2717ef1275ddbf1506ff3ab7a6df88785c/docs/internal/models/qwen3.8-27b/BENCHMARKS.md) compare
+The [full benchmarks](https://github.com/gufo-org/gufo/blob/main/docs/internal/models/qwen3.8-27b/BENCHMARKS.md) compare
 with llama.cpp at every depth and include Q8. The
-[quality report](https://github.com/gufo-org/gufo/blob/cf86cb2717ef1275ddbf1506ff3ab7a6df88785c/docs/internal/models/qwen3.8-27b/QUALITY.md) covers text and
+[quality report](https://github.com/gufo-org/gufo/blob/main/docs/internal/models/qwen3.8-27b/QUALITY.md) covers text and
 vision accuracy.

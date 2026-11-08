@@ -54,4 +54,4 @@ other GPU work, and let the machine cool between runs, because sustained load
 lowers its clock speeds. Run each case a few times and compare medians.
 
 The full method, the benchmark driver and the reference builds are in the
-[benchmark methodology](https://github.com/gufo-org/gufo/blob/cf86cb2717ef1275ddbf1506ff3ab7a6df88785c/docs/internal/benchmarks.md).
+[benchmark methodology](https://github.com/gufo-org/gufo/blob/main/docs/internal/benchmarks.md).

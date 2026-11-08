@@ -7,8 +7,9 @@
 // docs/figures/*.svg. Each page gets front matter with the title and summary from its
 // first lines. Links to other public pages become /docs/<version>/<page>; links to
 // anything else in the repository become GitHub URLs at --ref. The navigation comes
-// from docs/README.md and the model table in docs/models/README.md. Only the newest
-// --keep releases are kept; non-release versions are dropped once a release exists.
+// from docs/README.md and the model table in docs/models/README.md. The newest --keep
+// releases are kept, plus non-release versions such as "development" (Gufo main),
+// which list after the releases. A version whose pages didn't change keeps its date.
 import fs from 'node:fs';
 import path from 'node:path';
 import { parseArgs } from 'node:util';
@@ -129,6 +130,21 @@ function navigation() {
   return [...groups.filter((g) => g.items.length > 0), models].filter((g) => g.items.length > 0);
 }
 
+// Snapshot the previous copy so an unchanged sync leaves versions.json alone.
+function snapshot(dir) {
+  const files = new Map();
+  const walk = (d) => {
+    if (!fs.existsSync(d)) return;
+    for (const e of fs.readdirSync(d, { withFileTypes: true })) {
+      const p = path.join(d, e.name);
+      if (e.isDirectory()) walk(p);
+      else files.set(path.relative(dir, p), fs.readFileSync(p, 'utf8'));
+    }
+  };
+  walk(dir);
+  return files;
+}
+const before = snapshot(outDir);
 fs.rmSync(outDir, { recursive: true, force: true });
 for (const [repoPath, slug] of pages) {
   const { title, summary, body } = parsePage(repoPath);
@@ -145,7 +161,10 @@ if (fs.existsSync(figures)) {
   }
 }
 
-// versions.json: newest first. Releases sort by semantic version; others go first.
+const after = snapshot(outDir);
+const unchanged = before.size === after.size && [...after].every(([file, text]) => before.get(file) === text);
+
+// versions.json: releases newest first by semantic version, then non-release versions.
 const versionsFile = path.join(outRoot, 'versions.json');
 const semver = (v) => v.split(/[.-]/).slice(0, 3).map(Number);
 const newer = (a, b) => {
@@ -154,10 +173,13 @@ const newer = (a, b) => {
   return 0;
 };
 let versions = fs.existsSync(versionsFile) ? JSON.parse(fs.readFileSync(versionsFile, 'utf8')) : [];
+const previous = versions.find((v) => v.version === args.version);
+const entry = { version: args.version, ref: args.ref, release: args.release, date: args.date, nav: navigation() };
 versions = versions.filter((v) => v.version !== args.version);
-versions.push({ version: args.version, ref: args.ref, release: args.release, date: args.date, nav: navigation() });
+versions.push(unchanged && previous && previous.ref === args.ref ? previous : entry);
 const releases = versions.filter((v) => v.release).sort(newer).slice(0, Number(args.keep));
-versions = releases.length > 0 ? releases : versions.filter((v) => !v.release);
+const others = versions.filter((v) => !v.release).sort((a, b) => a.version.localeCompare(b.version));
+versions = [...releases, ...others];
 fs.writeFileSync(versionsFile, `${JSON.stringify(versions, null, 2)}\n`);
 
 for (const entry of fs.readdirSync(outRoot, { withFileTypes: true })) {

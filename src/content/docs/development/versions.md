@@ -20,7 +20,7 @@ Before 1.0.0:
 - new features and breaking changes raise the minor version: 0.31.1 to 0.32.0.
 
 After 1.0.0, breaking changes raise the major version. The
-[changelog](https://github.com/gufo-org/gufo/blob/cf86cb2717ef1275ddbf1506ff3ab7a6df88785c/CHANGELOG.md) lists every release and marks breaking changes.
+[changelog](https://github.com/gufo-org/gufo/blob/main/CHANGELOG.md) lists every release and marks breaking changes.
 
 Extensions have a separate version; see the
 [extension API](/docs/development/extension-api#versions).
