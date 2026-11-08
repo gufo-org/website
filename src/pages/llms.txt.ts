@@ -1,11 +1,22 @@
 import type { APIRoute } from 'astro';
 import { getPosts } from '../lib/posts';
+import { docsUrl, getDocs, latest } from '../lib/docs';
 
 // Generated rather than kept in public/ so the blog is listed only once it has posts.
 export const GET: APIRoute = async () => {
   const posts = await getPosts();
   const optional =
     posts.length > 0 ? `\n## Optional\n\n- [Blog](https://gufo.blog/blog): engineering notes and design decisions\n` : '';
+
+  // Every page of the latest docs version, in the order of its navigation.
+  const entries = new Map((await getDocs()).map((entry) => [entry.id, entry]));
+  const docs = latest.nav
+    .flatMap((group) => group.items)
+    .map((item) => {
+      const entry = entries.get(`${latest.version}/${item.slug}`) ?? entries.get(`${latest.version}/${item.slug}/index`);
+      return `- [${item.title}](https://gufo.blog${docsUrl(latest.version, item.slug)}): ${entry?.data.summary ?? ''}`;
+    })
+    .join('\n');
 
   return new Response(
     `# Gufo
@@ -16,14 +27,14 @@ Gufo targets one machine only and supports only the best model in each class, so
 
 ## Docs
 
-- [Documentation](https://gufo.blog/docs): quickstart with Podman, the OpenAI-compatible API, and building from source with or without Nix
+- [Documentation](https://gufo.blog/docs): install, models, command line, server API, cache, troubleshooting and extensions
+${docs}
 - [Benchmarks](https://gufo.blog/benchmarks): measured prefill, decode and concurrency results for Qwen3.8 Flash-Next, Qwen3.8 27B and DeepSeek V4 Flash, compared with llama.cpp and antirez/ds4
 - [Extensions](https://gufo.blog/extensions): catalogue of core and community model extensions, with their capabilities, artifact keys, options and build commands
 
 ## Source
 
 - [GitHub repository](https://github.com/gufo-org/gufo): source code, model guides, benchmark and quality reports
-- [API contract](https://github.com/gufo-org/gufo/blob/main/docs/SERVER.md): Chat Completions and Responses endpoints
 - [Container images](https://github.com/gufo-org/toolboxes): prebuilt runtime and development images
 ${optional}`,
     { headers: { 'Content-Type': 'text/plain; charset=utf-8' } },

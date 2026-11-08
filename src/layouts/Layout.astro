@@ -7,6 +7,8 @@ interface Props {
   published?: Date;
   /** Keep the page out of search results, e.g. the blog index while it has no posts. */
   noindex?: boolean;
+  /** Canonical path when it differs from this page, such as an older docs version. */
+  canonical?: string;
 }
 
 const {
@@ -15,6 +17,7 @@ const {
   type = 'website',
   published,
   noindex = false,
+  canonical,
 } = Astro.props;
 // Absolute URLs need `site` in astro.config.mjs; without it the tags fall back to root-relative paths.
 const absolute = (path: string) => (Astro.site ? new URL(path, Astro.site).href : path);
@@ -40,7 +43,7 @@ import '../styles/global.css';
     <title>{title}</title>
     <meta name="description" content={description} />
     {noindex && <meta name="robots" content="noindex" />}
-    {Astro.site && <link rel="canonical" href={absolute(pagePath)} />}
+    {Astro.site && <link rel="canonical" href={absolute(canonical ?? pagePath)} />}
 
     <meta property="og:type" content={type} />
     {published && <meta property="article:published_time" content={published.toISOString()} />}

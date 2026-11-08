@@ -102,3 +102,7 @@
 .prose-gufo .fig-step-text > span { grid-area: 1 / 1; }
 .prose-gufo .fig-step-text b { font: 600 12px var(--font-mono); color: var(--color-forest); margin-right: 2px; }
 @media (prefers-reduced-motion: reduce) { .prose-gufo [data-show] { transition: none; } }
+/* Docs figures: the SVG brings its own paper card; inlined so it uses the site fonts. */
+.prose-gufo figure.doc-figure { margin: 2.2em 0; }
+.prose-gufo figure.doc-figure svg { display: block; width: 100%; height: auto; }
+.prose-gufo figure.doc-figure figcaption { margin-top: 0.7em; font-family: var(--font-serif); font-style: italic; font-size: 15px; line-height: 1.5; color: var(--color-ink-3); }

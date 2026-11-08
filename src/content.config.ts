@@ -17,4 +17,17 @@ const blog = defineCollection({
   }),
 });
 
-export const collections = { blog };
+// Gufo's public documentation, one directory per synced release (scripts/sync-docs.mjs).
+// versions.json beside it lists the versions, newest first, with their navigation.
+const docs = defineCollection({
+  // Keep the file path as the id: the default slugger drops the dot in qwen3.8-27b.
+  loader: glob({ pattern: '**/*.md', base: './src/content/docs', generateId: ({ entry }) => entry.replace(/\.md$/, '') }),
+  schema: z.object({
+    title: z.string(),
+    summary: z.string(),
+    // Path of the page in the Gufo repository, for the source link.
+    source: z.string(),
+  }),
+});
+
+export const collections = { blog, docs };

@@ -1,0 +1,32 @@
+---
+import { docsUrl, getDocs, latest, splitId } from '../../lib/docs';
+
+// /docs and /docs/<page> always point at the latest synced version. Static hosting
+// can't send a 301, so this is an immediate refresh with a canonical link.
+export async function getStaticPaths() {
+  const entries = await getDocs();
+  return entries
+    .map((entry) => splitId(entry.id))
+    .filter(({ version }) => version === latest.version)
+    .map(({ slug }) => ({ params: { slug: slug || undefined }, props: { target: docsUrl(latest.version, slug) } }));
+}
+
+const { target } = Astro.props;
+const absolute = Astro.site ? new URL(target, Astro.site).href : target;
+---
+
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <title>Gufo documentation</title>
+    <meta http-equiv="refresh" content={`0;url=${target}`} />
+    <meta name="robots" content="noindex" />
+    <link rel="canonical" href={absolute} />
+    <!-- Keep the #section of old links; the refresh above is the no-script fallback. -->
+    <script is:inline define:vars={{ target }}>location.replace(target + location.hash);</script>
+  </head>
+  <body>
+    <a href={target}>Gufo documentation</a>
+  </body>
+</html>

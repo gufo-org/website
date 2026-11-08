@@ -1,13 +1,19 @@
 import type { APIRoute } from 'astro';
 import { getPosts } from '../lib/posts';
+import { docsUrl, getDocs, latest, splitId } from '../lib/docs';
 
 // Hand-rolled rather than @astrojs/sitemap: the site has a handful of pages.
-const pages = ['/', '/docs', '/benchmarks', '/extensions'];
+const pages = ['/', '/benchmarks', '/extensions'];
 
 export const GET: APIRoute = async ({ site }) => {
   const posts = await getPosts();
   const entries: { path: string; lastmod?: Date }[] = [
     ...pages.map((path) => ({ path })),
+    // Only the latest docs version is indexed; older ones point their canonical link at it.
+    ...(await getDocs())
+      .map((entry) => splitId(entry.id))
+      .filter(({ version }) => version === latest.version)
+      .map(({ version, slug }) => ({ path: docsUrl(version, slug) })),
     // The blog index is listed once it has something to show.
     ...(posts.length > 0 ? [{ path: '/blog' }] : []),
     ...posts.map((post) => ({ path: `/blog/${post.id}`, lastmod: post.data.date })),

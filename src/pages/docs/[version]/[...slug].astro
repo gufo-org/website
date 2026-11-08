@@ -1,0 +1,121 @@
+---
+import { render } from 'astro:content';
+import Layout from '../../../layouts/Layout.astro';
+import Navbar from '../../../components/Navbar.astro';
+import Footer from '../../../components/Footer.astro';
+import { docsUrl, getDocs, latest, sourceUrl, splitId, versions } from '../../../lib/docs';
+import '../../../styles/prose.css';
+
+// One page per synced version and Gufo doc; /docs/<page> redirects to the latest version.
+export async function getStaticPaths() {
+  const entries = await getDocs();
+  return entries.map((entry) => {
+    const { version, slug } = splitId(entry.id);
+    return { params: { version, slug: slug || undefined }, props: { entry } };
+  });
+}
+
+const { entry } = Astro.props;
+const { version, slug } = splitId(entry.id);
+const info = versions.find((v) => v.version === version)!;
+const { Content } = await render(entry);
+const isLatest = version === latest.version;
+// The same page in each version, or that version's home when it doesn't have it.
+const pagesByVersion = new Map<string, Set<string>>();
+for (const other of await getDocs()) {
+  const id = splitId(other.id);
+  if (!pagesByVersion.has(id.version)) pagesByVersion.set(id.version, new Set());
+  pagesByVersion.get(id.version)!.add(id.slug);
+}
+const switchTo = (v: string) => docsUrl(v, pagesByVersion.get(v)?.has(slug) ? slug : '');
+const label = (v: typeof info) => (v.release ? `v${v.version}` : v.version);
+const canonical = isLatest ? undefined : docsUrl(latest.version, pagesByVersion.get(latest.version)?.has(slug) ? slug : '');
+---
+
+<Layout title={`${entry.data.title} · Gufo docs`} description={entry.data.summary} canonical={canonical}>
+  <Navbar currentPath="/docs" />
+
+  <div class="w-full max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+    <div class="grid grid-cols-1 lg:grid-cols-4 gap-8 items-start">
+      <details id="toc-mobile" class="lg:hidden border-y border-line text-sm">
+        <summary class="cursor-pointer py-3 text-ink-2 select-none">Pages</summary>
+        <div class="pb-4 space-y-4">
+          {info.nav.map((group) => (
+            <div>
+              <div class="text-xs mb-1 text-ink-4">{group.group}</div>
+              <ul>
+                {group.items.map((item) => (
+                  <li><a href={docsUrl(version, item.slug)} class={`block py-1.5 ${item.slug === slug ? 'text-ink' : 'text-ink-2 hover:text-ink'}`}>{item.title}</a></li>
+                ))}
+              </ul>
+            </div>
+          ))}
+        </div>
+      </details>
+
+      <aside class="hidden lg:block lg:col-span-1 min-w-0 border-r border-line pr-4 space-y-6 text-sm sticky top-24 max-h-[calc(100vh-7rem)] overflow-y-auto">
+        <label class="block">
+          <span class="text-xs text-ink-4">Version</span>
+          <select data-version-picker class="mt-1 w-full rounded border border-line bg-paper px-2 py-1.5 text-ink-2">
+            {versions.map((v) => (
+              <option value={switchTo(v.version)} selected={v.version === version}>{label(v)}{v === latest ? ' (latest)' : ''}</option>
+            ))}
+          </select>
+        </label>
+        <a href={docsUrl(version, '')} class={`block px-2.5 py-1.5 rounded ${slug === '' ? 'sidebar-link-active' : 'text-ink-2 hover:text-ink hover:bg-paper-2'}`}>Overview</a>
+        {info.nav.map((group) => (
+          <div>
+            <div class="text-xs mb-2 text-ink-4">{group.group}</div>
+            <ul class="space-y-1">
+              {group.items.map((item) => (
+                <li>
+                  <a
+                    href={docsUrl(version, item.slug)}
+                    aria-current={item.slug === slug ? 'page' : undefined}
+                    class={`block px-2.5 py-1.5 rounded transition-colors ${item.slug === slug ? 'sidebar-link-active' : 'text-ink-2 hover:text-ink hover:bg-paper-2'}`}
+                  >
+                    {item.title}
+                  </a>
+                </li>
+              ))}
+            </ul>
+          </div>
+        ))}
+      </aside>
+
+      <main class="lg:col-span-3 min-w-0">
+        <div class="flex items-center gap-2 text-xs text-ink-3 mb-6">
+          <a href="/" class="hover:text-ink">Home</a>
+          <span>/</span>
+          <a href={docsUrl(version, '')} class="hover:text-ink">Documentation</a>
+          <span>/</span>
+          <span class="text-ink">{label(info)}</span>
+        </div>
+        {!isLatest && (
+          <p class="mb-6 rounded border border-line bg-paper px-4 py-3 text-sm text-ink-2">
+            {info.release ? `These pages describe Gufo ${label(info)}.` : 'These pages describe the development version of Gufo.'}{' '}
+            <a href={switchTo(latest.version)} class="text-forest underline">Read the latest release, {label(latest)}</a>.
+          </p>
+        )}
+        <h1 class="text-4xl sm:text-5xl text-ink mb-8">{entry.data.title}</h1>
+        <div class="prose-gufo [&_table]:block [&_table]:overflow-x-auto [&_h2]:scroll-mt-24 [&_h3]:scroll-mt-24">
+          <Content />
+        </div>
+        <p class="mt-12 pt-4 border-t border-line text-xs text-ink-3">
+          Synced from <a href={sourceUrl(info.ref, entry.data.source)} class="underline hover:text-ink">{entry.data.source}</a>
+          {info.release ? ` at v${info.version}` : ` at ${info.ref.slice(0, 8)}`}, {info.date}.
+        </p>
+      </main>
+    </div>
+  </div>
+
+  <Footer />
+</Layout>
+
+<script>
+  document.querySelector<HTMLSelectElement>('[data-version-picker]')?.addEventListener('change', (event) => {
+    window.location.href = (event.target as HTMLSelectElement).value;
+  });
+  const mobileToc = document.getElementById('toc-mobile') as HTMLDetailsElement | null;
+  mobileToc?.querySelectorAll('a').forEach((link) => link.addEventListener('click', () => (mobileToc.open = false)));
+</script>
