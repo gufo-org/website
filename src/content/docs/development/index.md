@@ -30,6 +30,11 @@ pages explain how to install it, run models, and extend it with your own.
 - [Extension API](/docs/development/extension-api): versions and the contracts a provider
   implements.
 
+## About
+
+- [Reference projects](/docs/development/reference-projects): the open-source engines Gufo
+  builds on.
+
 ## Contribute
 
 Developer documentation, design records and per-model evidence live in

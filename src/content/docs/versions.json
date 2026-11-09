@@ -169,6 +169,15 @@
         ]
       },
       {
+        "group": "About",
+        "items": [
+          {
+            "title": "Reference projects",
+            "slug": "reference-projects"
+          }
+        ]
+      },
+      {
         "group": "Models",
         "items": [
           {
