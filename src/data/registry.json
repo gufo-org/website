@@ -1,7 +1,7 @@
 {
   "registry": {
     "repository": "gufo-org/gufo-extension",
-    "revision": "673574985997e7cb9eb23ef30bff4346b2f6c74c"
+    "revision": "62bdc7e60a001b5f1fa173593286db77fed2ccd1"
   },
   "gufo": [
     {
@@ -38,8 +38,8 @@
       "releases": [
         {
           "version": "0.1.0",
-          "revision": "ab48afcab3390f781db703a9c09c2fd52c29fc24",
-          "digest": "sha256:a531ab549fd4525c995b71e6aa2ee8c2692b5167f73a611753a6f29ca30b842c",
+          "revision": "071c051471f7f00b0b15e88c5eabe19b5662431c",
+          "digest": "sha256:5fe9152d7ba2545a79f709a304911e5cb63139de91b7114967bf35c43470a721",
           "apiVersion": ">= 0.2.14",
           "platforms": [
             "linux"
@@ -141,9 +141,9 @@
       "releases": [
         {
           "version": "0.4.0",
-          "revision": "7a531b8280298eb05b3441395cf45c5d2b68a32d",
-          "digest": "sha256:aa515243c5ada69468527a4b836a2da0b7dd978da08e787f58d41b4feb5ca489",
-          "apiVersion": ">= 0.2.6",
+          "revision": "cbc13fed6deffabe39c2677abf915643137c248a",
+          "digest": "sha256:22d202c229731b913e7fb10e32ba446be1502d8a603da4483b0dd78aa5350788",
+          "apiVersion": ">= 0.2.16",
           "platforms": [
             "linux"
           ],
@@ -194,6 +194,57 @@
         }
       ],
       "options": []
+    },
+    {
+      "name": "strycast_qwen35moe",
+      "description": "Qwen3.6-35B-A3B and Ornith 1.5 122B on Strix Halo with MTP and DFlash2 speculative decoding",
+      "homepage": "https://github.com/slimsami/strycast-qwen35moe-gufo-extension",
+      "source": "https://github.com/slimsami/strycast-qwen35moe-gufo-extension",
+      "license": "MIT",
+      "maintainers": [
+        "@slimsami"
+      ],
+      "releases": [
+        {
+          "version": "0.0.1",
+          "revision": "4882b7a6954fe472218d0d120ee3665076fe71fa",
+          "digest": "sha256:03a06f35f0ca7939a3c6e433b276c01e0d4d3895a223332a304b84d142daa47e",
+          "apiVersion": ">= 0.2.0",
+          "platforms": [
+            "linux"
+          ]
+        }
+      ],
+      "providers": [
+        {
+          "id": "qwen35moe",
+          "capability": "text",
+          "keys": [
+            "gguf:qwen35moe"
+          ],
+          "modelIds": [
+            "qwen35moe"
+          ],
+          "speculative": [
+            "dflash2",
+            "mtp"
+          ]
+        }
+      ],
+      "options": [
+        {
+          "name": "--dflash-model",
+          "help": "DFlash2 draft model path for speculative decoding"
+        },
+        {
+          "name": "--mtp-model",
+          "help": "MTP draft model path for speculative decoding"
+        },
+        {
+          "name": "--kv-cache",
+          "help": "Attention KV cache format: f16 (default) or q8_0, 8-bit with about half the KV memory"
+        }
+      ]
     }
   ]
 }
