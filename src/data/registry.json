@@ -1,7 +1,7 @@
 {
   "registry": {
     "repository": "gufo-org/gufo-extension",
-    "revision": "3020df4e8c8ac53a29986f2ea5a91ea0803556d6"
+    "revision": "673574985997e7cb9eb23ef30bff4346b2f6c74c"
   },
   "gufo": [
     {
@@ -22,7 +22,7 @@
     },
     {
       "version": "development",
-      "api": "0.2.16"
+      "api": "0.2.18"
     }
   ],
   "extensions": [
@@ -94,6 +94,16 @@
         "@brunobarbosaux-ai"
       ],
       "releases": [
+        {
+          "version": "0.1.1",
+          "revision": "7420f20fa093b7116628c22a898e6b7f43a1424f",
+          "digest": "sha256:744ce829609f48129072478364a3903f5bd8550b0d6c53455d78f721d30366cc",
+          "apiVersion": ">= 0.2.7",
+          "platforms": [
+            "linux"
+          ],
+          "notes": "Weight placement fix: decide kMalloc vs managed once per model load (Flash-Next pattern) instead of a bare hipMalloc per tensor, so machines with a small device-heap cap load successfully."
+        },
         {
           "version": "0.1.0",
           "revision": "efacf0e2f0e8e30f67bccff56dede129928a9f7f",
