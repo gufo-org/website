@@ -1,5 +1,118 @@
 [
   {
+    "version": "0.33.0",
+    "ref": "v0.33.0",
+    "release": true,
+    "date": "2026-11-09",
+    "nav": [
+      {
+        "group": "Get started",
+        "items": [
+          {
+            "title": "Install",
+            "slug": "install"
+          },
+          {
+            "title": "Models",
+            "slug": "models"
+          },
+          {
+            "title": "Command line",
+            "slug": "cli"
+          },
+          {
+            "title": "Server",
+            "slug": "server"
+          }
+        ]
+      },
+      {
+        "group": "Run it well",
+        "items": [
+          {
+            "title": "Cache",
+            "slug": "cache"
+          },
+          {
+            "title": "Troubleshooting",
+            "slug": "troubleshooting"
+          },
+          {
+            "title": "Benchmarks",
+            "slug": "benchmarks"
+          },
+          {
+            "title": "Versions",
+            "slug": "versions"
+          }
+        ]
+      },
+      {
+        "group": "Extend it",
+        "items": [
+          {
+            "title": "Extensions",
+            "slug": "extensions"
+          },
+          {
+            "title": "Writing an extension",
+            "slug": "writing-extensions"
+          },
+          {
+            "title": "Extension API",
+            "slug": "extension-api"
+          }
+        ]
+      },
+      {
+        "group": "About",
+        "items": [
+          {
+            "title": "Reference projects",
+            "slug": "reference-projects"
+          }
+        ]
+      },
+      {
+        "group": "Models",
+        "items": [
+          {
+            "title": "DeepSeek V4 Flash",
+            "slug": "models/deepseek-v4-flash"
+          },
+          {
+            "title": "EmbeddingGemma 2",
+            "slug": "models/embeddinggemma-2"
+          },
+          {
+            "title": "MiniMax H3 FL2VA",
+            "slug": "models/minimax-h3"
+          },
+          {
+            "title": "Qwen-Image-2.1",
+            "slug": "models/qwen-image-2.1"
+          },
+          {
+            "title": "Qwen3-ASR 1.7B",
+            "slug": "models/qwen3-asr"
+          },
+          {
+            "title": "Qwen3-TTS 12Hz 1.7B",
+            "slug": "models/qwen3-tts"
+          },
+          {
+            "title": "Qwen3.8 27B",
+            "slug": "models/qwen3.8-27b"
+          },
+          {
+            "title": "Qwen3.8 Flash-Next",
+            "slug": "models/qwen3.8-flash-next"
+          }
+        ]
+      }
+    ]
+  },
+  {
     "version": "0.32.0",
     "ref": "v0.32.0",
     "release": true,
