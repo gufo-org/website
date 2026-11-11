@@ -1,7 +1,7 @@
 {
   "registry": {
     "repository": "gufo-org/gufo-extension",
-    "revision": "62bdc7e60a001b5f1fa173593286db77fed2ccd1"
+    "revision": "7e3bf21ab752217e296e8f592d44bf86cd685c6a"
   },
   "gufo": [
     {
@@ -26,7 +26,7 @@
     },
     {
       "version": "development",
-      "api": "0.2.21"
+      "api": "0.3.0"
     }
   ],
   "extensions": [
@@ -40,6 +40,16 @@
         "@franzmoca"
       ],
       "releases": [
+        {
+          "version": "0.2.0",
+          "revision": "004f8cc098614663be49dc3073908da00f725c28",
+          "digest": "sha256:ec2c884a9eae30f8f683a797ba6148476e87bc2a32eb906ec9b1af0abd0e7f30",
+          "apiVersion": ">= 0.2.17",
+          "platforms": [
+            "linux"
+          ],
+          "notes": "Direction and LoRA adapters (--adapter, --adapter-scale); faster prefill and streamed decode, with more expert cache on streamed builds; --prefill-batch 4096 keeps the prompt cache and gives the same logits as 2048. Built on Gufo 0.33.0."
+        },
         {
           "version": "0.1.0",
           "revision": "071c051471f7f00b0b15e88c5eabe19b5662431c",
@@ -85,6 +95,14 @@
         {
           "name": "--expert-cache-bytes",
           "help": "With --stream-experts: streamed expert cache bytes (default: what the sessions leave)"
+        },
+        {
+          "name": "--adapter",
+          "help": "Direction or LoRA adapter GGUF applied to the outputs that write into the residual streams; weights unchanged"
+        },
+        {
+          "name": "--adapter-scale",
+          "help": "With --adapter: factor on the adapter's own scale (default: 1)"
         }
       ]
     },
@@ -98,6 +116,16 @@
         "@brunobarbosaux-ai"
       ],
       "releases": [
+        {
+          "version": "0.2.0",
+          "revision": "b8c6d165f0888d5d516563dc382ae0ab24c5eeaa",
+          "digest": "sha256:129994a14f8e0c02ba6301a729494b9779cf0b075b39c881323f89d31decdd0c",
+          "apiVersion": ">= 0.2.7",
+          "platforms": [
+            "linux"
+          ],
+          "notes": "Session contexts are sized to the request (prompt + generation) instead of a hardcoded 8192, clamped to the model's 262144 native context and to free device memory, so long contexts degrade gracefully instead of failing."
+        },
         {
           "version": "0.1.1",
           "revision": "7420f20fa093b7116628c22a898e6b7f43a1424f",
