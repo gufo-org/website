@@ -105,6 +105,10 @@ well as the server runner. The [extension API](/docs/development/extension-api) 
 cache adapter, sampling defaults, reasoning markers, tool dialects and
 options.
 
+**Image models** declare startup options for `serve image` in their manifest.
+Declare which request features you support and apply background conditioning
+in your runner. See [`image.hpp`](https://github.com/gufo-org/gufo/blob/main/include/gufo/ext/image.hpp) for the contract.
+
 ## Build and test
 
 Point a Gufo checkout at your directory:
