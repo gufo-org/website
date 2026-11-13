@@ -149,7 +149,7 @@ Request fields and limits are on the [MiniMax H3](/docs/development/models/minim
 | --- | --- | --- |
 | `gufo serve asr` | `POST /v1/audio/transcriptions`, WebSocket `/v1/realtime` | [Qwen3-ASR](/docs/development/models/qwen3-asr) |
 | `gufo serve tts` | `POST /v1/audio/speech`, `GET /v1/audio/voices`, WebSocket `/v1/audio/speech/stream` | [Qwen3-TTS](/docs/development/models/qwen3-tts) |
-| `gufo serve image` | `POST /v1/images/generations`, `POST /v1/images/edits` | [Qwen-Image-2.1](/docs/development/models/qwen-image-2.1) |
+| `gufo serve image` | `POST /v1/images/generations`, `POST /v1/images/edits`, A1111 `/sdapi/v1/txt2img` and `/sdapi/v1/img2img` | [Qwen-Image-2.1](/docs/development/models/qwen-image-2.1) |
 | `gufo serve decision` | `POST /v1/systemone` | Defined by the model |
 
 ## Model names
