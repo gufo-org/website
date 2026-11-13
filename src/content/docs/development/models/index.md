@@ -21,7 +21,8 @@ to run the model and what speed to expect.
 | Qwen3.8 Flash-Next | Sharded Q4 GGUF; text/images | [Usage and modes](/docs/development/models/qwen3.8-flash-next) |
 <!-- END GENERATED MODEL TABLE -->
 
-Gufo doesn't ship weights; download them from Hugging Face as each page shows.
+Install a model's weights with `gufo model install <id>`, as each page shows;
+see [model files](/docs/development/install#model-files).
 Every speed on these pages was measured on Strix Halo with 128 GB of memory,
 on the date given next to it.
 
