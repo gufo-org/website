@@ -1,111 +1,83 @@
 ---
-import { Code } from 'astro:components';
 import Layout from '../layouts/Layout.astro';
 import Navbar from '../components/Navbar.astro';
 import Footer from '../components/Footer.astro';
-import ModelMatrix from '../components/ModelMatrix.astro';
-import readme from '../content/readme.md?raw';
-
-const principles = [
-  { title: 'Fewer models, done well', body: 'The best model for each size, not every model.' },
-  { title: 'Speed never costs quality', body: 'Every model has a quality report.' },
-  { title: 'Measure the whole workload', body: 'A faster kernel that makes requests slower gets rejected.' },
-  { title: 'Real workloads, reproducible builds', body: 'Several users and long conversations are the normal case.' },
+// Keep this list aligned with the official Gufo README's model list.
+const models = [
+  { name: 'Qwen3.8 Flash-Next', role: 'Text and images', href: '/docs/models/qwen3.8-flash-next' },
+  { name: 'Qwen3.8 27B', role: 'Text and images', href: '/docs/models/qwen3.8-27b' },
+  { name: 'DeepSeek V4 Flash', role: 'Text', href: '/docs/models/deepseek-v4-flash' },
+  { name: 'EmbeddingGemma 2', role: 'Multimodal embeddings', href: '/docs/models/embeddinggemma-2' },
+  { name: 'Qwen3-ASR 1.7B', role: 'Speech to text', href: '/docs/models/qwen3-asr' },
+  { name: 'Qwen3-TTS 1.7B', role: 'Speech and voice cloning', href: '/docs/models/qwen3-tts' },
+  { name: 'Qwen-Image-2.1 & Turbo', role: 'Image generation and editing', href: 'https://github.com/gufo-org/gufo/blob/main/docs/models/qwen-image-2.1.md' },
+  { name: 'MiniMax H3', role: 'Video with sound', href: '/docs/models/minimax-h3' },
 ];
-
-// The docs README is the single source for the quickstart; its first shell block is shown here.
-const quickstart = readme.match(/```sh\n([\s\S]*?)\n```/)?.[1] ?? '';
-if (!quickstart) throw new Error('No sh code block found in src/content/readme.md');
 ---
 
 <Layout title="Gufo: the Strix Halo inference engine">
   <Navbar currentPath="/" />
 
   <main id="main-content" class="flex-1">
-    <!-- Hero -->
-    <header class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 pt-20 pb-20 sm:pt-28 sm:pb-24">
-      <h1 class="text-4xl sm:text-5xl lg:text-[3.5rem] text-ink leading-[1.04] text-balance xl:whitespace-nowrap">
-        The <em class="font-bold">Open Source</em> Strix Halo AI engine
+    <header class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 pt-12 pb-14 sm:pt-16 sm:pb-16">
+      <h1 class="text-4xl sm:text-5xl lg:text-[3.5rem] text-ink leading-[1.1] text-balance">
+        Gufo, the <em class="text-forest">Open Source</em> Strix Halo AI Engine
       </h1>
-      <div class="mt-10 flex flex-wrap items-center gap-3">
-        <a href="/docs" class="inline-flex items-center h-11 px-5 rounded-full bg-forest text-ivory text-sm hover:bg-forest-dark transition-colors">
-          Get started
-        </a>
-        <a
-          href="/benchmarks"
-          class="inline-flex items-center h-11 px-5 rounded-full border border-line-strong text-ink text-sm hover:bg-paper transition-colors"
-        >
-          See benchmarks
-        </a>
+      <p class="mt-5 max-w-2xl text-lg sm:text-xl text-ink-2 leading-relaxed">
+        Run text, vision and audio models locally, with extensions.
+      </p>
+      <div class="mt-7 flex flex-wrap items-center gap-3">
+        <a href="/docs" class="inline-flex items-center h-12 px-6 rounded-full bg-forest text-ivory text-sm font-semibold hover:bg-forest-dark transition-colors">Get started <span class="ml-3" aria-hidden="true">→</span></a>
+        <a href="/benchmarks" class="inline-flex items-center h-12 px-6 rounded-full border border-line-strong text-ink text-sm font-semibold hover:bg-paper transition-colors">See benchmarks</a>
       </div>
     </header>
 
-    <!-- Principles -->
-    <section class="border-t border-line">
-      <div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-20 grid grid-cols-1 lg:grid-cols-3 gap-10">
-        <div><p class="eyebrow mb-3">01 / Principles</p><h2 class="text-3xl text-ink">Why Gufo</h2></div>
-        <div class="lg:col-span-2 grid grid-cols-1 sm:grid-cols-2 gap-x-10 gap-y-12">
-          <p class="sm:col-span-2 text-lg text-ink leading-relaxed">
-            We were tired of owning hardware we couldn't fully use. So we built Gufo: an inference engine tuned end to
-            end for Strix Halo, running only the best model in each class, with no performance left on the table.
-          </p>
-          {principles.map((p) => (
-            <div>
-              <h3 class="text-base font-semibold text-ink">{p.title}</h3>
-              <p class="mt-3 text-[15px] text-ink-2 leading-relaxed">{p.body}</p>
-            </div>
-          ))}
-          <p class="sm:col-span-2 text-[15px] text-ink-2 leading-relaxed">
-            Contributions are welcome. Two community forks are worth a look: a
-            <a href="https://github.com/pixmaate/gufo" target="_blank" rel="noopener noreferrer" class="text-ink underline decoration-line-strong hover:decoration-ink">Windows port</a>
-            and
-            <a href="https://github.com/neuhaus/gufo" target="_blank" rel="noopener noreferrer" class="text-ink underline decoration-line-strong hover:decoration-ink">Gufo RDMA</a>
-            for two Strix Halos linked together.
-          </p>
-        </div>
-      </div>
-    </section>
-
-    <!-- Quickstart -->
-    <section class="border-t border-line">
-      <div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-20 grid grid-cols-1 lg:grid-cols-3 gap-10 [&>*]:min-w-0">
-        <div>
-          <p class="eyebrow mb-3">02 / Quickstart</p>
-          <h2 class="text-3xl text-ink">Serve in two steps</h2>
-          <p class="mt-5 text-[15px] text-ink-2 leading-relaxed">
-            Download the weights, then start the runtime image with access to the GPU. The server listens on port 8080
-            and speaks the OpenAI API, so Open WebUI, Codex or any OpenAI SDK can use
-            <code class="text-ink">localhost:8080/v1</code>.
-          </p>
-          <a href="/docs/install#container" class="inline-block mt-6 text-sm text-ink underline decoration-line-strong hover:decoration-ink">
-            Full quickstart, or build from source
-          </a>
-        </div>
-
-        <div class="lg:col-span-2 code-block self-start">
-          <div class="code-block-header"><span>Quickstart</span><span>sh</span></div>
-          <Code code={quickstart} lang="sh" theme="github-light" class="p-5 text-[13px] leading-relaxed overflow-x-auto bg-transparent!" />
-        </div>
-      </div>
-    </section>
-
-    <!-- Models -->
-    <section class="border-t border-line">
-      <div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-20 space-y-10">
-        <div class="flex flex-col sm:flex-row sm:items-end justify-between gap-4">
+    <section class="border-t border-line bg-paper/50">
+      <div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-12 sm:py-14">
+        <div class="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-4 mb-8">
           <div>
-            <p class="eyebrow mb-3">03 / Models</p>
-            <h2 class="text-3xl text-ink">Supported models</h2>
-            <p class="mt-3 text-[15px] text-ink-2 max-w-2xl leading-relaxed">
-              Each model has its own implementation, kernels and tests under <code>src/models/</code>.
-            </p>
+            <p class="eyebrow mb-3">01 / GET STARTED</p>
+            <h2 class="text-3xl sm:text-4xl">Run Gufo your way</h2>
           </div>
-          <a href="/benchmarks" class="text-sm text-ink underline decoration-line-strong hover:decoration-ink shrink-0">
-            Benchmark tables
+        </div>
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <a href="/docs/install" class="group flex flex-col min-h-40 rounded-xl border border-line bg-ivory p-5 hover:border-forest transition-colors">
+            <span class="flex items-center justify-between gap-4"><span class="font-mono text-sm text-forest">01 / PLATFORM</span><img src="/images/linux.png" alt="" width="40" height="40" class="h-10 w-10 object-contain" /></span>
+            <span class="mt-auto pt-8 flex items-end justify-between gap-4"><span><span class="block text-2xl font-semibold text-ink">Linux</span><span class="block mt-2 text-sm text-ink-2">Install and run Gufo</span></span><span class="text-xl text-forest group-hover:translate-x-1 transition-transform" aria-hidden="true">→</span></span>
+          </a>
+          <a href="/docs/install#windows" class="group flex flex-col min-h-40 rounded-xl border border-line bg-ivory p-5 hover:border-forest transition-colors">
+            <span class="flex items-center justify-between gap-4"><span class="font-mono text-sm text-forest">02 / PLATFORM</span><img src="/images/windows.png" alt="" width="40" height="40" class="h-10 w-10 object-contain" /></span>
+            <span class="mt-auto pt-8 flex items-end justify-between gap-4"><span><span class="block text-2xl font-semibold text-ink">Windows</span><span class="block mt-2 text-sm text-ink-2">Install and run Gufo</span></span><span class="text-xl text-forest group-hover:translate-x-1 transition-transform" aria-hidden="true">→</span></span>
+          </a>
+          <a href="https://lemonade-server.ai/docs/guide/cli/#gufo-gufo-recipe" target="_blank" rel="noopener noreferrer" class="group flex flex-col min-h-40 rounded-xl border border-line bg-ivory p-5 hover:border-forest transition-colors">
+            <span class="flex items-center justify-between gap-4"><span class="font-mono text-sm text-forest">03 / INTEGRATION</span><img src="/images/lemonade.ico" alt="" width="40" height="40" class="h-10 w-10 object-contain" /></span>
+            <span class="mt-auto pt-8 flex items-end justify-between gap-4"><span><span class="block text-2xl font-semibold text-ink">Lemonade</span><span class="block mt-2 text-sm text-ink-2">Gufo is a supported backend</span></span><span class="text-xl text-forest" aria-hidden="true">↗</span></span>
           </a>
         </div>
+      </div>
+    </section>
 
-        <ModelMatrix />
+    <section class="border-t border-line">
+      <div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-12 sm:py-14">
+        <div class="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-5 mb-8">
+          <div><p class="eyebrow mb-3">02 / MODELS</p><h2 class="text-3xl sm:text-4xl">Models built into Gufo</h2><p class="mt-4 text-ink-2 leading-relaxed">Explore text, vision and audio models, each with its own implementation.</p></div>
+          <a href="/extensions" class="text-sm font-semibold text-forest underline decoration-line-strong hover:decoration-forest shrink-0">Explore extensions →</a>
+        </div>
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+          {models.map((model) => (
+            <a href={model.href} class="group flex flex-col min-h-32 rounded-xl border border-line p-5 hover:border-forest hover:bg-paper/50 transition-colors">
+              <span class="text-xs font-mono uppercase tracking-wide text-forest">{model.role}</span>
+              <span class="mt-auto pt-5 flex items-end justify-between gap-4"><span class="text-xl font-semibold text-ink">{model.name}</span><span class="text-forest group-hover:translate-x-1 transition-transform" aria-hidden="true">→</span></span>
+            </a>
+          ))}
+        </div>
+      </div>
+    </section>
+
+    <section class="border-t border-line bg-forest text-ivory">
+      <div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-12 sm:py-14 grid md:grid-cols-2 gap-8 md:gap-16">
+        <div><p class="font-mono text-xs text-ivory/70 mb-4">03 / COMMUNITY</p><h2 class="text-3xl sm:text-4xl">Open Source.</h2></div>
+        <div class="text-ivory/85 leading-relaxed"><p>Gufo is open source and contributions are welcome. The community also maintains Gufo RDMA, a fork for linking two Strix Halo systems.</p><a href="https://github.com/neuhaus/gufo" target="_blank" rel="noopener noreferrer" class="inline-block mt-6 text-sm font-semibold text-ivory underline decoration-ivory/50 hover:decoration-ivory">Explore Gufo RDMA ↗</a></div>
       </div>
     </section>
   </main>

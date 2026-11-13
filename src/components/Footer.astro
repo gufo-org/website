@@ -9,26 +9,27 @@ interface FooterLink {
 
 const columns: { title: string; links: FooterLink[] }[] = [
   {
-    title: 'Docs',
+    title: 'Documentation',
     links: [
+      { name: 'Getting started', href: '/docs' },
       { name: 'Install', href: '/docs/install' },
       { name: 'Server API', href: '/docs/server' },
-      { name: 'Extensions', href: '/extensions' },
     ],
   },
   {
-    title: 'Models',
+    title: 'Explore',
     links: [
-      { name: 'Qwen3.8 27B', href: '/benchmarks#qwen3.8-27b' },
-      { name: 'Qwen3.8 Flash-Next', href: '/benchmarks#qwen3.8-flash-next' },
-      { name: 'DeepSeek V4 Flash', href: '/benchmarks#deepseek-v4-flash' },
+      { name: 'Benchmarks', href: '/benchmarks' },
+      { name: 'Extensions', href: '/extensions' },
+      { name: 'Blog', href: '/blog' },
     ],
   },
   {
     title: 'Project',
     links: [
       { name: 'GitHub', href: 'https://github.com/gufo-org/gufo', external: true },
-      { name: 'OCI images', href: 'https://github.com/gufo-org/toolboxes', external: true },
+      { name: 'Releases', href: 'https://github.com/gufo-org/gufo/releases', external: true },
+      { name: 'Container images', href: 'https://github.com/gufo-org/toolboxes', external: true },
     ],
   },
 ];
@@ -43,7 +44,7 @@ const columns: { title: string; links: FooterLink[] }[] = [
           <span class="font-serif text-xl">Gufo</span>
         </a>
         <p class="mt-4 text-sm text-ink-3 leading-relaxed max-w-xs">
-          Local AI for AMD Strix Halo. Open source, built with the community.
+          Local AI for AMD Strix Halo.<br />Open source, built with the community.
         </p>
       </div>
 
