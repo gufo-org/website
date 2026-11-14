@@ -7,9 +7,9 @@ const models = [
   { name: 'Qwen3.8 Flash-Next', role: 'Text and images', href: '/docs/models/qwen3.8-flash-next' },
   { name: 'Qwen3.8 27B', role: 'Text and images', href: '/docs/models/qwen3.8-27b' },
   { name: 'DeepSeek V4 Flash', role: 'Text', href: '/docs/models/deepseek-v4-flash' },
-  { name: 'EmbeddingGemma 2', role: 'Multimodal embeddings', href: '/docs/models/embeddinggemma-2' },
-  { name: 'Qwen3-ASR 1.7B', role: 'Speech to text', href: '/docs/models/qwen3-asr' },
-  { name: 'Qwen3-TTS 1.7B', role: 'Speech and voice cloning', href: '/docs/models/qwen3-tts' },
+  { name: 'EmbeddingGemma 2', role: 'Multimodal embeddings', href: '/docs/models/embeddinggemma-2', npu: true },
+  { name: 'Qwen3-ASR 1.7B', role: 'Speech to text', href: '/docs/models/qwen3-asr', npu: true },
+  { name: 'Qwen3-TTS 1.7B', role: 'Speech and voice cloning', href: '/docs/models/qwen3-tts', npu: true },
   { name: 'Qwen-Image-2.1 & Turbo', role: 'Image generation and editing', href: 'https://github.com/gufo-org/gufo/blob/main/docs/models/qwen-image-2.1.md' },
   { name: 'MiniMax H3', role: 'Video with sound', href: '/docs/models/minimax-h3' },
 ];
@@ -66,7 +66,13 @@ const models = [
         <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
           {models.map((model) => (
             <a href={model.href} class="group flex flex-col min-h-32 rounded-xl border border-line p-5 hover:border-forest hover:bg-paper/50 transition-colors">
-              <span class="text-xs font-mono uppercase tracking-wide text-forest">{model.role}</span>
+              <span class="flex items-start justify-between gap-2">
+                <span class="text-xs font-mono uppercase tracking-wide text-forest">{model.role}</span>
+                <span class="flex shrink-0 gap-1.5" aria-label={model.npu ? 'Runs on GPU or NPU' : 'Runs on GPU'}>
+                  <span class="rounded-full border border-line-strong px-2 py-0.5 font-mono text-[10px] font-semibold tracking-wide text-ink-2">GPU</span>
+                  {model.npu && <span class="rounded-full bg-forest/10 px-2 py-0.5 font-mono text-[10px] font-semibold tracking-wide text-forest">NPU</span>}
+                </span>
+              </span>
               <span class="mt-auto pt-5 flex items-end justify-between gap-4"><span class="text-xl font-semibold text-ink">{model.name}</span><span class="text-forest group-hover:translate-x-1 transition-transform" aria-hidden="true">→</span></span>
             </a>
           ))}
