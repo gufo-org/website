@@ -133,6 +133,9 @@ cmake --install build/release
   [xdna-driver](https://github.com/amd/xdna-driver), which installs to
   `/opt/xilinx/xrt`; for another prefix, set `XILINX_XRT` to it. The Nix
   build pins the pair in [`.devops/nix/xrt`](https://github.com/gufo-org/gufo/blob/main/.devops/nix/xrt/default.nix).
+  Only `lib/gufo/libgufo_npu_xrt.so`, which Gufo loads on first NPU use,
+  links XRT: `gufo` starts without XRT and runs on the GPU, and libraries
+  bundled in XRT's `lib` directory never replace the ones `gufo` links.
 - If CMake can't find ROCm, pass `-DCMAKE_PREFIX_PATH=/opt/rocm`, and
   `-DCMAKE_HIP_COMPILER=/opt/rocm/llvm/bin/clang++` if it picks a system Clang.
 - The Nix build applies a [ROCm runtime patch](https://github.com/gufo-org/gufo/blob/main/.devops/nix/patches/rocr-fixed-cwsr-rocm10.patch)
