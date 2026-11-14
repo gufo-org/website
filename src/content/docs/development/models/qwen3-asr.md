@@ -82,3 +82,10 @@ As of September 21, 2026, on Strix Halo, transcription runs at **15.27×
 real time** once the model is loaded. See the
 [full benchmarks](https://github.com/gufo-org/gufo/blob/main/docs/internal/models/qwen3-asr/BENCHMARKS.md) and the
 [quality report](https://github.com/gufo-org/gufo/blob/main/docs/internal/models/qwen3-asr/QUALITY.md).
+
+## On the NPU
+
+`--npu` (on `gufo serve asr` and `gufo transcribe`) runs the model on the
+XDNA NPU with the GPU off, at about half the GPU's speed: a 10-second
+recording takes about 1.3 s. See the
+[NPU benchmarks](https://github.com/gufo-org/gufo/blob/main/docs/internal/models/qwen3-asr/BENCHMARKS.md#npu).
