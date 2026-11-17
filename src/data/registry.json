@@ -1,7 +1,7 @@
 {
   "registry": {
     "repository": "gufo-org/gufo-extension",
-    "revision": "04ebaa980f50b10ac7ff6d340c801bc67ef47bb1"
+    "revision": "9df3130f3278b9bc41e9ea0391093e11c254b69f"
   },
   "gufo": [
     {
@@ -285,6 +285,57 @@
         {
           "name": "--kv-cache",
           "help": "Attention KV cache format: f16 (default) or q8_0, 8-bit with about half the KV memory"
+        }
+      ]
+    },
+    {
+      "name": "upscale",
+      "description": "Real-ESRGAN x2/x4 image upscaling (SRVGGNetCompact) on Strix Halo with HIP",
+      "homepage": "https://github.com/D3rPapts/upscale-gufo-extension",
+      "source": "https://github.com/D3rPapts/upscale-gufo-extension",
+      "license": "MIT",
+      "maintainers": [
+        "@D3rPapts"
+      ],
+      "releases": [
+        {
+          "version": "0.1.0",
+          "revision": "42eed34073ad072e7e97a04888d0af80a8014deb",
+          "digest": "sha256:e29f272308caa77287462c7e36790d09814aa9dd80aa3802d6d971d4512d4e88",
+          "apiVersion": ">= 0.3.0",
+          "platforms": [
+            "windows"
+          ],
+          "notes": "First release: Real-ESRGAN SRVGGNetCompact (realesr-animevideov3, realesr-general-x4v3, realesr-general-wdn-x4v3) as an image_generation provider for /v1/images/edits, x2 and x4. GPU-validated on Strix Halo (Windows) against Gufo main 0d238d4f; bit-identical to the in-tree upscaler of gufo-studio-windows. Video upscaling is not included yet."
+        }
+      ],
+      "providers": [
+        {
+          "id": "realesrgan",
+          "capability": "image",
+          "keys": [
+            "safetensors:realesrgan",
+            "safetensors:SRVGGNetCompact"
+          ],
+          "modelIds": [
+            "realesr-animevideov3",
+            "realesr-general-x4v3",
+            "realesr-general-wdn-x4v3"
+          ]
+        }
+      ],
+      "options": [
+        {
+          "name": "--upscale-scale",
+          "help": "Largest magnification per axis the provider accepts: 4 (native) or 2; the output size comes from the request"
+        },
+        {
+          "name": "--upscale-tile-pixels",
+          "help": "Largest tile per network pass in input pixels (default 512 Ki)"
+        },
+        {
+          "name": "--upscale-fp32",
+          "help": "Direct FP32 convolutions instead of FP16 WMMA (validation path)"
         }
       ]
     }
