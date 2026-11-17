@@ -1,7 +1,7 @@
 {
   "registry": {
     "repository": "gufo-org/gufo-extension",
-    "revision": "9df3130f3278b9bc41e9ea0391093e11c254b69f"
+    "revision": "de6d06d79cd8843878e064173388ffd035b1f8d2"
   },
   "gufo": [
     {
@@ -172,6 +172,17 @@
       ],
       "releases": [
         {
+          "version": "0.6.0",
+          "revision": "f7893c6217f05ce8bff6b6912c695a76a9b1e194",
+          "digest": "sha256:600d5f1d7ef2a7a1e1b2f5d0e1bef9fc1d3741c9934ce67db3a93fb40ca4ea27",
+          "apiVersion": ">= 0.3.20",
+          "platforms": [
+            "linux",
+            "windows"
+          ],
+          "notes": "Adds XDNA NPU support via --npu, Windows support, shared audio decoding and text, vision, audio and decision performance improvements."
+        },
+        {
           "version": "0.4.0",
           "revision": "cbc13fed6deffabe39c2677abf915643137c248a",
           "digest": "sha256:22d202c229731b913e7fb10e32ba446be1502d8a603da4483b0dd78aa5350788",
@@ -225,7 +236,12 @@
           ]
         }
       ],
-      "options": []
+      "options": [
+        {
+          "name": "--npu",
+          "help": "Run the LFM3 backbone on the XDNA NPU (npu/README.md)"
+        }
+      ]
     },
     {
       "name": "strycast_qwen35moe",
