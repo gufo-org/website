@@ -1,7 +1,7 @@
 {
   "registry": {
     "repository": "gufo-org/gufo-extension",
-    "revision": "7e3bf21ab752217e296e8f592d44bf86cd685c6a"
+    "revision": "04ebaa980f50b10ac7ff6d340c801bc67ef47bb1"
   },
   "gufo": [
     {
@@ -237,6 +237,16 @@
         "@slimsami"
       ],
       "releases": [
+        {
+          "version": "0.1.0",
+          "revision": "14e46a3f7a79f4404dfd4d819cc8b33a92cd62ca",
+          "digest": "sha256:74827093e71d63cd1e170ac1ab6082ae59f792ab6db98161af2722560b93ab2e",
+          "apiVersion": ">= 0.2.21",
+          "platforms": [
+            "linux"
+          ],
+          "notes": "Builds against Gufo 0.33.0. Strycast's 35B-A3B and Ornith runner on the v0.33.0 base: Gufo's own KV-cache option, MTP prime chunk and layered prefill replace Strycast's earlier variants; the probe declines GGUFs whose expert formats the kernels cannot decode."
+        },
         {
           "version": "0.0.1",
           "revision": "4882b7a6954fe472218d0d120ee3665076fe71fa",
