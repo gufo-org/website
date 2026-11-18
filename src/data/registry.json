@@ -1,7 +1,7 @@
 {
   "registry": {
     "repository": "gufo-org/gufo-extension",
-    "revision": "de6d06d79cd8843878e064173388ffd035b1f8d2"
+    "revision": "8f8ff5e3275ce80f8373b7390ebbe27b63c41570"
   },
   "gufo": [
     {
@@ -26,7 +26,7 @@
     },
     {
       "version": "development",
-      "api": "0.3.20"
+      "api": "0.3.25"
     }
   ],
   "extensions": [
@@ -40,6 +40,16 @@
         "@franzmoca"
       ],
       "releases": [
+        {
+          "version": "0.3.0",
+          "revision": "8390e85c5bbd922adbdc8bbcd60473f08341cead",
+          "digest": "sha256:4389cd1a85d2209c61b9aaac3a0a43378069ad5220f65163ec704c6fa5fcc99c",
+          "apiVersion": ">= 0.3.3",
+          "platforms": [
+            "linux"
+          ],
+          "notes": "Extension API 0.3: prompts that arrive while another session decodes prefill one batch per pass (2048 tokens, following --prefill-batch), 36% faster with less total stall for the decoding session; prompt-cache restores and DSpark checkpoints wait for queued device writes. Built on Gufo a27bbf98 (after 0.34.0, included in 0.35.0)."
+        },
         {
           "version": "0.2.0",
           "revision": "004f8cc098614663be49dc3073908da00f725c28",
