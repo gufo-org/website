@@ -1,7 +1,7 @@
 {
   "registry": {
     "repository": "gufo-org/gufo-extension",
-    "revision": "8f8ff5e3275ce80f8373b7390ebbe27b63c41570"
+    "revision": "ce8b8a0f91a402cf715e88d70cf8eb4fd2257a15"
   },
   "gufo": [
     {
@@ -26,7 +26,7 @@
     },
     {
       "version": "development",
-      "api": "0.3.25"
+      "api": "0.3.28"
     }
   ],
   "extensions": [
@@ -170,6 +170,67 @@
         }
       ],
       "options": []
+    },
+    {
+      "name": "gemma4",
+      "description": "Gemma 4 31B, 31B QAT and 26B-A4B on Strix Halo: MTP drafting, vision, tool calls and reasoning",
+      "homepage": "https://github.com/franzmoca/gemma4-gufo-extension",
+      "source": "https://github.com/franzmoca/gemma4-gufo-extension",
+      "license": "MIT",
+      "maintainers": [
+        "@franzmoca"
+      ],
+      "releases": [
+        {
+          "version": "0.2.0",
+          "revision": "8dcfdbb8fe75cc98e4f44cf739bbb3b49ea41207",
+          "digest": "sha256:6f2e244639d0b3a9290fe6897fad40260de0e43adee5ae3d65cac0fce305386b",
+          "apiVersion": ">= 0.3.20",
+          "platforms": [
+            "linux"
+          ],
+          "notes": "First registry release. Built on Gufo 0.35.0."
+        }
+      ],
+      "providers": [
+        {
+          "id": "gemma4",
+          "capability": "text",
+          "keys": [
+            "gguf:gemma4"
+          ],
+          "modelIds": [
+            "gemma-4-31B-it",
+            "gemma-4-31B-it-qat",
+            "gemma-4-26B-A4B-it"
+          ],
+          "speculative": [
+            "mtp"
+          ]
+        }
+      ],
+      "options": [
+        {
+          "name": "--mtp-model",
+          "help": "gemma4-assistant MTP drafter GGUF for --speculative mtp"
+        },
+        {
+          "name": "--draft-calibration",
+          "help": "Where the calibrated policy learns: shared or request (exact seeded replay; default: shared)"
+        },
+        {
+          "name": "--draft-trace",
+          "help": "Append one JSON line per MTP verification cycle to this file"
+        },
+        {
+          "name": "--prefill-weights",
+          "help": "Prefill copies of the projections: off, compact or decoded (default: off)"
+        },
+        {
+          "name": "--image-tokens",
+          "help": "Soft tokens per image: 70, 140, 280, 560 or 1120 (default: 280)"
+        }
+      ]
     },
     {
       "name": "lfm3",
