@@ -1,7 +1,7 @@
 {
   "registry": {
     "repository": "gufo-org/gufo-extension",
-    "revision": "ce8b8a0f91a402cf715e88d70cf8eb4fd2257a15"
+    "revision": "22f1bb1873abede259c0323231fb8e43cd90d562"
   },
   "gufo": [
     {
@@ -26,7 +26,7 @@
     },
     {
       "version": "development",
-      "api": "0.3.28"
+      "api": "0.3.30"
     }
   ],
   "extensions": [
@@ -118,7 +118,7 @@
     },
     {
       "name": "flint",
-      "description": "Flint 40B MoE text generation",
+      "description": "Flint 40B MoE text generation with optional DFlash2 speculative decoding",
       "homepage": "https://github.com/brunobarbosaux-ai/flint-gufo-extension",
       "source": "https://github.com/brunobarbosaux-ai/flint-gufo-extension",
       "license": "MIT",
@@ -126,6 +126,16 @@
         "@brunobarbosaux-ai"
       ],
       "releases": [
+        {
+          "version": "0.3.0",
+          "revision": "b262cb6a23ad545ebb816710cc58da93f4adda97",
+          "digest": "sha256:642250f62f55198a23b88ea98a136832806e8e18246d3700b5736fd875efc672",
+          "apiVersion": ">= 0.3.0",
+          "platforms": [
+            "linux"
+          ],
+          "notes": "DFlash2 speculative decoding: opt-in draft/verify cycle with the Flint-DFlash2 drafter (--speculative dflash2 --dflash-model <gguf>; drafter must be passed explicitly), fixed and adaptive draft policies (adaptive default), byte-identical greedy output vs spec-off at depths 0/8k/32k/131k, no spec-off regression, prefix-reuse safe in serve, per-session drafter contexts (concurrency-safe), honest per-session ResourceClaim (scratch + MMQ arena + KV granule rounding). Provider exposes speculative_defaults (dflash2, max 7, min 1, adaptive). Ported to extension API 0.3 (required TextSchedulingProfile: pass_tokens 8192). Verified serve context ceiling 192k (256k startup hang is pre-existing, see DEFERRED). Built and validated on Gufo main 390639b3 (API 0.3.27, v0.35.0+)."
+        },
         {
           "version": "0.2.0",
           "revision": "b8c6d165f0888d5d516563dc382ae0ab24c5eeaa",
