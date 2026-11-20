@@ -1,7 +1,5 @@
 ---
 import Layout from '../layouts/Layout.astro';
-import Navbar from '../components/Navbar.astro';
-import Footer from '../components/Footer.astro';
 import { capabilities, extensions, gufoVersions, registryRevision, tiers, type Capability, type Extension, type Tier } from '../data/extensions';
 
 const github = 'https://github.com';
@@ -91,8 +89,6 @@ cmake --build --preset release`;
   title="Extensions · Gufo"
   description="Catalogue of Gufo model extensions: core models shipped in every build and reviewed community extensions you install by name, with their capabilities, artifact keys and options."
 >
-  <Navbar currentPath="/extensions" />
-
   <main id="main-content" class="flex-1 w-full max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-6">
     <div class="flex items-center gap-2 text-xs text-ink-3">
       <a href="/" class="hover:text-ink">Home</a>
@@ -190,7 +186,6 @@ cmake --build --preset release`;
                 data-search={text}
                 data-title={e.title.toLowerCase()}
                 data-index={idx}
-                aria-controls="detail-panel"
                 style={`--accent: ${tiers[e.tier].color}`}
                 class="ext-row flex flex-col gap-2 p-4 rounded-lg border border-line bg-ivory transition-colors"
               >
@@ -235,13 +230,7 @@ cmake --build --preset release`;
     </div>
 
     <div>
-      <div id="detail-scrim" class="fixed inset-0 z-[55] bg-ink/30 hidden" aria-hidden="true"></div>
-
-      <aside
-        id="detail-panel"
-        aria-label="Extension details"
-        class="detail-panel fixed inset-y-0 right-0 z-[60] w-full sm:w-[28rem] overflow-y-auto bg-ivory border-l border-line translate-x-full transition-transform"
-      >
+      <dialog id="detail-panel" aria-label="Extension details" class="side-sheet open:block w-full sm:w-[28rem] overflow-y-auto">
         {extensions.map((e) => {
           const cmd = command(e);
           const caps = capsOf(e);
@@ -379,7 +368,7 @@ cmake --build --preset release`;
             </section>
           );
         })}
-      </aside>
+      </dialog>
     </div>
 
     <!-- Writing one -->
@@ -408,7 +397,6 @@ cmake --build --preset release`;
     </section>
   </main>
 
-  <Footer />
 </Layout>
 
 <style>
@@ -565,19 +553,13 @@ cmake --build --preset release`;
     background: var(--accent);
     box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent) 20%, transparent);
   }
-
-  /* Tailwind 4 moves the sheet with `translate`, so opening resets that property. */
-  .detail-panel.is-open {
-    translate: none;
-  }
 </style>
 
 <script>
   const catalog = document.getElementById('catalog')!;
   const rows = [...catalog.querySelectorAll<HTMLAnchorElement>('.ext-row')];
   const details = [...document.querySelectorAll<HTMLElement>('[data-detail]')];
-  const panel = document.getElementById('detail-panel')!;
-  const scrim = document.getElementById('detail-scrim')!;
+  const panel = document.getElementById('detail-panel') as HTMLDialogElement;
   const checks = [...document.querySelectorAll<HTMLInputElement>('.facet-check')];
   const facetToggle = document.getElementById('facet-toggle')!;
   const facetBody = document.getElementById('facet-body')!;
@@ -647,51 +629,35 @@ cmake --build --preset release`;
     clearFacets();
   }
 
-  // Keep the closed panel out of the tab order and the page still while it is open.
-  function setOpen(open: boolean) {
-    panel.classList.toggle('is-open', open);
-    scrim.classList.toggle('hidden', !open);
-    panel.inert = !open;
-    document.body.style.overflow = open ? 'hidden' : '';
-    if (!open) rows.forEach((r) => r.setAttribute('aria-current', 'false'));
-  }
-
-  function select(name: string, open: boolean) {
+  // Show one extension in the details sheet. The modal dialog handles focus,
+  // Escape and the backdrop; the hash keeps the open extension linkable.
+  function select(name: string) {
     const row = rows.find((r) => r.dataset.ext === name);
-    if (!row) return false;
+    if (!row) return;
     if (row.hidden) reset();
-    rows.forEach((r) => r.setAttribute('aria-current', r === row ? 'true' : 'false'));
+    rows.forEach((r) => r.setAttribute('aria-current', String(r === row)));
     details.forEach((d) => (d.hidden = d.dataset.detail !== name));
+    if (!panel.open) panel.showModal();
     panel.scrollTop = 0;
-    if (open) {
-      setOpen(true);
-      panel.querySelector<HTMLElement>(`[data-detail="${name}"] .detail-close`)?.focus();
-    }
-    return true;
-  }
-
-  function close() {
-    const opener = rows.find((r) => r.getAttribute('aria-current') === 'true');
-    setOpen(false);
-    opener?.focus();
-    // Drop the hash so reopening the same extension still fires hashchange.
-    history.replaceState(null, '', location.pathname + location.search);
   }
 
   rows.forEach((row) =>
     row.addEventListener('click', (event) => {
       event.preventDefault();
-      const name = row.dataset.ext!;
-      history.replaceState(null, '', `#${name}`);
-      select(name, true);
+      history.replaceState(null, '', row.hash);
+      select(row.dataset.ext!);
     }),
   );
-  document.querySelectorAll('.detail-close').forEach((b) => b.addEventListener('click', close));
-  scrim.addEventListener('click', close);
-  document.addEventListener('keydown', (event) => {
-    if (event.key === 'Escape' && panel.classList.contains('is-open')) close();
+  panel.addEventListener('click', (event) => {
+    const target = event.target as HTMLElement;
+    if (target === panel || target.closest('.detail-close')) panel.close();
   });
-  window.addEventListener('hashchange', () => select(decodeURIComponent(location.hash.slice(1)), true));
+  panel.addEventListener('close', () => {
+    rows.forEach((r) => r.setAttribute('aria-current', 'false'));
+    // Drop the hash so reopening the same extension still fires hashchange.
+    history.replaceState(null, '', location.pathname + location.search);
+  });
+  window.addEventListener('hashchange', () => select(decodeURIComponent(location.hash.slice(1))));
 
   checks.forEach((c) => c.addEventListener('change', apply));
   facetClear.addEventListener('click', clearFacets);
@@ -705,6 +671,5 @@ cmake --build --preset release`;
   document.getElementById('catalog-reset')?.addEventListener('click', reset);
 
   // A link to one extension (/extensions#lfm3) opens its panel.
-  setOpen(false);
-  select(decodeURIComponent(location.hash.slice(1)), true);
+  select(decodeURIComponent(location.hash.slice(1)));
 </script>

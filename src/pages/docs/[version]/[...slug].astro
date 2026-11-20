@@ -1,8 +1,6 @@
 ---
 import { render } from 'astro:content';
 import Layout from '../../../layouts/Layout.astro';
-import Navbar from '../../../components/Navbar.astro';
-import Footer from '../../../components/Footer.astro';
 import { docsUrl, getDocs, latest, sourceUrl, splitId, versions } from '../../../lib/docs';
 import '../../../styles/prose.css';
 
@@ -33,8 +31,6 @@ const canonical = isLatest ? undefined : docsUrl(latest.version, pagesByVersion.
 ---
 
 <Layout title={`${entry.data.title} · Gufo docs`} description={entry.data.summary} canonical={canonical}>
-  <Navbar currentPath="/docs" />
-
   <div class="w-full max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
     <div class="grid grid-cols-1 lg:grid-cols-4 gap-8 items-start">
       <details id="toc-mobile" class="lg:hidden border-y border-line text-sm">
@@ -118,7 +114,6 @@ const canonical = isLatest ? undefined : docsUrl(latest.version, pagesByVersion.
     </div>
   </div>
 
-  <Footer />
 </Layout>
 
 <script>

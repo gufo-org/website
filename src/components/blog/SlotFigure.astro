@@ -78,13 +78,11 @@ const steps = [
   "A comes back while slot 1 is busy, so Gufo restores its checkpoint into slot 2.",
 ];
 const show = frames(steps.length);
-import StepControls from './StepControls.astro';
-import StepText from './StepText.astro';
+import Figure from './Figure.astro';
 import { frames } from './steps';
 ---
-<figure class="slf" data-steps={steps.length}>
-  <p class="slf-eyebrow"><span class="fig-eyebrow-title"><span class="slf-dot"></span>{figure !== undefined && <>Fig. {figure} · </>}A slot changes hands</span><span class="fig-eyebrow-side"><StepControls count={steps.length} /></span></p>
-  <div class="slf-scroll">
+<Figure class="slf" title="A slot changes hands" figure={figure} caption={caption} steps={steps}>
+  <div class="fig-scroll">
     <svg viewBox={`0 0 760 ${bottom + 40}`} role="img" aria-label="Moment 1: A has just finished a turn in slot 1. Its checkpoints hold their own copy of the private state and borrow the rows in the slot. Moment 2: while slot 1 is idle, the borrowed rows are copied to backing RAM. Moment 3: B takes slot 1 and overwrites it; the checkpoints now reference the rows in backing RAM, and without the copy they would read B's rows. Moment 4: A comes back and is restored into slot 2.">
       <defs>
         <marker id="slf-arrow" viewBox="0 0 8 8" refX="7" refY="4" markerWidth="7" markerHeight="7" orient="auto">
@@ -96,7 +94,7 @@ import { frames } from './steps';
         <clipPath id="slf-clip"><rect x="0" y="0" width={cellW} height={h} rx="6" /></clipPath>
       </defs>
 
-      {moments.map((m, j) => <text x={colX(j)} y="30" class="slf-head" {...show(`${j + 1}-`)}>{m}</text>)}
+      {moments.map((m, j) => <text x={colX(j)} y="30" class="fig-head" {...show(`${j + 1}-`)}>{m}</text>)}
 
       {lanes.map((lane, i) => {
         const y = laneY(i);
@@ -163,25 +161,9 @@ import { frames } from './steps';
       <text x="24" y={bottom + 30} class="slf-note" {...show('2-')}>The copy runs piece by piece while slot 1 has nothing to do, so by the time B arrives it is usually finished.</text>
     </svg>
   </div>
-  <StepText steps={steps} />
-  {caption && <figcaption>{caption}</figcaption>}
-</figure>
+</Figure>
 
-<style>
-  .slf {
-    margin: 2.5rem 0;
-    padding: 20px;
-    background: var(--color-paper);
-    border: 1px solid var(--color-line-strong);
-    border-radius: 10px;
-    font-family: var(--font-sans);
-  }
-  .slf-eyebrow { display: flex; align-items: center; justify-content: space-between; gap: 8px 12px; font: 12px var(--font-mono); color: var(--color-ink-3); }
-  .slf-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--color-forest); }
-  .slf-scroll { margin: 14px 0; overflow-x: auto; }
-  .slf svg { display: block; width: 100%; min-width: 560px; height: auto; }
-
-  .slf-head { font: 10.5px var(--font-mono); letter-spacing: 0.06em; text-transform: uppercase; fill: var(--color-ink-4); }
+<style is:global>
   .slf-note { font: italic 12px var(--font-sans); fill: var(--color-ink-3); }
   .slf-arrowhead { fill: var(--color-ink-3); }
   .slf-flow { stroke: var(--color-ink-3); stroke-width: 1.4; }
@@ -200,6 +182,4 @@ import { frames } from './steps';
   .slf-progress { fill: var(--c); fill-opacity: 0.6; }
   .slf-free { fill: none; stroke: var(--color-ink-4); stroke-dasharray: 3 3; }
   .slf-free-text { font: italic 12px var(--font-sans); fill: var(--color-ink-4); }
-
-  .slf figcaption { font-family: var(--font-serif); font-style: italic; font-size: 14px; line-height: 1.5; color: var(--color-ink-2); }
 </style>

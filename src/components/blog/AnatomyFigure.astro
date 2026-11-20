@@ -2,8 +2,7 @@
 // The anatomy of one extension directory: metadata read by three build
 // systems without compiling, a registration entry point, and the two files
 // the build generates from them. Stepped in four frames.
-import StepControls from './StepControls.astro';
-import StepText from './StepText.astro';
+import Figure from './Figure.astro';
 import { frames } from './steps';
 
 interface Props {
@@ -40,9 +39,8 @@ const show = frames(steps.length);
 const fileY = (i: number) => 84 + i * 32;
 const readerY = (i: number) => 40 + i * 44;
 ---
-<figure class="anf" data-steps={steps.length}>
-  <p class="anf-eyebrow"><span class="fig-eyebrow-title"><span class="anf-dot"></span>{figure !== undefined && <>Fig. {figure} · </>}One directory, two manifests</span><span class="fig-eyebrow-side"><StepControls count={steps.length} /></span></p>
-  <div class="anf-scroll">
+<Figure class="anf" title="One directory, two manifests" figure={figure} caption={caption} steps={steps}>
+  <div class="fig-scroll">
     <svg viewBox="0 0 760 312" role="img" aria-label="An extension directory holds extension.json, extension.cmake, extension.cpp, provider.cpp, model sources and functional test fragments. CMake, Nix and CI read extension.json without compiling. The build generates a registry file that calls every entry point in a fixed order, and constants that keep the code in step with the manifest.">
       <defs>
         <marker id="anf-arrow" viewBox="0 0 8 8" refX="7" refY="4" markerWidth="7" markerHeight="7" orient="auto">
@@ -50,8 +48,8 @@ const readerY = (i: number) => 40 + i * 44;
         </marker>
       </defs>
 
-      <text x="24" y="28" class="anf-head">The extension · one directory</text>
-      <text x="430" y="28" class="anf-head">Readers · no compile needed</text>
+      <text x="24" y="28" class="fig-head">The extension · one directory</text>
+      <text x="430" y="28" class="fig-head">Readers · no compile needed</text>
 
       <rect x="24" y="44" width="280" height="248" rx="10" class="anf-folder" />
       {files.map((f, i) => (
@@ -85,25 +83,9 @@ const readerY = (i: number) => 40 + i * 44;
       </g>
     </svg>
   </div>
-  <StepText steps={steps} />
-  {caption && <figcaption>{caption}</figcaption>}
-</figure>
+</Figure>
 
-<style>
-  .anf {
-    margin: 2.5rem 0;
-    padding: 20px;
-    background: var(--color-paper);
-    border: 1px solid var(--color-line-strong);
-    border-radius: 10px;
-    font-family: var(--font-sans);
-  }
-  .anf-eyebrow { display: flex; justify-content: space-between; align-items: center; gap: 12px; font: 12px var(--font-mono); color: var(--color-ink-3); }
-  .anf-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--color-forest); }
-  .anf-scroll { margin: 14px 0; overflow-x: auto; }
-  .anf svg { display: block; width: 100%; min-width: 560px; height: auto; }
-
-  .anf-head { font: 10.5px var(--font-mono); letter-spacing: 0.06em; text-transform: uppercase; fill: var(--color-ink-4); }
+<style is:global>
   .anf-arrowhead { fill: var(--color-ink-3); }
   .anf-flow { stroke: var(--color-ink-3); stroke-width: 1.2; stroke-opacity: 0.6; }
 
@@ -119,6 +101,4 @@ const readerY = (i: number) => 40 + i * 44;
   .anf-gen-title { font: 11px var(--font-mono); fill: color-mix(in srgb, #3d8a8a 85%, black); }
   .anf-gen-line { font: 10px var(--font-mono); fill: var(--color-ink-3); }
   .anf-mut { font-style: italic; fill: var(--color-ink-4); }
-
-  .anf figcaption { font-family: var(--font-serif); font-style: italic; font-size: 14px; line-height: 1.5; color: var(--color-ink-2); }
 </style>

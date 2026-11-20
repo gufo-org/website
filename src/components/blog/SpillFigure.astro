@@ -57,17 +57,15 @@ const steps = [
   "Evicting A@8,192 drops its references and frees its private state. A@12,288 still references every chunk, so no rows are freed.",
 ];
 const show = frames(steps.length);
-import StepControls from './StepControls.astro';
-import StepText from './StepText.astro';
+import Figure from './Figure.astro';
 import { frames } from './steps';
 ---
-<figure class="spf" data-steps={steps.length}>
-  <p class="spf-eyebrow"><span class="fig-eyebrow-title"><span class="spf-dot"></span>{figure !== undefined && <>Fig. {figure} · </>}Preserving borrowed rows</span><span class="fig-eyebrow-side"><StepControls count={steps.length} /></span></p>
-  <div class="spf-scroll">
+<Figure class="spf" title="Preserving borrowed rows" figure={figure} caption={caption} steps={steps}>
+  <div class="fig-scroll">
     <svg viewBox={`0 0 760 ${bottom + 40}`} role="img" aria-label="Before: A's six chunks are live in slot 1, and checkpoints A@8,192 and A@12,288 borrow four and six of them. After B takes slot 1, the six chunks are copied once into backing RAM and A@12,288 still references all of them. Evicting A@8,192 frees only its private state.">
       {stages.map((stage, j) => (
         <g {...show(`${j + 1}-`)}>
-          <text x="24" y={stage.y} class="spf-head">{stage.head}</text>
+          <text x="24" y={stage.y} class="fig-head">{stage.head}</text>
           {stage.rows.map((r, n) => (
             <g style={`--c: ${r.kind === 'bar' ? colours.B : colours.A}`} {...(r.steps ? show(r.steps) : {})}>
               <rect x="24" y={r.y - 14} width="112" height="28" rx="6" class={r.kind === 'evicted' ? 'spf-chip is-gone' : 'spf-chip'} />
@@ -109,25 +107,9 @@ import { frames } from './steps';
       <text x="24" y={bottom + 28} class="spf-note" {...show('3-')}>Every chunk is still referenced by A@12,288, so evicting A@8,192 frees no rows at all.</text>
     </svg>
   </div>
-  <StepText steps={steps} />
-  {caption && <figcaption>{caption}</figcaption>}
-</figure>
+</Figure>
 
-<style>
-  .spf {
-    margin: 2.5rem 0;
-    padding: 20px;
-    background: var(--color-paper);
-    border: 1px solid var(--color-line-strong);
-    border-radius: 10px;
-    font-family: var(--font-sans);
-  }
-  .spf-eyebrow { display: flex; align-items: center; justify-content: space-between; gap: 8px 12px; font: 12px var(--font-mono); color: var(--color-ink-3); }
-  .spf-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--color-forest); }
-  .spf-scroll { margin: 14px 0; overflow-x: auto; }
-  .spf svg { display: block; width: 100%; min-width: 560px; height: auto; }
-
-  .spf-head { font: 10.5px var(--font-mono); letter-spacing: 0.06em; text-transform: uppercase; fill: var(--color-ink-4); }
+<style is:global>
   .spf-note { font: italic 12px var(--font-sans); fill: var(--color-ink-3); }
 
   .spf-chip { fill: var(--color-ivory); stroke: var(--color-line-strong); }
@@ -143,6 +125,4 @@ import { frames } from './steps';
   .spf-state { stroke: var(--color-paper); stroke-width: 1; fill-opacity: 0.75; }
   .spf-own { font: 11px var(--font-mono); fill: var(--color-ink-3); }
   .spf-own.is-gone { font-style: italic; fill: var(--color-ink-4); }
-
-  .spf figcaption { font-family: var(--font-serif); font-style: italic; font-size: 14px; line-height: 1.5; color: var(--color-ink-2); }
 </style>

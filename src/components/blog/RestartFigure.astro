@@ -52,15 +52,13 @@ const steps = [
   `The manifest is written, synced and renamed into place. A@${number(queued)} now exists: it lists C1 to C6, four of them shared with A@${number(durable)}, and a restart restores ${number(queued)} tokens.`,
 ];
 const show = frames(steps.length);
-import StepControls from './StepControls.astro';
-import StepText from './StepText.astro';
+import Figure from './Figure.astro';
 import { frames } from './steps';
 ---
-<figure class="rsf" data-steps={steps.length}>
-  <p class="rsf-eyebrow"><span class="fig-eyebrow-title"><span class="rsf-dot"></span>{figure !== undefined && <>Fig. {figure} · </>}The manifest publishes a checkpoint</span><span class="fig-eyebrow-side"><StepControls count={steps.length} /></span></p>
-  <div class="rsf-scroll">
+<Figure class="rsf" title="The manifest publishes a checkpoint" figure={figure} caption={caption} steps={steps}>
+  <div class="fig-scroll">
     <svg viewBox={`0 0 760 ${bottom + 40}`} role="img" aria-label={`A@${number(durable)} is complete on disk with chunks C1 to C4, a state file and a manifest. A@${number(queued)} is queued. First its new chunks C5 and C6 and its state file are written and synced; no manifest lists them, so a restart ignores them and restores ${number(durable)} tokens. Then its manifest is renamed into place; it lists C1 to C6, and a restart restores ${number(queued)} tokens.`}>
-      <text x="24" y="26" class="rsf-head">On disk</text>
+      <text x="24" y="26" class="fig-head">On disk</text>
       <text x={left} y="40" class="rsf-col">chunk files, shared</text>
       <text x={stateX + stateW / 2} y="40" class="rsf-col" text-anchor="middle">state</text>
       <text x={manifestX + manifestW / 2} y="40" class="rsf-col" text-anchor="middle">manifest</text>
@@ -124,7 +122,7 @@ import { frames } from './steps';
         ];
         return (
           <g {...show(st.range)}>
-            <text x="24" y={restartTop - 12} class="rsf-head">If Gufo restarts now, a {number(prompt)}-token request</text>
+            <text x="24" y={restartTop - 12} class="fig-head">If Gufo restarts now, a {number(prompt)}-token request</text>
             {segments.map((s, i) => {
               const x1 = x(s.from) + (i > 0 ? gap : 0);
               const x2 = x(s.to) - (i === 0 ? gap : 0);
@@ -145,25 +143,9 @@ import { frames } from './steps';
       <text x="24" y={bottom + 26} class="rsf-note">A checkpoint exists on disk only once its manifest is renamed into place, after its chunks and state are synced.</text>
     </svg>
   </div>
-  <StepText steps={steps} />
-  {caption && <figcaption>{caption}</figcaption>}
-</figure>
+</Figure>
 
-<style>
-  .rsf {
-    margin: 2.5rem 0;
-    padding: 20px;
-    background: var(--color-paper);
-    border: 1px solid var(--color-line-strong);
-    border-radius: 10px;
-    font-family: var(--font-sans);
-  }
-  .rsf-eyebrow { display: flex; align-items: center; justify-content: space-between; gap: 8px 12px; font: 12px var(--font-mono); color: var(--color-ink-3); }
-  .rsf-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--color-forest); }
-  .rsf-scroll { margin: 14px 0; overflow-x: auto; }
-  .rsf svg { display: block; width: 100%; min-width: 560px; height: auto; }
-
-  .rsf-head { font: 10.5px var(--font-mono); letter-spacing: 0.06em; text-transform: uppercase; fill: var(--color-ink-4); }
+<style is:global>
   .rsf-col { font: italic 11px var(--font-sans); fill: var(--color-ink-4); }
   .rsf-note { font: italic 12px var(--font-sans); fill: var(--color-ink-3); }
   .rsf-aside { font: italic 11.5px var(--font-sans); fill: #8a5a1f; }
@@ -188,6 +170,4 @@ import { frames } from './steps';
   .rsf-seg { fill: color-mix(in srgb, var(--c) 14%, white); stroke: var(--c); stroke-width: 1.4; }
   .rsf-seg-count { font: 13px var(--font-mono); fill: var(--color-ink); }
   .rsf-seg-label { font: italic 12px var(--font-sans); fill: color-mix(in srgb, var(--c) 75%, black); }
-
-  .rsf figcaption { font-family: var(--font-serif); font-style: italic; font-size: 14px; line-height: 1.5; color: var(--color-ink-2); }
 </style>

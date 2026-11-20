@@ -50,13 +50,11 @@ const steps = [
   `It computes the ${number(edit - restored)} unchanged tokens up to the edit again, then prefills the ${number(total - edit)} edited ones.`,
 ];
 const show = frames(steps.length);
-import StepControls from './StepControls.astro';
-import StepText from './StepText.astro';
+import Figure from './Figure.astro';
 import { frames } from './steps';
 ---
-<figure class="edf" data-steps={steps.length}>
-  <p class="edf-eyebrow"><span class="fig-eyebrow-title"><span class="edf-dot"></span>{figure !== undefined && <>Fig. {figure} · </>}Editing an earlier message</span><span class="fig-eyebrow-side"><StepControls count={steps.length} /></span></p>
-  <div class="edf-scroll">
+<Figure class="edf" title="Editing an earlier message" figure={figure} caption={caption} steps={steps}>
+  <div class="fig-scroll">
     <svg viewBox="0 0 760 226" role="img" aria-label={`Conversation A has checkpoints at ${checkpoints.map(number).join(', ')}. An edit changes token ${number(edit + 1)}. The edited request restores the checkpoint at ${number(restored)}, computes tokens ${number(restored)} to ${number(edit)} again although they didn't change, and prefills the edited text after that.`}>
       <defs>
         <marker id="edf-arrow" viewBox="0 0 8 8" refX="7" refY="4" markerWidth="7" markerHeight="7" orient="auto">
@@ -64,7 +62,7 @@ import { frames } from './steps';
         </marker>
       </defs>
 
-      <text x={left} y="26" class="edf-head">Conversation A · before the edit</text>
+      <text x={left} y="26" class="fig-head">Conversation A · before the edit</text>
       <g {...show('2-')}>
         <line x1={x(edit)} y1="34" x2={x(edit)} y2={newTop + 36} class="edf-edit" />
         <text x={x(edit) - 6} y="26" class="edf-edit-label" text-anchor="end">edit at {number(edit + 1)}</text>
@@ -100,7 +98,7 @@ import { frames } from './steps';
       <g {...show('3-')}>
         <line x1={x(restored)} y1={oldTop + 32} x2={x(restored)} y2={newTop - 6} class="edf-restore" marker-end="url(#edf-arrow)" />
         <text x={x(restored) - 8} y={(oldTop + newTop) / 2 + 12} class="edf-note" text-anchor="end">restore</text>
-        <text x={left} y={newTop - 12} class="edf-head">Edited request · {number(total)} tokens</text>
+        <text x={left} y={newTop - 12} class="fig-head">Edited request · {number(total)} tokens</text>
       </g>
       {segments.map((s, i) => {
         const x1 = x(s.from) + (i > 0 ? gap : 0);
@@ -116,26 +114,11 @@ import { frames } from './steps';
       })}
     </svg>
   </div>
-  <StepText steps={steps} />
-  {caption && <figcaption>{caption}</figcaption>}
-</figure>
+</Figure>
 
-<style>
-  .edf {
-    --diff: #b8336a;
-    margin: 2.5rem 0;
-    padding: 20px;
-    background: var(--color-paper);
-    border: 1px solid var(--color-line-strong);
-    border-radius: 10px;
-    font-family: var(--font-sans);
-  }
-  .edf-eyebrow { display: flex; justify-content: space-between; align-items: center; gap: 12px; font: 12px var(--font-mono); color: var(--color-ink-3); }
-  .edf-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--color-forest); }
-  .edf-scroll { margin: 14px 0; overflow-x: auto; }
-  .edf svg { display: block; width: 100%; min-width: 560px; height: auto; }
+<style is:global>
+  .edf { --diff: #b8336a; }
 
-  .edf-head { font: 10.5px var(--font-mono); letter-spacing: 0.06em; text-transform: uppercase; fill: var(--color-ink-4); }
   .edf-cp-label { font: 11px var(--font-mono); fill: var(--color-ink-3); }
   .is-stale .edf-cp-label { font-style: italic; fill: var(--color-ink-4); }
   .edf-note { font: italic 12px var(--font-sans); fill: var(--color-ink-3); }
@@ -154,6 +137,4 @@ import { frames } from './steps';
   .edf-seg { fill: color-mix(in srgb, var(--c) 14%, white); stroke: var(--c); stroke-width: 1.4; }
   .edf-seg-count { font: 13px var(--font-mono); fill: var(--color-ink); }
   .edf-seg-label { font: italic 12px var(--font-sans); fill: color-mix(in srgb, var(--c) 75%, black); }
-
-  .edf figcaption { font-family: var(--font-serif); font-style: italic; font-size: 14px; line-height: 1.5; color: var(--color-ink-2); }
 </style>

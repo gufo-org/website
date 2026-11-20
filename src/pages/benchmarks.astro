@@ -1,21 +1,13 @@
 ---
 import Layout from '../layouts/Layout.astro';
-import Navbar from '../components/Navbar.astro';
-import Footer from '../components/Footer.astro';
+import Chart from '../components/Chart.astro';
 import { benchmarks } from '../data/benchmarks';
-
-const chartPayload = benchmarks.map((m) => ({
-  id: m.id,
-  views: m.views.map((v) => ({ id: v.id, charts: v.charts })),
-}));
 ---
 
 <Layout
   title="Benchmarks · Gufo"
   description="Measured prefill, decode, concurrency, loading and memory results for Gufo on AMD Strix Halo, compared with llama.cpp and antirez/ds4."
 >
-  <Navbar currentPath="/benchmarks" />
-
   <main id="main-content" class="flex-1 w-full max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-6">
     <!-- Breadcrumbs -->
     <div class="flex items-center gap-2 text-xs text-ink-3">
@@ -39,15 +31,11 @@ const chartPayload = benchmarks.map((m) => ({
             type="button"
             role="tab"
             id={`model-tab-${m.id}`}
-            data-model-id={m.id}
+            data-model={m.id}
             aria-controls={`model-panel-${m.id}`}
             aria-selected={idx === 0 ? 'true' : 'false'}
             tabindex={idx === 0 ? 0 : -1}
-            class={`model-tab shrink-0 px-3.5 py-2 rounded-full text-xs border transition-colors ${
-              idx === 0
-                ? 'bg-ink text-ivory border-ink'
-                : 'bg-transparent text-ink-2 border-line hover:border-line-strong'
-            }`}
+            class="shrink-0 px-3.5 py-2 rounded-full text-xs border border-line text-ink-2 hover:border-line-strong aria-selected:bg-ink aria-selected:text-ivory aria-selected:border-ink transition-colors"
           >
             <span class="font-semibold">{m.short}</span>
             <span class="ml-2 text-[11px] opacity-60">{m.reference ? `vs ${m.reference.split(' ')[0]}` : 'no reference'}</span>
@@ -62,7 +50,8 @@ const chartPayload = benchmarks.map((m) => ({
         id={`model-panel-${m.id}`}
         role="tabpanel"
         aria-labelledby={`model-tab-${m.id}`}
-        class={`model-panel scroll-mt-32 space-y-6 ${idx === 0 ? 'block' : 'hidden'}`}>
+        hidden={idx !== 0}
+        class="model-panel scroll-mt-32 space-y-6">
         <!-- Model header -->
         <div class="pt-4 space-y-3">
           <div class="flex flex-col sm:flex-row sm:items-start justify-between gap-3 border-b border-line pb-3">
@@ -87,17 +76,13 @@ const chartPayload = benchmarks.map((m) => ({
             <div class="text-xs text-ink-4 px-2 py-1 border-b border-line">
               Benchmark
             </div>
-            <div class="flex lg:block gap-2 overflow-x-auto lg:overflow-visible view-list" data-model-id={m.id}>
+            <div class="flex lg:block gap-2 overflow-x-auto lg:overflow-visible">
               {m.views.map((v, vIdx) => (
                 <button
                   type="button"
-                  data-view-id={v.id}
+                  data-view={v.id}
                   aria-pressed={vIdx === 0 ? 'true' : 'false'}
-                  class={`view-btn shrink-0 lg:w-full text-left p-2.5 rounded text-xs transition-colors border lg:mb-1.5 ${
-                    vIdx === 0
-                      ? 'bg-paper text-ink border-transparent font-semibold'
-                      : 'bg-transparent text-ink-3 border-transparent hover:text-ink hover:bg-paper'
-                  }`}
+                  class="view-btn shrink-0 lg:w-full text-left p-2.5 rounded text-xs text-ink-3 hover:text-ink hover:bg-paper aria-pressed:bg-paper aria-pressed:text-ink aria-pressed:font-semibold transition-colors lg:mb-1.5"
                 >
                   <div class="font-semibold whitespace-nowrap">{v.label}</div>
                   <div class="text-[11px] text-ink-4 mt-0.5 whitespace-nowrap">{v.kicker}</div>
@@ -112,17 +97,11 @@ const chartPayload = benchmarks.map((m) => ({
 
           <div class="lg:col-span-3 min-w-0 space-y-6">
             {m.views.map((v, vIdx) => (
-              <div
-                id={`view-${m.id}-${v.id}`}
-                data-model-id={m.id}
-                class={`view-panel space-y-6 ${vIdx === 0 ? 'block' : 'hidden'}`}
-              >
+              <div data-view={v.id} hidden={vIdx !== 0} class="view-panel space-y-6">
                 {v.charts.map((c) => (
-                  <div class="min-w-0 pt-5 border-t border-line space-y-3 overflow-hidden">
+                  <div class="min-w-0 pt-5 border-t border-line space-y-3">
                     <h3 class="text-sm font-semibold text-ink">{c.title}</h3>
-                    <div class="relative w-full min-w-0 h-72 sm:h-80">
-                      <canvas id={`chart-${c.id}`} class="max-w-full"></canvas>
-                    </div>
+                    <Chart chart={c} />
                   </div>
                 ))}
 
@@ -170,13 +149,8 @@ const chartPayload = benchmarks.map((m) => ({
             ))}
 
             <!-- Notes -->
-            <div class="admonition admonition-info">
-              <div class="admonition-title">
-                <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                </svg>
-                <span>Notes</span>
-              </div>
+            <div class="rounded-r-md border-l-2 border-[#6a9bcc] bg-paper px-5 py-4">
+              <p class="mb-2 text-[13px] font-semibold text-ink">Notes</p>
               <ul class="space-y-1.5 text-xs text-ink-2">
                 {m.notes.map((note) => (
                   <li class="flex items-start gap-2">
@@ -191,230 +165,53 @@ const chartPayload = benchmarks.map((m) => ({
       </div>
     ))}
   </main>
-
-  <Footer />
-
-  <script is:inline type="application/json" id="bench-charts" set:html={JSON.stringify(chartPayload)}></script>
 </Layout>
 
 <script>
-  import Chart from 'chart.js/auto';
+  const tabs = [...document.querySelectorAll<HTMLElement>('#model-bar [role="tab"]')];
+  const panels = [...document.querySelectorAll<HTMLElement>('.model-panel')];
+  const fromHash = () => decodeURIComponent(location.hash.slice(1));
 
-  interface Series {
-    label: string;
-    data: (number | null)[];
-    color: string;
-    dashed?: boolean;
-  }
-
-  interface ChartSpec {
-    id: string;
-    title: string;
-    type: 'line' | 'bar';
-    labels: string[];
-    series: Series[];
-    xTitle?: string;
-    yTitle: string;
-  }
-
-  interface ViewSpec {
-    id: string;
-    charts: ChartSpec[];
-  }
-
-  const payloadEl = document.getElementById('bench-charts');
-  const payload: { id: string; views: ViewSpec[] }[] = payloadEl ? JSON.parse(payloadEl.textContent || '[]') : [];
-  const viewsByModel = new Map(payload.map((entry) => [entry.id, entry.views]));
-  const instances: Record<string, any> = {};
-
-  const axis = {
-    grid: { color: '#dcdfd5' },
-    ticks: { color: '#626862', font: { family: 'JetBrains Mono, ui-monospace, monospace', size: 11 } },
-  };
-
-  function renderChart(spec: ChartSpec) {
-    const el = document.getElementById(`chart-${spec.id}`) as HTMLCanvasElement | null;
-    if (!el) return;
-    instances[spec.id]?.destroy();
-
-    instances[spec.id] = new Chart(el, {
-      type: spec.type,
-      data: {
-        labels: spec.labels,
-        datasets: spec.series.map((s) => ({
-          label: s.label,
-          data: s.data,
-          borderColor: s.color,
-          backgroundColor: spec.type === 'bar' ? s.color : 'transparent',
-          borderDash: s.dashed ? [5, 5] : undefined,
-          borderRadius: spec.type === 'bar' ? 4 : undefined,
-          tension: 0.25,
-          pointRadius: spec.type === 'line' ? 3 : undefined,
-        })),
-      },
-      options: {
-        responsive: true,
-        maintainAspectRatio: false,
-        plugins: {
-          legend: {
-            display: spec.series.length > 1,
-            labels: { color: '#3a3f3a', font: { family: 'JetBrains Mono, ui-monospace, monospace', size: 11 } },
-          },
-          tooltip: {
-            backgroundColor: '#141714',
-            borderColor: '#141714',
-            borderWidth: 1,
-            titleColor: '#f7f8f3',
-            bodyColor: '#f7f8f3',
-            padding: 10,
-          },
-        },
-        scales: {
-          x: {
-            ...axis,
-            title: spec.xTitle ? { display: true, text: spec.xTitle, color: '#626862', font: { size: 11 } } : undefined,
-          },
-          y: {
-            ...axis,
-            title: { display: true, text: spec.yTitle, color: '#626862', font: { size: 11 } },
-          },
-        },
-      },
-    });
-  }
-
-  function renderView(modelId: string, viewId: string) {
-    const view = (viewsByModel.get(modelId) || []).find((v) => v.id === viewId);
-    view?.charts.forEach(renderChart);
-  }
-
-  const ACTIVE_MODEL = ['bg-ink', 'text-ivory', 'border-ink'];
-  const IDLE_MODEL = ['bg-transparent', 'text-ink-2', 'border-line', 'hover:border-line-strong'];
-  const ACTIVE_VIEW = ['bg-paper', 'text-ink', 'border-transparent', 'font-semibold'];
-  const IDLE_VIEW = ['bg-transparent', 'text-ink-3', 'border-transparent', 'hover:text-ink', 'hover:bg-paper'];
-
-  function activeViewOf(modelId: string): string | null {
-    const btn = document.querySelector(`.view-list[data-model-id="${modelId}"] .view-btn.is-active`) as HTMLElement | null;
-    if (btn) return btn.getAttribute('data-view-id');
-    const first = (viewsByModel.get(modelId) || [])[0];
-    return first ? first.id : null;
-  }
-
-  function selectView(modelId: string, viewId: string) {
-    document
-      .querySelectorAll(`.view-list[data-model-id="${modelId}"] .view-btn`)
-      .forEach((btn) => {
-        const isTarget = btn.getAttribute('data-view-id') === viewId;
-        btn.classList.toggle('is-active', isTarget);
-        btn.setAttribute('aria-pressed', isTarget ? 'true' : 'false');
-        btn.classList.remove(...(isTarget ? IDLE_VIEW : ACTIVE_VIEW));
-        btn.classList.add(...(isTarget ? ACTIVE_VIEW : IDLE_VIEW));
-      });
-
-    document.querySelectorAll(`.view-panel[data-model-id="${modelId}"]`).forEach((panel) => {
-      const isTarget = panel.id === `view-${modelId}-${viewId}`;
-      panel.classList.toggle('hidden', !isTarget);
-      panel.classList.toggle('block', isTarget);
-    });
-
-    requestAnimationFrame(() => renderView(modelId, viewId));
-  }
-
-  function selectModel(modelId: string) {
-    if (!viewsByModel.has(modelId)) return;
-    document.querySelectorAll('#model-bar .model-tab').forEach((tab) => {
-      const isTarget = tab.getAttribute('data-model-id') === modelId;
-      tab.setAttribute('aria-selected', isTarget ? 'true' : 'false');
-      tab.setAttribute('tabindex', isTarget ? '0' : '-1');
-      tab.classList.remove(...(isTarget ? IDLE_MODEL : ACTIVE_MODEL));
-      tab.classList.add(...(isTarget ? ACTIVE_MODEL : IDLE_MODEL));
-    });
-
-    document.querySelectorAll('.model-panel').forEach((panel) => {
-      const isTarget = panel.id === `model-panel-${modelId}`;
-      panel.classList.toggle('hidden', !isTarget);
-      panel.classList.toggle('block', isTarget);
-    });
-
-    const viewId = activeViewOf(modelId);
-    if (viewId) requestAnimationFrame(() => renderView(modelId, viewId));
-
-    // Keep the selection linkable, e.g. /benchmarks#deepseek-v4-flash.
-    if (location.hash.slice(1) !== modelId) history.replaceState(null, '', `#${modelId}`);
-  }
-
-  const modelFromHash = () => decodeURIComponent(location.hash.slice(1));
-
-  function init() {
-    // Mark the initially visible view of each model as active.
-    payload.forEach((model) => {
-      const first = model.views[0];
-      if (!first) return;
-      document
-        .querySelector(`.view-list[data-model-id="${model.id}"] .view-btn[data-view-id="${first.id}"]`)
-        ?.classList.add('is-active');
-    });
-
-    // Delegated: survives re-renders and never depends on load ordering.
-    document.addEventListener('click', (event) => {
-      const target = event.target as HTMLElement | null;
-      if (!target) return;
-
-      const tab = target.closest('#model-bar .model-tab') as HTMLElement | null;
-      if (tab) {
-        const modelId = tab.getAttribute('data-model-id');
-        if (modelId) selectModel(modelId);
-        return;
-      }
-
-      const viewBtn = target.closest('.view-list .view-btn') as HTMLElement | null;
-      if (viewBtn) {
-        const modelId = viewBtn.closest('.view-list')?.getAttribute('data-model-id');
-        const viewId = viewBtn.getAttribute('data-view-id');
-        if (modelId && viewId) selectView(modelId, viewId);
-      }
-    });
-
-    // Arrow keys move between model tabs, as in the ARIA tabs pattern.
-    document.getElementById('model-bar')?.addEventListener('keydown', (event) => {
-      const tabs = [...document.querySelectorAll<HTMLElement>('#model-bar .model-tab')];
-      const current = tabs.indexOf(document.activeElement as HTMLElement);
-      if (current === -1) return;
-      const next = {
-        ArrowRight: current + 1,
-        ArrowLeft: current - 1,
-        Home: 0,
-        End: tabs.length - 1,
-      }[event.key];
-      if (next === undefined) return;
-      event.preventDefault();
-      const tab = tabs[(next + tabs.length) % tabs.length];
-      tab.focus();
-      const modelId = tab.getAttribute('data-model-id');
-      if (modelId) selectModel(modelId);
-    });
-
-    // Footer links change only the hash when already on this page. No element carries
-    // the model id, so the browser doesn't scroll; bring the panel into view ourselves.
-    window.addEventListener('hashchange', () => {
-      const modelId = modelFromHash();
-      if (!viewsByModel.has(modelId)) return;
-      selectModel(modelId);
-      document.getElementById(`model-panel-${modelId}`)?.scrollIntoView({ block: 'start' });
-    });
-
-    const initial = viewsByModel.has(modelFromHash()) ? modelFromHash() : payload[0]?.id;
-    if (initial && initial !== payload[0]?.id) {
-      selectModel(initial);
-    } else {
-      const firstView = payload[0]?.views[0];
-      if (initial && firstView) renderView(initial, firstView.id);
+  function selectModel(id: string) {
+    if (!tabs.some((tab) => tab.dataset.model === id)) return false;
+    for (const tab of tabs) {
+      const on = tab.dataset.model === id;
+      tab.ariaSelected = String(on);
+      tab.tabIndex = on ? 0 : -1;
     }
+    for (const panel of panels) panel.hidden = panel.id !== `model-panel-${id}`;
+    // Keep the selection linkable, e.g. /benchmarks#deepseek-v4-flash.
+    if (fromHash() !== id) history.replaceState(null, '', `#${id}`);
+    return true;
   }
 
-  if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', init, { once: true });
-  } else {
-    init();
-  }
+  document.addEventListener('click', (event) => {
+    const target = event.target as HTMLElement;
+    const tab = target.closest<HTMLElement>('#model-bar [role="tab"]');
+    if (tab) return void selectModel(tab.dataset.model!);
+
+    const button = target.closest<HTMLElement>('.view-btn');
+    const panel = button?.closest('.model-panel');
+    if (!button || !panel) return;
+    for (const other of panel.querySelectorAll('.view-btn')) other.ariaPressed = String(other === button);
+    for (const view of panel.querySelectorAll<HTMLElement>('.view-panel')) view.hidden = view.dataset.view !== button.dataset.view;
+  });
+
+  // Arrow keys move between model tabs, as in the ARIA tabs pattern.
+  document.getElementById('model-bar')!.addEventListener('keydown', (event) => {
+    const current = tabs.indexOf(document.activeElement as HTMLElement);
+    const next = { ArrowRight: current + 1, ArrowLeft: current - 1, Home: 0, End: tabs.length - 1 }[event.key];
+    if (current === -1 || next === undefined) return;
+    event.preventDefault();
+    const tab = tabs[(next + tabs.length) % tabs.length];
+    tab.focus();
+    selectModel(tab.dataset.model!);
+  });
+
+  // Links such as /benchmarks#deepseek-v4-flash open that model. No element carries
+  // the model id, so the browser doesn't scroll; bring the panel into view ourselves.
+  window.addEventListener('hashchange', () => {
+    if (selectModel(fromHash())) document.getElementById(`model-panel-${fromHash()}`)!.scrollIntoView();
+  });
+  selectModel(fromHash());
 </script>

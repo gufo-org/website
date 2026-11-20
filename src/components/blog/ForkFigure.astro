@@ -57,13 +57,11 @@ const steps = [
   `The second subagent restores the learned checkpoint and prefills only its own task.`,
 ];
 const show = frames(steps.length);
-import StepControls from './StepControls.astro';
-import StepText from './StepText.astro';
+import Figure from './Figure.astro';
 import { frames } from './steps';
 ---
-<figure class="fkf" data-steps={steps.length}>
-  <p class="fkf-eyebrow"><span class="fig-eyebrow-title"><span class="fkf-dot"></span>{figure !== undefined && <>Fig. {figure} · </>}Learning a boundary</span><span class="fig-eyebrow-side"><StepControls count={steps.length} /></span></p>
-  <div class="fkf-scroll">
+<Figure class="fkf" title="Learning a boundary" figure={figure} caption={caption} steps={steps}>
+  <div class="fig-scroll">
     <svg viewBox={`0 0 760 ${bottom + 8}`} role="img" aria-label={`A parent has ${number(parent)} tokens and a checkpoint at ${number(grid)}. Its subagents share the first ${number(shared)} tokens. The first subagent restores ${number(grid)}, computes the gap to ${number(shared)}, captures a learned checkpoint there and prefills its own task. The second subagent restores the learned checkpoint and prefills only its own task.`}>
       <defs>
         <marker id="fkf-arrow" viewBox="0 0 8 8" refX="7" refY="4" markerWidth="7" markerHeight="7" orient="auto">
@@ -71,7 +69,7 @@ import { frames } from './steps';
         </marker>
       </defs>
 
-      <text x={left} y="26" class="fkf-head">Parent · {number(parent)} tokens</text>
+      <text x={left} y="26" class="fig-head">Parent · {number(parent)} tokens</text>
       <g {...show('2-')}>
         <line x1={x(shared)} y1="34" x2={x(shared)} y2={subagents[0].top + 32} class="fkf-diverge" />
         <text x={x(shared) + 6} y="26" class="fkf-diverge-label">subagents diverge at {number(shared)}</text>
@@ -93,7 +91,7 @@ import { frames } from './steps';
 
       {subagents.map((sub, n) => (
         <g {...show(`${n + 3}-`)}>
-          <text x={left} y={sub.top - 12} class="fkf-head">{sub.head}</text>
+          <text x={left} y={sub.top - 12} class="fig-head">{sub.head}</text>
           {sub.segments.map((s, i) => {
             const x1 = x(s.from) + (i > 0 ? gap : 0);
             const x2 = x(s.to) - (sub.segments.length - 1 > i ? gap : 0);
@@ -119,26 +117,11 @@ import { frames } from './steps';
       </g>
     </svg>
   </div>
-  <StepText steps={steps} />
-  {caption && <figcaption>{caption}</figcaption>}
-</figure>
+</Figure>
 
-<style>
-  .fkf {
-    --diff: #b8336a;
-    margin: 2.5rem 0;
-    padding: 20px;
-    background: var(--color-paper);
-    border: 1px solid var(--color-line-strong);
-    border-radius: 10px;
-    font-family: var(--font-sans);
-  }
-  .fkf-eyebrow { display: flex; align-items: center; justify-content: space-between; gap: 8px 12px; font: 12px var(--font-mono); color: var(--color-ink-3); }
-  .fkf-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--color-forest); }
-  .fkf-scroll { margin: 14px 0; overflow-x: auto; }
-  .fkf svg { display: block; width: 100%; min-width: 560px; height: auto; }
+<style is:global>
+  .fkf { --diff: #b8336a; }
 
-  .fkf-head { font: 10.5px var(--font-mono); letter-spacing: 0.06em; text-transform: uppercase; fill: var(--color-ink-4); }
   .fkf-cp-label { font: 11px var(--font-mono); fill: var(--color-ink-3); }
   .fkf-note { font: italic 12px var(--font-sans); fill: var(--color-ink-3); }
   .fkf-learned { font: 600 12px var(--font-sans); fill: var(--color-ink); }
@@ -155,6 +138,4 @@ import { frames } from './steps';
   .fkf-seg { fill: color-mix(in srgb, var(--c) 14%, white); stroke: var(--c); stroke-width: 1.4; }
   .fkf-seg-count { font: 13px var(--font-mono); fill: var(--color-ink); }
   .fkf-seg-label { font: italic 12px var(--font-sans); fill: color-mix(in srgb, var(--c) 75%, black); }
-
-  .fkf figcaption { font-family: var(--font-serif); font-style: italic; font-size: 14px; line-height: 1.5; color: var(--color-ink-2); }
 </style>

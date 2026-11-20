@@ -2,8 +2,6 @@
 import { render } from 'astro:content';
 import { getPosts } from '../../lib/posts';
 import Layout from '../../layouts/Layout.astro';
-import Navbar from '../../components/Navbar.astro';
-import Footer from '../../components/Footer.astro';
 import '../../styles/prose.css';
 
 export async function getStaticPaths() {
@@ -19,7 +17,6 @@ const minutes = Math.max(1, Math.round(words / 230));
 ---
 
 <Layout title={`${title} · Gufo`} description={summary} type="article" published={date}>
-  <Navbar currentPath="/blog" />
   <main id="main-content" class="flex-1">
     <article class="max-w-3xl mx-auto px-4 sm:px-6 pt-12 sm:pt-20 pb-24">
       <nav class="flex gap-3 text-sm text-ink-3 mb-10" aria-label="Breadcrumb">
@@ -65,5 +62,4 @@ const minutes = Math.max(1, Math.round(words / 230));
       <p class="mt-16 text-sm"><a href="/blog" class="text-ink-3 hover:text-forest">← All posts</a></p>
     </article>
   </main>
-  <Footer />
 </Layout>

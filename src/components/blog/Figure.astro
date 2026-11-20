@@ -1,0 +1,107 @@
+---
+// The card every blog figure sits in: a titled eyebrow, the figure's own content
+// and an optional caption. With `steps` the figure becomes a short walkthrough:
+// one sentence per frame, previous/next buttons, and content that declares the
+// frames it belongs to (see steps.ts).
+interface Props {
+  title: string;
+  figure?: number | string;
+  caption?: string;
+  steps?: string[];
+  /** The figure's own class, for its custom properties and overrides. */
+  class?: string;
+  [data: `data-${string}`]: unknown;
+}
+
+const { title, figure, caption, steps, class: name, ...data } = Astro.props;
+---
+<figure class:list={['fig', name]} data-steps={steps?.length} {...data}>
+  <p class="fig-eyebrow">
+    <span class="fig-title"><span class="fig-dot"></span>{figure !== undefined && <>Fig. {figure} · </>}{title}</span>
+    {steps && (
+      <span class="fig-steps" hidden>
+        <button type="button" aria-label="Previous step">‹</button>
+        <span aria-hidden="true"><span data-step-now>{steps.length}</span> / {steps.length}</span>
+        <button type="button" aria-label="Next step">›</button>
+      </span>
+    )}
+  </p>
+  <slot />
+  {steps && (
+    // Stacked in one grid cell, so the figure keeps the height of the longest sentence.
+    <p class="fig-step-text" aria-live="polite">
+      {steps.map((text, i) => <span data-show={i + 1} data-off={i + 1 < steps.length ? '' : undefined}><b>{i + 1}.</b> {text}</span>)}
+    </p>
+  )}
+  {caption && <figcaption>{caption}</figcaption>}
+</figure>
+
+<script>
+  import { inRange } from './steps';
+
+  document.querySelectorAll<HTMLElement>('figure[data-steps]').forEach((figure) => {
+    const count = Number(figure.dataset.steps);
+    const controls = figure.querySelector<HTMLElement>('.fig-steps')!;
+    const [prev, next] = controls.querySelectorAll('button');
+    let step = 1;
+
+    const show = (to: number) => {
+      step = Math.min(count, Math.max(1, to));
+      for (const el of figure.querySelectorAll('[data-show]')) el.toggleAttribute('data-off', !inRange(el.getAttribute('data-show')!, step));
+      controls.querySelector('[data-step-now]')!.textContent = String(step);
+      prev.disabled = step === 1;
+      next.disabled = step === count;
+    };
+    prev.addEventListener('click', () => show(step - 1));
+    next.addEventListener('click', () => show(step + 1));
+    figure.addEventListener('keydown', (event) => {
+      if (event.key !== 'ArrowLeft' && event.key !== 'ArrowRight') return;
+      event.preventDefault();
+      show(step + (event.key === 'ArrowLeft' ? -1 : 1));
+    });
+
+    controls.hidden = false;
+    show(1);
+  });
+</script>
+
+<!-- Global, like the figures' own styles: the content arrives through a slot, and
+     every class carries the `fig` prefix or the figure's own. -->
+<style is:global>
+  figure.fig {
+    margin: 2.5rem 0;
+    padding: 20px;
+    background: var(--color-paper);
+    border: 1px solid var(--color-line-strong);
+    border-radius: 10px;
+    font-family: var(--font-sans);
+  }
+  .fig-eyebrow { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 8px 12px; font: 12px var(--font-mono); color: var(--color-ink-3); }
+  .fig-title { display: flex; align-items: center; gap: 8px; }
+  .fig-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--color-forest); }
+  .fig figcaption { font-family: var(--font-serif); font-style: italic; font-size: 14px; line-height: 1.5; color: var(--color-ink-2); }
+
+  /* Diagrams scroll sideways on narrow screens rather than shrink their labels. */
+  .fig-scroll { margin: 14px 0; overflow-x: auto; }
+  .fig-scroll svg { display: block; width: 100%; min-width: 560px; height: auto; }
+  .fig-head { font: 10.5px var(--font-mono); letter-spacing: 0.06em; text-transform: uppercase; fill: var(--color-ink-4); }
+
+  /* Stepped figures: one frame at a time. */
+  .fig[data-steps] .fig-title { flex: 1 1 14em; }
+  .fig-steps { display: inline-flex; align-items: center; gap: 6px; margin-left: auto; }
+  .fig-steps[hidden] { display: none; }
+  .fig-steps button {
+    width: 26px; height: 26px; border-radius: 6px;
+    border: 1px solid var(--color-line-strong); background: var(--color-ivory);
+    font: 15px/1 var(--font-sans); color: var(--color-ink-2); cursor: pointer;
+  }
+  .fig-steps button:hover:not(:disabled) { border-color: var(--color-forest); color: var(--color-forest); }
+  .fig-steps button:disabled { opacity: 0.35; cursor: default; }
+  .fig-steps > span { min-width: 3.2em; text-align: center; font-variant-numeric: tabular-nums; }
+  .fig [data-show] { transition: opacity 0.25s ease, visibility 0.25s; }
+  .fig [data-off] { opacity: 0; visibility: hidden; }
+  .fig-step-text { display: grid; margin: 0 0 12px; font: 14px/1.5 var(--font-sans); color: var(--color-ink-2); }
+  .fig-step-text > span { grid-area: 1 / 1; }
+  .fig-step-text b { font: 600 12px var(--font-mono); color: var(--color-forest); margin-right: 2px; }
+  @media (prefers-reduced-motion: reduce) { .fig [data-show] { transition: none; } }
+</style>

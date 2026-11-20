@@ -46,13 +46,11 @@ const steps = [
   "C restores A's checkpoint. It references A's three chunks and computes only one new chunk.",
 ];
 const show = frames(steps.length);
-import StepControls from './StepControls.astro';
-import StepText from './StepText.astro';
+import Figure from './Figure.astro';
 import { frames } from './steps';
 ---
-<figure class="cof" data-steps={steps.length}>
-  <p class="cof-eyebrow"><span class="fig-eyebrow-title"><span class="cof-dot"></span>{figure !== undefined && <>Fig. {figure} · </>}Two cold prefills, one restore</span><span class="fig-eyebrow-side"><StepControls count={steps.length} /></span></p>
-  <div class="cof-scroll">
+<Figure class="cof" title="Two cold prefills, one restore" figure={figure} caption={caption} steps={steps}>
+  <div class="fig-scroll">
     <svg viewBox={`0 0 760 ${bottom + 34}`} role="img" aria-label="B and A each compute the same 6,144 tokens cold and keep three chunks each; nothing is shared between them. C restores A's checkpoint at 6,144, references A's three chunks and computes one new chunk up to 8,192.">
       <defs>
         <marker id="cof-arrow" viewBox="0 0 8 8" refX="7" refY="4" markerWidth="7" markerHeight="7" orient="auto">
@@ -60,9 +58,9 @@ import { frames } from './steps';
         </marker>
       </defs>
 
-      <text x="24" y="26" class="cof-head">Checkpoint</text>
-      <text x={left} y="26" class="cof-head">Rows · {number(chunk)}-token chunks</text>
-      <text x={sideX} y="26" class="cof-head">Stores</text>
+      <text x="24" y="26" class="fig-head">Checkpoint</text>
+      <text x={left} y="26" class="fig-head">Rows · {number(chunk)}-token chunks</text>
+      <text x={sideX} y="26" class="fig-head">Stores</text>
       {[0, 2048, 4096, 6144, 8192].map((t) => <line x1={x(t)} y1="40" x2={x(t)} y2={bottom - 6} class="cof-grid" />)}
 
       {rows.map((r, n) => (
@@ -98,25 +96,9 @@ import { frames } from './steps';
       <text x="24" y={bottom + 20} class="cof-note" {...show('3-')}>Seven chunks in memory: A's three, B's three and C's new one. C shares A's rows because it restored them.</text>
     </svg>
   </div>
-  <StepText steps={steps} />
-  {caption && <figcaption>{caption}</figcaption>}
-</figure>
+</Figure>
 
-<style>
-  .cof {
-    margin: 2.5rem 0;
-    padding: 20px;
-    background: var(--color-paper);
-    border: 1px solid var(--color-line-strong);
-    border-radius: 10px;
-    font-family: var(--font-sans);
-  }
-  .cof-eyebrow { display: flex; align-items: center; justify-content: space-between; gap: 8px 12px; font: 12px var(--font-mono); color: var(--color-ink-3); }
-  .cof-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--color-forest); }
-  .cof-scroll { margin: 14px 0; overflow-x: auto; }
-  .cof svg { display: block; width: 100%; min-width: 560px; height: auto; }
-
-  .cof-head { font: 10.5px var(--font-mono); letter-spacing: 0.06em; text-transform: uppercase; fill: var(--color-ink-4); }
+<style is:global>
   .cof-note { font: italic 12px var(--font-sans); fill: var(--color-ink-3); }
   .cof-side { font: 11px var(--font-mono); fill: var(--color-ink-3); }
   .cof-grid { stroke: var(--color-line-strong); stroke-dasharray: 2 4; }
@@ -130,6 +112,4 @@ import { frames } from './steps';
   .cof-cell.is-ref { fill: var(--color-ivory); stroke: color-mix(in srgb, var(--c) 55%, white); }
   .cof-cell-text { font: 12px var(--font-mono); fill: var(--color-ink); }
   .cof-cell-text.is-ref { font-size: 11px; fill: color-mix(in srgb, var(--c) 75%, black); }
-
-  .cof figcaption { font-family: var(--font-serif); font-style: italic; font-size: 14px; line-height: 1.5; color: var(--color-ink-2); }
 </style>

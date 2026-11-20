@@ -1,0 +1,119 @@
+---
+// A line or bar chart drawn as SVG at build time, so the benchmarks page needs
+// no chart library. Hovering or tapping a point or bar shows its value.
+import type { BenchChart } from '../data/benchmarks';
+
+interface Props {
+  chart: BenchChart;
+}
+
+const { labels, series, type, title, xTitle, yTitle } = Astro.props.chart;
+
+const W = 720;
+const H = 320;
+const left = 64;
+const right = 16;
+const top = 12;
+const bottom = xTitle ? 52 : 32;
+const plotW = W - left - right;
+const plotH = H - top - bottom;
+
+// The y axis starts at zero and ends on a round step, with about five gridlines.
+const max = Math.max(...series.flatMap((s) => s.data).filter((v) => v !== null));
+const magnitude = 10 ** Math.floor(Math.log10(max / 5));
+const step = [1, 2, 2.5, 5, 10].map((m) => m * magnitude).find((s) => s >= max / 5)!;
+const ticks = Array.from({ length: Math.ceil(max / step) + 1 }, (_, i) => Number((i * step).toPrecision(6)));
+const y = (v: number) => top + plotH * (1 - v / ticks[ticks.length - 1]);
+
+// Each label owns a band of the x axis: points sit at its centre, bars share it.
+const band = plotW / labels.length;
+const centre = (i: number) => left + band * (i + 0.5);
+const barW = Math.min((band * 0.7) / series.length, 64);
+const barX = (i: number, k: number) => centre(i) + (k - series.length / 2) * barW;
+
+const number = (v: number) => v.toLocaleString('en-US');
+// Missing values break the line instead of dropping to zero.
+const path = (data: (number | null)[]) =>
+  data.map((v, i) => (v === null ? '' : `${data[i - 1] == null ? 'M' : 'L'}${centre(i).toFixed(1)} ${y(v).toFixed(1)}`)).join('');
+---
+
+<figure class="chart">
+  {series.length > 1 && (
+    <p class="chart-legend">
+      {series.map((s) => (
+        <span>
+          <svg width="20" height="8" aria-hidden="true">
+            {type === 'bar'
+              ? <rect width="20" height="8" rx="2" fill={s.color} />
+              : <line x1="0" y1="4" x2="20" y2="4" stroke={s.color} stroke-width="2" stroke-dasharray={s.dashed ? '5 4' : undefined} />}
+          </svg>
+          {s.label}
+        </span>
+      ))}
+    </p>
+  )}
+  <div class="chart-scroll">
+    <svg viewBox={`0 0 ${W} ${H}`} role="img" aria-label={title}>
+      {ticks.map((t) => (
+        <>
+          <line x1={left} x2={W - right} y1={y(t)} y2={y(t)} class="chart-grid" />
+          <text x={left - 8} y={y(t) + 4} text-anchor="end" class="chart-tick">{number(t)}</text>
+        </>
+      ))}
+      {labels.map((label, i) => <text x={centre(i)} y={H - bottom + 18} text-anchor="middle" class="chart-tick">{label}</text>)}
+      {xTitle && <text x={left + plotW / 2} y={H - 8} text-anchor="middle" class="chart-title">{xTitle}</text>}
+      <text transform={`translate(14 ${top + plotH / 2}) rotate(-90)`} text-anchor="middle" class="chart-title">{yTitle}</text>
+
+      {series.map((s, k) => (
+        <g fill={s.color} stroke={s.color}>
+          {type === 'line' && <path d={path(s.data)} class="chart-line" stroke-dasharray={s.dashed ? '5 4' : undefined} />}
+          {s.data.map((v, i) => v !== null && (
+            <g class="chart-mark" data-tip={`${s.label} · ${labels[i]}: ${number(v)}`}>
+              {type === 'bar'
+                ? <rect x={barX(i, k)} y={y(v)} width={barW - 2} height={y(0) - y(v)} rx="3" />
+                : <><circle cx={centre(i)} cy={y(v)} r="3.5" /><circle cx={centre(i)} cy={y(v)} r="12" class="chart-hit" /></>}
+            </g>
+          ))}
+        </g>
+      ))}
+    </svg>
+  </div>
+</figure>
+
+<script>
+  // One tooltip shared by every chart, placed above the hovered or tapped mark.
+  const tip = Object.assign(document.createElement('div'), { className: 'chart-tip', hidden: true });
+  document.body.append(tip);
+  document.addEventListener('pointerover', (event) => {
+    const mark = (event.target as Element).closest<SVGElement>('.chart-mark');
+    tip.hidden = !mark;
+    if (!mark) return;
+    tip.textContent = mark.dataset.tip!;
+    const box = mark.getBoundingClientRect();
+    const half = tip.offsetWidth / 2 + 8;
+    const x = Math.min(Math.max(box.left + box.width / 2, half), innerWidth - half);
+    tip.style.left = `${x}px`;
+    tip.style.top = `${box.top}px`;
+  });
+  addEventListener('scroll', () => (tip.hidden = true), { capture: true, passive: true });
+</script>
+
+<style is:global>
+  .chart-tip { position: fixed; z-index: 50; translate: -50% calc(-100% - 6px); padding: 4px 8px; border-radius: 6px; background: var(--color-ink); color: var(--color-ivory); font: 11px var(--font-mono); white-space: nowrap; pointer-events: none; }
+  .chart-tip[hidden] { display: none; }
+</style>
+
+<style>
+  .chart-legend { display: flex; flex-wrap: wrap; justify-content: center; gap: 4px 16px; margin-bottom: 8px; font: 11px var(--font-mono); color: var(--color-ink-2); }
+  .chart-legend span { display: inline-flex; align-items: center; gap: 6px; }
+  /* Narrow screens scroll the chart sideways rather than shrink its labels. */
+  .chart-scroll { overflow-x: auto; }
+  .chart-scroll svg { display: block; width: 100%; min-width: 520px; height: auto; }
+  .chart-grid { stroke: var(--color-line); }
+  .chart-tick { font: 11px var(--font-mono); fill: var(--color-ink-3); stroke: none; }
+  .chart-title { font: 11px var(--font-sans); fill: var(--color-ink-3); stroke: none; }
+  .chart-line { fill: none; stroke-width: 2; }
+  .chart-mark { stroke: none; }
+  .chart-mark:hover { opacity: 0.7; }
+  .chart-hit { fill: transparent; }
+</style>

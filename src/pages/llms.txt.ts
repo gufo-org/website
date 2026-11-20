@@ -1,13 +1,7 @@
 import type { APIRoute } from 'astro';
-import { getPosts } from '../lib/posts';
 import { docsUrl, getDocs, latest } from '../lib/docs';
 
-// Generated rather than kept in public/ so the blog is listed only once it has posts.
 export const GET: APIRoute = async () => {
-  const posts = await getPosts();
-  const optional =
-    posts.length > 0 ? `\n## Optional\n\n- [Blog](https://gufo.blog/blog): engineering notes and design decisions\n` : '';
-
   // Every page of the latest docs version, in the order of its navigation.
   const entries = new Map((await getDocs()).map((entry) => [entry.id, entry]));
   const docs = latest.nav
@@ -36,7 +30,11 @@ ${docs}
 
 - [GitHub repository](https://github.com/gufo-org/gufo): source code, model guides, benchmark and quality reports
 - [Container images](https://github.com/gufo-org/toolboxes): prebuilt runtime and development images
-${optional}`,
+
+## Optional
+
+- [Blog](https://gufo.blog/blog): engineering notes and design decisions
+`,
     { headers: { 'Content-Type': 'text/plain; charset=utf-8' } },
   );
 };

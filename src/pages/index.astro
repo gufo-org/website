@@ -1,22 +1,25 @@
 ---
 import Layout from '../layouts/Layout.astro';
-import Navbar from '../components/Navbar.astro';
-import Footer from '../components/Footer.astro';
+import { docsUrl, latest } from '../lib/docs';
+
+// Docs links go straight to the latest version, skipping the /docs redirect page.
+const doc = (slug: string) => docsUrl(latest.version, slug);
 // Keep this list aligned with the official Gufo README's model list.
 const models = [
-  { name: 'Qwen3.8 Flash-Next', role: 'Text and images', href: '/docs/models/qwen3.8-flash-next' },
-  { name: 'Qwen3.8 27B', role: 'Text and images', href: '/docs/models/qwen3.8-27b' },
-  { name: 'DeepSeek V4 Flash', role: 'Text', href: '/docs/models/deepseek-v4-flash' },
-  { name: 'EmbeddingGemma 2', role: 'Multimodal embeddings', href: '/docs/models/embeddinggemma-2', npu: true },
-  { name: 'Qwen3-ASR 1.7B', role: 'Speech to text', href: '/docs/models/qwen3-asr', npu: true },
-  { name: 'Qwen3-TTS 1.7B', role: 'Speech and voice cloning', href: '/docs/models/qwen3-tts', npu: true },
+  { name: 'Qwen3.8 Flash-Next', role: 'Text and images', href: doc('models/qwen3.8-flash-next') },
+  { name: 'Qwen3.8 27B', role: 'Text and images', href: doc('models/qwen3.8-27b') },
+  { name: 'DeepSeek V4 Flash', role: 'Text', href: doc('models/deepseek-v4-flash') },
+  { name: 'EmbeddingGemma 2', role: 'Multimodal embeddings', href: doc('models/embeddinggemma-2'), npu: true },
+  { name: 'Qwen3-ASR 1.7B', role: 'Speech to text', href: doc('models/qwen3-asr'), npu: true },
+  { name: 'Qwen3-TTS 1.7B', role: 'Speech and voice cloning', href: doc('models/qwen3-tts'), npu: true },
   { name: 'Qwen-Image-2.1 & Turbo', role: 'Image generation and editing', href: 'https://github.com/gufo-org/gufo/blob/main/docs/models/qwen-image-2.1.md' },
-  { name: 'MiniMax H3', role: 'Video with sound', href: '/docs/models/minimax-h3' },
+  { name: 'MiniMax H3', role: 'Video with sound', href: doc('models/minimax-h3') },
 ];
 ---
 
 <Layout title="Gufo: the Strix Halo inference engine">
-  <Navbar currentPath="/" />
+  <!-- The headline sets "Open Source" in italic. -->
+  <link slot="head" rel="preload" href="/fonts/source-serif-4-italic-400-700.woff2" as="font" type="font/woff2" crossorigin />
 
   <main id="main-content" class="flex-1">
     <header class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 pt-12 pb-14 sm:pt-16 sm:pb-16">
@@ -27,7 +30,7 @@ const models = [
         Run text, vision and audio models locally, with extensions.
       </p>
       <div class="mt-7 flex flex-wrap items-center gap-3">
-        <a href="/docs" class="inline-flex items-center h-12 px-6 rounded-full bg-forest text-ivory text-sm font-semibold hover:bg-forest-dark transition-colors">Get started <span class="ml-3" aria-hidden="true">→</span></a>
+        <a href={doc('')} class="inline-flex items-center h-12 px-6 rounded-full bg-forest text-ivory text-sm font-semibold hover:bg-forest-dark transition-colors">Get started <span class="ml-3" aria-hidden="true">→</span></a>
         <a href="/benchmarks" class="inline-flex items-center h-12 px-6 rounded-full border border-line-strong text-ink text-sm font-semibold hover:bg-paper transition-colors">See benchmarks</a>
       </div>
     </header>
@@ -41,11 +44,11 @@ const models = [
           </div>
         </div>
         <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-          <a href="/docs/install" class="group flex flex-col min-h-40 rounded-xl border border-line bg-ivory p-5 hover:border-forest transition-colors">
+          <a href={doc('install')} class="group flex flex-col min-h-40 rounded-xl border border-line bg-ivory p-5 hover:border-forest transition-colors">
             <span class="flex items-center justify-between gap-4"><span class="font-mono text-sm text-forest">01 / PLATFORM</span><img src="/images/linux.png" alt="" width="40" height="40" class="h-10 w-10 object-contain" /></span>
             <span class="mt-auto pt-8 flex items-end justify-between gap-4"><span><span class="block text-2xl font-semibold text-ink">Linux</span><span class="block mt-2 text-sm text-ink-2">Install and run Gufo</span></span><span class="text-xl text-forest group-hover:translate-x-1 transition-transform" aria-hidden="true">→</span></span>
           </a>
-          <a href="/docs/install#windows" class="group flex flex-col min-h-40 rounded-xl border border-line bg-ivory p-5 hover:border-forest transition-colors">
+          <a href={`${doc('install')}#windows`} class="group flex flex-col min-h-40 rounded-xl border border-line bg-ivory p-5 hover:border-forest transition-colors">
             <span class="flex items-center justify-between gap-4"><span class="font-mono text-sm text-forest">02 / PLATFORM</span><img src="/images/windows.png" alt="" width="40" height="40" class="h-10 w-10 object-contain" /></span>
             <span class="mt-auto pt-8 flex items-end justify-between gap-4"><span><span class="block text-2xl font-semibold text-ink">Windows</span><span class="block mt-2 text-sm text-ink-2">Install and run Gufo</span></span><span class="text-xl text-forest group-hover:translate-x-1 transition-transform" aria-hidden="true">→</span></span>
           </a>
@@ -88,5 +91,4 @@ const models = [
     </section>
   </main>
 
-  <Footer />
 </Layout>
