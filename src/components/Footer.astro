@@ -1,5 +1,8 @@
 ---
 import Logo from './Logo.astro';
+import { docsUrl, latest } from '../lib/docs';
+
+const doc = (slug: string) => docsUrl(latest.version, slug);
 
 interface FooterLink {
   name: string;
@@ -11,9 +14,9 @@ const columns: { title: string; links: FooterLink[] }[] = [
   {
     title: 'Documentation',
     links: [
-      { name: 'Getting started', href: '/docs' },
-      { name: 'Install', href: '/docs/install' },
-      { name: 'Server API', href: '/docs/server' },
+      { name: 'Getting started', href: doc('') },
+      { name: 'Install', href: doc('install') },
+      { name: 'Server API', href: doc('server') },
     ],
   },
   {

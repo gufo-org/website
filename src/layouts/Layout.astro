@@ -5,7 +5,7 @@ interface Props {
   /** Open Graph type; blog posts pass `article` with their publication date. */
   type?: 'website' | 'article';
   published?: Date;
-  /** Keep the page out of search results, e.g. the blog index while it has no posts. */
+  /** Keep the page out of search results, e.g. the 404 page. */
   noindex?: boolean;
   /** Canonical path when it differs from this page, such as an older docs version. */
   canonical?: string;
@@ -24,6 +24,8 @@ const absolute = (path: string) => (Astro.site ? new URL(path, Astro.site).href 
 const ogImage = absolute('/og.png');
 // With `build.format: 'file'` the built pathname is /docs.html; the public URL is /docs.
 const pagePath = Astro.url.pathname.replace(/(index)?\.html$/, '');
+import Navbar from '../components/Navbar.astro';
+import Footer from '../components/Footer.astro';
 import '../styles/fonts.css';
 import '../styles/global.css';
 ---
@@ -37,7 +39,7 @@ import '../styles/global.css';
     <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
     <link rel="preload" href="/fonts/instrument-sans-400-700.woff2" as="font" type="font/woff2" crossorigin />
     <link rel="preload" href="/fonts/source-serif-4-400-700.woff2" as="font" type="font/woff2" crossorigin />
-    <link rel="preload" href="/fonts/source-serif-4-italic-400-700.woff2" as="font" type="font/woff2" crossorigin />
+    <slot name="head" />
     <meta name="generator" content={Astro.generator} />
     <meta name="theme-color" content="#f7f8f3" />
     <title>{title}</title>
@@ -69,7 +71,9 @@ import '../styles/global.css';
   </head>
   <body class="min-h-screen flex flex-col bg-ivory text-ink selection:bg-forest/20">
     <a href="#main-content" class="skip-link">Skip to main content</a>
+    <Navbar />
     <slot />
+    <Footer />
   </body>
 </html>
 

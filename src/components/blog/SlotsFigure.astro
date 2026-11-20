@@ -66,16 +66,14 @@ const steps = [
   "B finishes and C takes slot 2. B's live state is overwritten; from now on B comes back from its checkpoints.",
 ];
 const show = frames(steps.length);
-import StepControls from './StepControls.astro';
-import StepText from './StepText.astro';
+import Figure from './Figure.astro';
 import { frames } from './steps';
 ---
-<figure class="sxf" data-steps={steps.length}>
-  <p class="sxf-eyebrow"><span class="fig-eyebrow-title"><span class="sxf-dot"></span>{figure !== undefined && <>Fig. {figure} · </>}Two slots, two requests at a time</span><span class="fig-eyebrow-side"><StepControls count={steps.length} /></span></p>
-  <div class="sxf-scroll">
+<Figure class="sxf" title="Two slots, two requests at a time" figure={figure} caption={caption} steps={steps}>
+  <div class="fig-scroll">
     <svg viewBox={`0 0 760 ${queueY + 56}`} role="img" aria-label="With --sessions 2 there are two slots. Slot 1 holds A's live state, including the answer it just generated; slot 2 is running B. A's next turn continues in place and prefills only the new message. Conversation C arrives while both slots are busy and waits. When B finishes, C takes slot 2 and B's live state is overwritten.">
-      <text x="24" y="26" class="sxf-head">Execution slots · --sessions 2</text>
-      <text x={statusX} y="26" class="sxf-head">Status</text>
+      <text x="24" y="26" class="fig-head">Execution slots · --sessions 2</text>
+      <text x={statusX} y="26" class="fig-head">Status</text>
 
       {lanes.map((lane, n) => (
         <g>
@@ -129,25 +127,9 @@ import { frames } from './steps';
       </g>
     </svg>
   </div>
-  <StepText steps={steps} />
-  {caption && <figcaption>{caption}</figcaption>}
-</figure>
+</Figure>
 
-<style>
-  .sxf {
-    margin: 2.5rem 0;
-    padding: 20px;
-    background: var(--color-paper);
-    border: 1px solid var(--color-line-strong);
-    border-radius: 10px;
-    font-family: var(--font-sans);
-  }
-  .sxf-eyebrow { display: flex; align-items: center; justify-content: space-between; gap: 8px 12px; font: 12px var(--font-mono); color: var(--color-ink-3); }
-  .sxf-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--color-forest); }
-  .sxf-scroll { margin: 14px 0; overflow-x: auto; }
-  .sxf svg { display: block; width: 100%; min-width: 560px; height: auto; }
-
-  .sxf-head { font: 10.5px var(--font-mono); letter-spacing: 0.06em; text-transform: uppercase; fill: var(--color-ink-4); }
+<style is:global>
   .sxf-note { font: italic 12px var(--font-sans); fill: var(--color-ink-3); }
   .sxf-chip { fill: var(--color-ivory); stroke: var(--color-line-strong); }
   .sxf-chip.is-queue { fill: none; stroke-dasharray: 3 3; }
@@ -160,6 +142,4 @@ import { frames } from './steps';
   .sxf-status { font: 12px var(--font-mono); fill: var(--color-ink-4); }
   .sxf-status.is-busy { fill: var(--color-forest); font-weight: 600; }
   .sxf-legend { font: 12px var(--font-sans); fill: var(--color-ink-3); }
-
-  .sxf figcaption { font-family: var(--font-serif); font-style: italic; font-size: 14px; line-height: 1.5; color: var(--color-ink-2); }
 </style>

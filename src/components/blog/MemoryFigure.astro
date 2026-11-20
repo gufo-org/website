@@ -3,6 +3,7 @@
 // takes with shared rows, next to the same checkpoints stored as full copies
 // and the RAM budget. The server renders the default values, so the figure
 // reads the same without JavaScript.
+import Figure from './Figure.astro';
 interface Props {
   figure?: number | string;
   caption?: string;
@@ -32,8 +33,7 @@ const estimate = (depth: number, count: number) => {
 const first = estimate(defaults.depth, defaults.count);
 const pct = (b: number) => `${Math.min(100, (b / (scaleGiB * 2 ** 30)) * 100)}%`;
 ---
-<figure class="mef" data-memory data-per-checkpoint={perCheckpoint} data-per-token={perToken} data-spacing={spacing} data-scale={scaleGiB}>
-  <p class="mef-eyebrow"><span class="fig-eyebrow-title"><span class="mef-dot"></span>{figure !== undefined && <>Fig. {figure} · </>}What a set of checkpoints costs</span></p>
+<Figure class="mef" title="What a set of checkpoints costs" figure={figure} caption={caption} data-memory data-per-checkpoint={perCheckpoint} data-per-token={perToken} data-spacing={spacing} data-scale={scaleGiB}>
 
   <div class="mef-controls">
     <label>Conversation length <output data-out="depth">{number(defaults.depth)} tokens</output>
@@ -73,8 +73,7 @@ const pct = (b: number) => `${Math.min(100, (b / (scaleGiB * 2 ** 30)) * 100)}%`
   </div>
 
   <p class="mef-note">Flash-Next, measured: {number(Math.round(perCheckpoint / 1e6))} MB of private state per checkpoint and {number(perToken)} bytes per row. Checkpoints are {number(spacing)} tokens apart on one conversation; the bars stop at {scaleGiB} GiB.</p>
-  {caption && <figcaption>{caption}</figcaption>}
-</figure>
+</Figure>
 
 <script>
   document.querySelectorAll<HTMLElement>('figure[data-memory]').forEach((figure) => {
@@ -124,20 +123,8 @@ const pct = (b: number) => `${Math.min(100, (b / (scaleGiB * 2 ** 30)) * 100)}%`
   });
 </script>
 
-<style>
-  .mef {
-    --rows: #3f7a4f;
-    --states: #9a5c8a;
-    --copies: #c27a2c;
-    margin: 2.5rem 0;
-    padding: 20px;
-    background: var(--color-paper);
-    border: 1px solid var(--color-line-strong);
-    border-radius: 10px;
-    font-family: var(--font-sans);
-  }
-  .mef-eyebrow { display: flex; align-items: center; gap: 8px; font: 12px var(--font-mono); color: var(--color-ink-3); }
-  .mef-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--color-forest); }
+<style is:global>
+  .mef { --rows: #3f7a4f; --states: #9a5c8a; --copies: #c27a2c; }
 
   .mef-controls { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 12px 24px; margin: 18px 0 20px; }
   .mef-controls label { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 4px 8px; font: 10.5px var(--font-mono); letter-spacing: 0.06em; text-transform: uppercase; color: var(--color-ink-4); }
@@ -163,7 +150,6 @@ const pct = (b: number) => `${Math.min(100, (b / (scaleGiB * 2 ** 30)) * 100)}%`
   .mef-fit.is-over { color: #b8336a; }
   .mef-note { margin: 14px 0 12px; font: italic 12px/1.5 var(--font-sans); color: var(--color-ink-3); }
 
-  .mef figcaption { font-family: var(--font-serif); font-style: italic; font-size: 14px; line-height: 1.5; color: var(--color-ink-2); }
   @media (prefers-reduced-motion: reduce) { .mef-track i, .mef-budget { transition: none; } }
   @media (max-width: 520px) { .mef-row { grid-template-columns: 1fr 5.5em; } .mef-track { grid-column: 1 / -1; grid-row: 2; } }
 </style>

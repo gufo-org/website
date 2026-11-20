@@ -4,6 +4,7 @@
 // 256-row chunks, and who computed, references or copies each range of rows.
 // Ranges are drawn at readable widths, not to scale. Inline SVG rendered on
 // the server.
+import Figure from './Figure.astro';
 interface Props {
   figure?: number | string;
   caption?: string;
@@ -62,12 +63,11 @@ const block = (cx: number, top: number, seed: number) =>
   }));
 const bottom = rowY(rows.length - 1) + 14;
 ---
-<figure class="pvf">
-  <p class="pvf-eyebrow"><span class="pvf-dot"></span>{figure !== undefined && <>Fig. {figure} · </>}Three conversations, one system prompt</p>
-  <div class="pvf-scroll">
+<Figure class="pvf" title="Three conversations, one system prompt" figure={figure} caption={caption}>
+  <div class="fig-scroll">
     <svg viewBox={`0 0 760 ${bottom + 58}`} role="img" aria-label="Conversation 1 computes the 6,000-token prompt cold and leaves a checkpoint at 4,096. Conversation 2 restores it, references conversation 1's rows up to 4,096, recomputes the gap to 5,888 and holds the partial chunk to 6,000, where it captures a checkpoint. Conversation 3 restores that checkpoint: it references rows from conversations 1 and 2 and stores its own copy of the partial chunk. After 6,000 each conversation computes its own rows.">
-      <text x="24" y="26" class="pvf-head">Conversation</text>
-      <text x={start} y="26" class="pvf-head">Rows · 256-row chunks · not to scale</text>
+      <text x="24" y="26" class="fig-head">Conversation</text>
+      <text x={start} y="26" class="fig-head">Rows · 256-row chunks · not to scale</text>
       {[0, 1, 2, 3].map((i) => <text x={edge(i)} y="46" class="pvf-axis" text-anchor={i === 0 ? 'start' : 'middle'}>{number(columns[i].from)}</text>)}
 
       {rows.map((r, i) => {
@@ -119,24 +119,9 @@ const bottom = rowY(rows.length - 1) + 14;
       </g>
     </svg>
   </div>
-  {caption && <figcaption>{caption}</figcaption>}
-</figure>
+</Figure>
 
-<style>
-  .pvf {
-    margin: 2.5rem 0;
-    padding: 20px;
-    background: var(--color-paper);
-    border: 1px solid var(--color-line-strong);
-    border-radius: 10px;
-    font-family: var(--font-sans);
-  }
-  .pvf-eyebrow { display: flex; align-items: center; gap: 8px; font: 12px var(--font-mono); color: var(--color-ink-3); }
-  .pvf-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--color-forest); }
-  .pvf-scroll { margin: 14px 0; overflow-x: auto; }
-  .pvf svg { display: block; width: 100%; min-width: 560px; height: auto; }
-
-  .pvf-head { font: 10.5px var(--font-mono); letter-spacing: 0.06em; text-transform: uppercase; fill: var(--color-ink-4); }
+<style is:global>
   .pvf-axis { font: 10.5px var(--font-mono); fill: var(--color-ink-4); }
   .pvf-note { font: italic 12px var(--font-sans); fill: var(--color-ink-3); }
   .pvf-legend { font: 12px var(--font-sans); fill: var(--color-ink-3); }
@@ -150,6 +135,4 @@ const bottom = rowY(rows.length - 1) + 14;
   .pvf-seg.is-ref { fill: var(--color-ivory); stroke: color-mix(in srgb, var(--c) 55%, white); }
   .pvf-seg-text { font: 11.5px var(--font-mono); fill: var(--color-ink); }
   .pvf-seg-text.is-ref, .pvf-seg-text.is-copy { fill: color-mix(in srgb, var(--c) 75%, black); }
-
-  .pvf figcaption { font-family: var(--font-serif); font-style: italic; font-size: 14px; line-height: 1.5; color: var(--color-ink-2); }
 </style>

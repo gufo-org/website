@@ -48,16 +48,14 @@ const steps = [
   'The rest is the new message, which isn\'t cached, so the walk stops. The deepest candidates win, and on the tie live beats disk.',
 ];
 const show = frames(steps.length);
-import StepControls from './StepControls.astro';
-import StepText from './StepText.astro';
+import Figure from './Figure.astro';
 import { frames } from './steps';
 ---
-<figure class="lkf" data-steps={steps.length}>
-  <p class="lkf-eyebrow"><span class="fig-eyebrow-title"><span class="lkf-dot"></span>{figure !== undefined && <>Fig. {figure} · </>}One lookup, three tiers</span><span class="fig-eyebrow-side"><StepControls count={steps.length} /></span></p>
-  <div class="lkf-scroll">
+<Figure class="lkf" title="One lookup, three tiers" figure={figure} caption={caption} steps={steps}>
+  <div class="fig-scroll">
     <svg viewBox="0 0 760 276" role="img" aria-label="A prefix tree holds a shared 4,096-token system prompt with a RAM checkpoint, A's history to 8,192 with a live frontier and a disk checkpoint, and B's history to 6,000 with a RAM checkpoint. A's next turn walks the system prompt and A's history, collecting RAM at 4,096, live at 8,192 and disk at 8,192. The deepest are at 8,192, and live wins the tie over disk.">
-      <text x="24" y="26" class="lkf-head">Prefix index · new prompt: A's next turn</text>
-      <text x={panelX} y="26" class="lkf-head">Candidates on the path</text>
+      <text x="24" y="26" class="fig-head">Prefix index · new prompt: A's next turn</text>
+      <text x={panelX} y="26" class="fig-head">Candidates on the path</text>
 
       <path d={`M${n1.x} ${n1.y} C ${n1.x + 90} ${n1.y}, ${n3.x} ${n1.y + 20}, ${n3.x} ${n3.y - 7}`} class="lkf-edge" />
       <text x={n3.x + 10} y={n1.y + 44} class="lkf-edge-label">B's history → 6,000</text>
@@ -99,25 +97,9 @@ import { frames } from './steps';
       </g>
     </svg>
   </div>
-  <StepText steps={steps} />
-  {caption && <figcaption>{caption}</figcaption>}
-</figure>
+</Figure>
 
-<style>
-  .lkf {
-    margin: 2.5rem 0;
-    padding: 20px;
-    background: var(--color-paper);
-    border: 1px solid var(--color-line-strong);
-    border-radius: 10px;
-    font-family: var(--font-sans);
-  }
-  .lkf-eyebrow { display: flex; align-items: center; justify-content: space-between; gap: 8px 12px; font: 12px var(--font-mono); color: var(--color-ink-3); }
-  .lkf-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--color-forest); }
-  .lkf-scroll { margin: 14px 0; overflow-x: auto; }
-  .lkf svg { display: block; width: 100%; min-width: 560px; height: auto; }
-
-  .lkf-head { font: 10.5px var(--font-mono); letter-spacing: 0.06em; text-transform: uppercase; fill: var(--color-ink-4); }
+<style is:global>
   .lkf-note { font: italic 12px var(--font-sans); fill: var(--color-ink-3); }
   .lkf-edge-label { font: 11px var(--font-mono); fill: var(--color-ink-3); }
 
@@ -135,6 +117,4 @@ import { frames } from './steps';
   .lkf-rank { font: 12px var(--font-sans); fill: var(--color-ink-3); }
   .lkf-rank.is-chosen { font-weight: 600; fill: var(--color-forest); }
   .lkf-rank.is-off { font-style: italic; fill: var(--color-ink-4); }
-
-  .lkf figcaption { font-family: var(--font-serif); font-style: italic; font-size: 14px; line-height: 1.5; color: var(--color-ink-2); }
 </style>

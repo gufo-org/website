@@ -2,6 +2,7 @@
 // A static diagram of prefill on a plain transformer: a short prompt split
 // into tokens, the attention layers it passes through, and the KV rows each
 // token leaves behind. Everything is inline SVG rendered on the server.
+import Figure from './Figure.astro';
 interface Props {
   figure?: number | string;
   caption?: string;
@@ -26,10 +27,9 @@ const edges = layers.slice(1).flatMap((_, l) =>
 );
 const lastX = layerX(layers.length - 1);
 ---
-<figure class="kvf">
-  <p class="kvf-eyebrow"><span class="kvf-dot"></span>{figure !== undefined && <>Fig. {figure} · </>}Prefill on a transformer</p>
+<Figure class="kvf" title="Prefill on a transformer" figure={figure} caption={caption}>
   <p class="kvf-prompt">Prompt: <q>{sentence}</q></p>
-  <div class="kvf-scroll">
+  <div class="fig-scroll">
     <svg viewBox="0 0 760 330" role="img" aria-label={`The prompt "${sentence}" is split into ${tokens.length} tokens. Each token passes through ${layers.length} attention layers, and each leaves one row in the KV cache holding a key and a value per layer.`}>
       <defs>
         <marker id="kvf-arrow" viewBox="0 0 8 8" refX="7" refY="4" markerWidth="7" markerHeight="7" orient="auto">
@@ -37,9 +37,9 @@ const lastX = layerX(layers.length - 1);
         </marker>
       </defs>
 
-      <text x="24" y="30" class="kvf-head">Tokens</text>
-      <text x="290" y="30" class="kvf-head" text-anchor="middle">Model · attention layers</text>
-      <text x="496" y="30" class="kvf-head">KV cache · one row per token</text>
+      <text x="24" y="30" class="fig-head">Tokens</text>
+      <text x="290" y="30" class="fig-head" text-anchor="middle">Model · attention layers</text>
+      <text x="496" y="30" class="fig-head">KV cache · one row per token</text>
 
       <rect x="172" y="50" width="236" height="224" rx="10" class="kvf-model" />
       {layers.map((name, l) => (
@@ -86,26 +86,12 @@ const lastX = layerX(layers.length - 1);
       </g>
     </svg>
   </div>
-  {caption && <figcaption>{caption}</figcaption>}
-</figure>
+</Figure>
 
-<style>
-  .kvf {
-    margin: 2.5rem 0;
-    padding: 20px;
-    background: var(--color-paper);
-    border: 1px solid var(--color-line-strong);
-    border-radius: 10px;
-    font-family: var(--font-sans);
-  }
-  .kvf-eyebrow { display: flex; align-items: center; gap: 8px; font: 12px var(--font-mono); color: var(--color-ink-3); }
-  .kvf-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--color-forest); }
+<style is:global>
   .kvf-prompt { margin-top: 10px; font-size: 14px; color: var(--color-ink-3); }
   .kvf-prompt q { font-family: var(--font-mono); font-size: 13px; color: var(--color-ink); }
-  .kvf-scroll { margin: 14px 0; overflow-x: auto; }
-  .kvf svg { display: block; width: 100%; min-width: 560px; height: auto; }
 
-  .kvf-head { font: 10.5px var(--font-mono); letter-spacing: 0.06em; text-transform: uppercase; fill: var(--color-ink-4); }
   .kvf-layer { font: 11px var(--font-mono); fill: var(--color-ink-3); }
   .kvf-model { fill: var(--color-ivory); stroke: var(--color-line-strong); }
   .kvf-edge { stroke: var(--color-ink-4); stroke-opacity: 0.3; stroke-width: 0.8; }
@@ -120,6 +106,4 @@ const lastX = layerX(layers.length - 1);
 
   .kvf-ghost rect { fill: none; stroke: var(--color-ink-4); stroke-dasharray: 3 3; }
   .kvf-ghost text { font: italic 12px var(--font-sans); fill: var(--color-ink-4); }
-
-  .kvf figcaption { font-family: var(--font-serif); font-style: italic; font-size: 14px; line-height: 1.5; color: var(--color-ink-2); }
 </style>

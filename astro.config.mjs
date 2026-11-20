@@ -10,6 +10,8 @@ export default defineConfig({
   // directly instead of redirecting to /docs/.
   build: { format: 'file' },
   trailingSlash: 'never',
+  // Fetch a page when its link is hovered or touched, so the click is instant.
+  prefetch: { prefetchAll: true },
   integrations: [mdx()],
   markdown: {
     // Light theme to sit on the paper background of the blog prose.

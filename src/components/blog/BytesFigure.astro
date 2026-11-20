@@ -3,6 +3,7 @@
 // figures: three runs over the same 6,144 tokens, split into different
 // passes, end with rows that differ in the last bits. The values are
 // illustrative. Inline SVG rendered on the server.
+import Figure from './Figure.astro';
 interface Props {
   figure?: number | string;
   caption?: string;
@@ -27,13 +28,12 @@ const rowY = (i: number) => 66 + i * 54;
 const bottom = rowY(runs.length - 1) + 30;
 const gap = 1.5;
 ---
-<figure class="byf">
-  <p class="byf-eyebrow"><span class="byf-dot"></span>{figure !== undefined && <>Fig. {figure} · </>}Same tokens, different bytes</p>
-  <div class="byf-scroll">
+<Figure class="byf" title="Same tokens, different bytes" figure={figure} caption={caption}>
+  <div class="fig-scroll">
     <svg viewBox={`0 0 760 ${bottom + 34}`} role="img" aria-label={`Three runs compute the same ${number(total)} tokens: one in a single pass, one by restoring a checkpoint at 4,096 and computing the rest, and one that stops at 4,096 to capture a checkpoint. The same value in their KV rows differs in the last digits.`}>
-      <text x="24" y="26" class="byf-head">Computation</text>
-      <text x={left} y="26" class="byf-head">The same {number(total)} tokens, split into passes</text>
-      <text x={valueX} y="26" class="byf-head">A value at token 6,000</text>
+      <text x="24" y="26" class="fig-head">Computation</text>
+      <text x={left} y="26" class="fig-head">The same {number(total)} tokens, split into passes</text>
+      <text x={valueX} y="26" class="fig-head">A value at token 6,000</text>
 
       {runs.map((r, i) => {
         const y = rowY(i);
@@ -61,25 +61,11 @@ const gap = 1.5;
       <text x="24" y={bottom + 20} class="byf-note">All three are valid. Mixing them, state from one run with rows from another, gives a state no run produced.</text>
     </svg>
   </div>
-  {caption && <figcaption>{caption}</figcaption>}
-</figure>
+</Figure>
 
-<style>
-  .byf {
-    --diff: #b8336a;
-    margin: 2.5rem 0;
-    padding: 20px;
-    background: var(--color-paper);
-    border: 1px solid var(--color-line-strong);
-    border-radius: 10px;
-    font-family: var(--font-sans);
-  }
-  .byf-eyebrow { display: flex; align-items: center; gap: 8px; font: 12px var(--font-mono); color: var(--color-ink-3); }
-  .byf-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--color-forest); }
-  .byf-scroll { margin: 14px 0; overflow-x: auto; }
-  .byf svg { display: block; width: 100%; min-width: 560px; height: auto; }
+<style is:global>
+  .byf { --diff: #b8336a; }
 
-  .byf-head { font: 10.5px var(--font-mono); letter-spacing: 0.06em; text-transform: uppercase; fill: var(--color-ink-4); }
   .byf-note, .byf-how { font: italic 12px var(--font-sans); fill: var(--color-ink-3); }
 
   .byf-chip { fill: color-mix(in srgb, var(--c) 14%, white); stroke: var(--c); stroke-width: 1.4; }
@@ -89,6 +75,4 @@ const gap = 1.5;
   .byf-pass-text { font: 12px var(--font-mono); fill: var(--color-ink); }
   .byf-value { font: 15px var(--font-mono); fill: var(--color-ink); }
   .byf-diff { fill: var(--diff); font-weight: 600; }
-
-  .byf figcaption { font-family: var(--font-serif); font-style: italic; font-size: 14px; line-height: 1.5; color: var(--color-ink-2); }
 </style>

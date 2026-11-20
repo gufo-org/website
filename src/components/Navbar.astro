@@ -1,220 +1,71 @@
 ---
-import { getPosts } from '../lib/posts';
 import Logo from './Logo.astro';
+import { docsUrl, latest } from '../lib/docs';
 
-interface Props {
-  currentPath?: string;
-}
-
-const { currentPath = '/' } = Astro.props;
-
-// The blog joins the navigation once it has a published post.
-const hasPosts = (await getPosts()).length > 0;
+const github = 'https://github.com/gufo-org/gufo';
+// Docs links go straight to the latest version, skipping the /docs redirect page.
 const navItems = [
-  { name: 'Docs', href: '/docs' },
-  { name: 'Benchmarks', href: '/benchmarks' },
-  { name: 'Extensions', href: '/extensions' },
-  ...(hasPosts ? [{ name: 'Blog', href: '/blog' }] : []),
+  { name: 'Docs', href: docsUrl(latest.version, ''), section: '/docs' },
+  { name: 'Benchmarks', href: '/benchmarks', section: '/benchmarks' },
+  { name: 'Extensions', href: '/extensions', section: '/extensions' },
+  { name: 'Blog', href: '/blog', section: '/blog' },
 ];
-
-const isActive = (href: string) =>
-  currentPath === href || (href !== '/' && currentPath.startsWith(href.split('#')[0]));
+const current = (section: string) => (Astro.url.pathname.startsWith(section) ? 'page' : undefined);
 ---
 
-<header class="sticky top-0 z-50 border-b border-line text-sm">
-  <!-- The blur sits on its own layer: a backdrop-filter on the header itself would make it the
-       containing block for the fixed scrim and panel below, shrinking them to the bar. -->
-  <div class="absolute inset-0 -z-10 bg-ivory/90 backdrop-blur" aria-hidden="true"></div>
-
-  <!-- Drawer state. Sibling of the overlay and panel so `peer-checked` can reach them. The
-       labels below are the controls, so the checkbox itself stays out of the tab order. -->
-  <input type="checkbox" id="nav-drawer" class="peer sr-only" tabindex="-1" aria-hidden="true" />
-
-  <div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
-    <div class="flex items-center justify-between h-16 gap-3">
-      <!-- Left: wordmark and desktop links -->
-      <div class="flex items-center gap-8 min-w-0">
-        <a href="/" class="flex items-center gap-2.5 shrink-0">
-          <Logo />
-          <span class="font-serif text-xl text-ink tracking-tight">Gufo</span>
-        </a>
-
-        <nav aria-label="Main" class="hidden md:flex items-center gap-6">
-          {navItems.map((item) => (
-            <a
-              href={item.href}
-              aria-current={isActive(item.href) ? 'page' : undefined}
-              class={`transition-colors ${isActive(item.href) ? 'text-ink' : 'text-ink-3 hover:text-ink'}`}
-            >
-              {item.name}
-            </a>
-          ))}
-        </nav>
-      </div>
-
-      <!-- Right: GitHub, then the menu button on small screens -->
-      <div class="flex items-center gap-2">
-        <a
-          href="https://github.com/gufo-org/gufo"
-          target="_blank"
-          rel="noopener noreferrer"
-          class="hidden md:inline-flex h-10 items-center gap-2 leading-none text-ink hover:text-forest transition-colors"
-        >
-          <svg class="w-4 h-4 fill-current" viewBox="0 0 24 24" aria-hidden="true">
-            <path d="M12 0C5.37 0 0 5.37 0 12c0 5.31 3.435 9.795 8.205 11.385.6.105.825-.255.825-.57 0-.285-.015-1.23-.015-2.235-3.015.555-3.795-.735-4.035-1.41-.135-.345-.72-1.41-1.23-1.695-.42-.225-1.02-.78-.015-.795.945-.015 1.62.87 1.845 1.23 1.08 1.815 2.805 1.305 3.495.99.105-.78.42-1.305.765-1.605-2.67-.3-5.46-1.335-5.46-5.925 0-1.305.465-2.385 1.23-3.225-.12-.3-.54-1.53.12-3.18 0 0 1.005-.315 3.3 1.23.96-.27 1.98-.405 3-.405s2.04.135 3 .405c2.295-1.56 3.3-1.23 3.3-1.23.66 1.65.24 2.88.12 3.18.765.84 1.23 1.905 1.23 3.225 0 4.605-2.805 5.625-5.475 5.925.435.375.81 1.095.81 2.22 0 1.605-.015 2.895-.015 3.3 0 .315.225.69.825.57A12.02 12.02 0 0024 12c0-6.63-5.37-12-12-12z" />
-          </svg>
-          <span>GitHub</span>
-        </a>
-
-        <label
-          for="nav-drawer"
-          role="button"
-          tabindex="0"
-          aria-controls="nav-panel"
-          aria-expanded="false"
-          class="md:hidden flex items-center justify-center w-10 h-10 -mr-2 rounded text-ink hover:bg-paper cursor-pointer transition-colors"
-        >
-          <span class="sr-only">Open menu</span>
-          <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
-            <path stroke-linecap="round" stroke-width="1.75" d="M4 7h16M4 12h16M4 17h16" />
-          </svg>
-        </label>
-      </div>
-    </div>
-  </div>
-
-  <!-- Scrim: tapping outside closes the panel -->
-  <label
-    for="nav-drawer"
-    class="md:hidden fixed inset-0 z-40 bg-ink/30 opacity-0 pointer-events-none peer-checked:opacity-100 peer-checked:pointer-events-auto transition-opacity duration-200"
-    aria-hidden="true"
-  ></label>
-
-  <!-- Side panel. Hidden while closed so its links stay out of the tab order. Visibility
-       animates only on close, so the panel is visible, and focusable, as soon as it opens. -->
-  <div
-    id="nav-panel"
-    role="dialog"
-    aria-modal="true"
-    aria-label="Menu"
-    class="md:hidden fixed top-0 right-0 z-50 h-dvh w-72 max-w-[85vw] bg-ivory border-l border-line translate-x-full invisible peer-checked:translate-x-0 peer-checked:visible transition-[translate,visibility] peer-checked:transition-[translate] duration-200 ease-out flex flex-col"
-  >
-    <div class="flex items-center justify-between h-16 px-4 border-b border-line shrink-0">
-      <span class="font-serif text-lg text-ink">Gufo</span>
-      <label
-        for="nav-drawer"
-        role="button"
-        tabindex="0"
-        aria-controls="nav-panel"
-        class="flex items-center justify-center w-10 h-10 -mr-2 rounded text-ink-3 hover:bg-paper cursor-pointer transition-colors"
-      >
-        <span class="sr-only">Close menu</span>
-        <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.75" d="M6 18L18 6M6 6l12 12" />
-        </svg>
-      </label>
-    </div>
-
-    <nav aria-label="Main" class="flex-1 overflow-y-auto p-3 space-y-0.5">
-      {navItems.map((item) => (
-        <a
-          href={item.href}
-          aria-current={isActive(item.href) ? 'page' : undefined}
-          class={`block px-3 py-3 rounded text-base transition-colors ${
-            isActive(item.href) ? 'text-ink bg-paper' : 'text-ink-2 hover:bg-paper'
-          }`}
-        >
-          {item.name}
-        </a>
-      ))}
-    </nav>
-
-    <div class="p-4 border-t border-line shrink-0">
-      <a
-        href="https://github.com/gufo-org/gufo"
-        target="_blank"
-        rel="noopener noreferrer"
-        class="flex items-center justify-center gap-2 h-10 rounded-full bg-ink text-ivory text-sm"
-      >
-        <svg class="w-4 h-4 fill-current" viewBox="0 0 24 24" aria-hidden="true">
-          <path d="M12 0C5.37 0 0 5.37 0 12c0 5.31 3.435 9.795 8.205 11.385.6.105.825-.255.825-.57 0-.285-.015-1.23-.015-2.235-3.015.555-3.795-.735-4.035-1.41-.135-.345-.72-1.41-1.23-1.695-.42-.225-1.02-.78-.015-.795.945-.015 1.62.87 1.845 1.23 1.08 1.815 2.805 1.305 3.495.99.105-.78.42-1.305.765-1.605-2.67-.3-5.46-1.335-5.46-5.925 0-1.305.465-2.385 1.23-3.225-.12-.3-.54-1.53.12-3.18 0 0 1.005-.315 3.3 1.23.96-.27 1.98-.405 3-.405s2.04.135 3 .405c2.295-1.56 3.3-1.23 3.3-1.23.66 1.65.24 2.88.12 3.18.765.84 1.23 1.905 1.23 3.225 0 4.605-2.805 5.625-5.475 5.925.435.375.81 1.095.81 2.22 0 1.605-.015 2.895-.015 3.3 0 .315.225.69.825.57A12.02 12.02 0 0024 12c0-6.63-5.37-12-12-12z" />
-        </svg>
-        View on GitHub
+<header class="sticky top-0 z-50 border-b border-line bg-ivory/90 backdrop-blur text-sm">
+  <div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 flex items-center justify-between h-16 gap-3">
+    <div class="flex items-center gap-8 min-w-0">
+      <a href="/" class="flex items-center gap-2.5 shrink-0">
+        <Logo />
+        <span class="font-serif text-xl text-ink tracking-tight">Gufo</span>
       </a>
+      <nav aria-label="Main" class="hidden md:flex items-center gap-6">
+        {navItems.map((item) => (
+          <a href={item.href} aria-current={current(item.section)} class="text-ink-3 hover:text-ink aria-[current]:text-ink transition-colors">{item.name}</a>
+        ))}
+      </nav>
     </div>
+
+    <a href={github} target="_blank" rel="noopener noreferrer" class="hidden md:inline-flex h-10 items-center gap-2 text-ink hover:text-forest transition-colors">
+      <svg class="w-4 h-4 fill-current" viewBox="0 0 24 24" aria-hidden="true">
+        <path d="M12 0C5.37 0 0 5.37 0 12c0 5.31 3.435 9.795 8.205 11.385.6.105.825-.255.825-.57 0-.285-.015-1.23-.015-2.235-3.015.555-3.795-.735-4.035-1.41-.135-.345-.72-1.41-1.23-1.695-.42-.225-1.02-.78-.015-.795.945-.015 1.62.87 1.845 1.23 1.08 1.815 2.805 1.305 3.495.99.105-.78.42-1.305.765-1.605-2.67-.3-5.46-1.335-5.46-5.925 0-1.305.465-2.385 1.23-3.225-.12-.3-.54-1.53.12-3.18 0 0 1.005-.315 3.3 1.23.96-.27 1.98-.405 3-.405s2.04.135 3 .405c2.295-1.56 3.3-1.23 3.3-1.23.66 1.65.24 2.88.12 3.18.765.84 1.23 1.905 1.23 3.225 0 4.605-2.805 5.625-5.475 5.925.435.375.81 1.095.81 2.22 0 1.605-.015 2.895-.015 3.3 0 .315.225.69.825.57A12.02 12.02 0 0024 12c0-6.63-5.37-12-12-12z" />
+      </svg>
+      GitHub
+    </a>
+
+    <button
+      type="button"
+      aria-label="Open menu"
+      onclick="document.getElementById('nav-menu').showModal()"
+      class="md:hidden flex items-center justify-center w-10 h-10 -mr-2 rounded text-ink hover:bg-paper cursor-pointer"
+    >
+      <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
+        <path stroke-linecap="round" stroke-width="1.75" d="M4 7h16M4 12h16M4 17h16" />
+      </svg>
+    </button>
   </div>
 </header>
 
-<style>
-  /* Tap feedback for drawer links. */
-  #nav-drawer:checked ~ #nav-panel a:active {
-    opacity: 0.7;
-  }
-
-  /* Keep the page still behind the open drawer. Scoped to the drawer's breakpoint so
-     widening the window with the drawer open doesn't leave the page locked. */
-  @media (width < 48rem) {
-    :global(html:has(#nav-drawer:checked)) {
-      overflow: hidden;
-    }
-  }
-</style>
-
-<script>
-  // Progressive enhancement: the drawer opens and closes with CSS on click; this adds
-  // keyboard support, keeps aria-expanded in sync and keeps focus inside the open panel.
-  const drawer = document.getElementById('nav-drawer') as HTMLInputElement | null;
-  const panel = document.getElementById('nav-panel');
-  if (drawer && panel) {
-    const toggles = document.querySelectorAll<HTMLElement>('label[for="nav-drawer"][role="button"]');
-    const menuButton = [...toggles].find((toggle) => !panel.contains(toggle));
-    const closeButton = [...toggles].find((toggle) => panel.contains(toggle));
-    const focusable = () => [...panel.querySelectorAll<HTMLElement>('a[href], [role="button"][tabindex="0"]')];
-
-    const sync = () => {
-      toggles.forEach((toggle) => toggle.setAttribute('aria-expanded', String(drawer.checked)));
-      if (drawer.checked) closeButton?.focus();
-      else if (panel.contains(document.activeElement)) menuButton?.focus();
-    };
-    drawer.addEventListener('change', sync);
-
-    // Tab and Shift+Tab wrap around inside the open panel.
-    panel.addEventListener('keydown', (event) => {
-      if (event.key !== 'Tab' || !drawer.checked) return;
-      const items = focusable();
-      const first = items[0];
-      const last = items[items.length - 1];
-      if (event.shiftKey && document.activeElement === first) {
-        event.preventDefault();
-        last?.focus();
-      } else if (!event.shiftKey && document.activeElement === last) {
-        event.preventDefault();
-        first?.focus();
-      }
-    });
-
-    // Labels don't activate on Enter or Space like real buttons do.
-    toggles.forEach((toggle) => {
-      toggle.addEventListener('keydown', (event) => {
-        if (event.key !== 'Enter' && event.key !== ' ') return;
-        event.preventDefault();
-        drawer.checked = !drawer.checked;
-        sync();
-      });
-    });
-
-    // Close after navigating to an in-page anchor, where no page load happens.
-    panel.querySelectorAll('a[href*="#"]').forEach((link) => {
-      link.addEventListener('click', () => {
-        drawer.checked = false;
-        sync();
-      });
-    });
-
-    document.addEventListener('keydown', (event) => {
-      if (event.key !== 'Escape' || !drawer.checked) return;
-      drawer.checked = false;
-      sync();
-    });
-  }
-</script>
+<!-- Mobile menu. A modal <dialog> brings the focus trap, Escape and the backdrop;
+     a click on the backdrop lands on the dialog element itself and closes it. -->
+<dialog id="nav-menu" aria-label="Menu" class="side-sheet w-72 max-w-[85vw] text-sm" onclick="if (event.target === this) this.close()">
+  <div class="flex items-center justify-between h-16 px-4 border-b border-line shrink-0">
+    <span class="font-serif text-lg text-ink">Gufo</span>
+    <form method="dialog">
+      <button aria-label="Close menu" class="flex items-center justify-center w-10 h-10 -mr-2 rounded text-ink-3 hover:bg-paper cursor-pointer">
+        <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
+          <path stroke-linecap="round" stroke-width="1.75" d="M6 18L18 6M6 6l12 12" />
+        </svg>
+      </button>
+    </form>
+  </div>
+  <nav aria-label="Main" class="flex-1 overflow-y-auto p-3 space-y-0.5">
+    {navItems.map((item) => (
+      <a href={item.href} aria-current={current(item.section)} class="block px-3 py-3 rounded text-base text-ink-2 hover:bg-paper aria-[current]:text-ink aria-[current]:bg-paper">{item.name}</a>
+    ))}
+  </nav>
+  <div class="p-4 border-t border-line shrink-0">
+    <a href={github} target="_blank" rel="noopener noreferrer" class="flex items-center justify-center h-10 rounded-full bg-ink text-ivory">View on GitHub</a>
+  </div>
+</dialog>

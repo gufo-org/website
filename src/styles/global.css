@@ -69,48 +69,6 @@
     min-width: 0;
     max-width: 100%;
   }
-
-  /* Chart.js writes an explicit pixel width onto its canvas when it measures the
-     container. If it ever measures wide, that width sticks and pushes the page
-     past the viewport, so cap it. */
-  canvas {
-    max-width: 100%;
-  }
-}
-
-/* Callouts: a quiet rule and a paper tint, no colour coding beyond the rule. */
-.admonition {
-  border-left: 2px solid var(--color-ink-3);
-  background-color: var(--color-paper);
-  border-radius: 0 6px 6px 0;
-  padding: 1rem 1.25rem;
-  margin: 1.25rem 0;
-}
-.admonition-tip {
-  border-left-color: var(--color-forest);
-}
-.admonition-info {
-  border-left-color: #6a9bcc;
-}
-.admonition-important,
-.admonition-warning {
-  border-left-color: var(--color-amber);
-}
-.admonition-danger {
-  border-left-color: #bf4d43;
-}
-
-.admonition-title {
-  font-weight: 600;
-  font-size: 0.8125rem;
-  color: var(--color-ink);
-  margin-bottom: 0.5rem;
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-}
-.admonition-title svg {
-  display: none;
 }
 
 /* Small monospace label above a section heading, e.g. "01 / Why Gufo". */
@@ -144,9 +102,6 @@ pre.code-block {
 }
 .code-block code {
   font-size: inherit;
-}
-.code-comment {
-  color: var(--color-ink-3);
 }
 
 /* Copy button, added by the script in Layout.astro. */
@@ -195,6 +150,44 @@ pre.code-block {
   background-color: var(--color-paper);
   font-weight: 600;
   border-radius: 4px;
+}
+
+/* Sheets that slide in from the right, as modal <dialog>s: the mobile menu and
+   the extension details. In the components layer so width utilities apply. */
+@layer components {
+  .side-sheet {
+    inset: 0 0 0 auto;
+    height: 100dvh;
+    max-width: 100vw;
+    max-height: none;
+    flex-direction: column;
+    background: var(--color-ivory);
+    color: var(--color-ink);
+    border-left: 1px solid var(--color-line);
+    translate: 100% 0;
+    transition: translate 0.2s ease-out, display 0.2s allow-discrete, overlay 0.2s allow-discrete;
+  }
+  .side-sheet[open] {
+    display: flex;
+    translate: 0 0;
+  }
+  @starting-style {
+    .side-sheet[open] {
+      translate: 100% 0;
+    }
+  }
+  .side-sheet::backdrop {
+    background: color-mix(in srgb, var(--color-ink) 30%, transparent);
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .side-sheet {
+      transition: none;
+    }
+  }
+}
+/* Keep the page still behind an open sheet. */
+html:has(dialog[open]) {
+  overflow: hidden;
 }
 
 /* Keep keyboard navigation past repeated site navigation quick and visible. */
