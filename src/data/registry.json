@@ -1,7 +1,7 @@
 {
   "registry": {
     "repository": "gufo-org/gufo-extension",
-    "revision": "22f1bb1873abede259c0323231fb8e43cd90d562"
+    "revision": "1a0cf369d328b73a8cdb8224a9fdf4ea954e4f5a"
   },
   "gufo": [
     {
@@ -252,6 +252,17 @@
         "@fedeizzo"
       ],
       "releases": [
+        {
+          "version": "0.6.1",
+          "revision": "882e97b348c28bc3baf8517157b6ced0c66d00c3",
+          "digest": "sha256:4b1764c893903640f00066b39881f9f829b90d935ad48d2f04547ae13f6fcf25",
+          "apiVersion": ">= 0.3.20",
+          "platforms": [
+            "linux",
+            "windows"
+          ],
+          "notes": "Adds pinned, locked install recipes for LFM3-1.7B, LFM3-VL-2B, LFM3-Audio-2B (shared ASR/TTS) and d1-Omni-2B, enabling gufo model install and NixOS model sync. Runtime code is unchanged from 0.6.0."
+        },
         {
           "version": "0.6.0",
           "revision": "f7893c6217f05ce8bff6b6912c695a76a9b1e194",
