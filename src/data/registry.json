@@ -1,7 +1,7 @@
 {
   "registry": {
     "repository": "gufo-org/gufo-extension",
-    "revision": "1a0cf369d328b73a8cdb8224a9fdf4ea954e4f5a"
+    "revision": "ef07619b579be03686b802dc08a6df2bb9d70daf"
   },
   "gufo": [
     {
@@ -26,7 +26,7 @@
     },
     {
       "version": "development",
-      "api": "0.3.30"
+      "api": "0.3.38"
     }
   ],
   "extensions": [
@@ -241,6 +241,52 @@
           "help": "Soft tokens per image: 70, 140, 280, 560 or 1120 (default: 280)"
         }
       ]
+    },
+    {
+      "name": "inkling2",
+      "description": "Inkling 2 Mini (looped MoE, native NVFP4 experts) on Strix Halo: Unsloth GGUFs, vision, tool calls, reasoning control, batched decode and a 1,000,000-token context",
+      "homepage": "https://github.com/headbouyJB/inkling2-gufo",
+      "source": "https://github.com/headbouyJB/inkling2-gufo",
+      "license": "MIT",
+      "maintainers": [
+        "@headbouyJB"
+      ],
+      "releases": [
+        {
+          "version": "0.1.2",
+          "revision": "8bb6cd5eaa76c3aa27c74ca005622735aa294a98",
+          "digest": "sha256:de1fc1d266d4f1b5d5fa62e1eff88c709554d48067fc1ab376cff3cade060c7f",
+          "apiVersion": ">= 0.3.20",
+          "platforms": [
+            "linux"
+          ],
+          "notes": "Batched decode: routed-expert kernels run shared experts together; 4 sessions 79.6 to 86.2 tok/s, outputs bit-identical to 0.1.1. Built on Gufo 0.35.0; tested in-tree and as an installed module."
+        },
+        {
+          "version": "0.1.1",
+          "revision": "14fc91d77056153a7e080b165bce12f869d63bec",
+          "digest": "sha256:183dc1fe5c319cfdca9881be0e17b13358b10ce8c53eca209a58ed7c9bd37d34",
+          "apiVersion": ">= 0.3.20",
+          "platforms": [
+            "linux"
+          ],
+          "notes": "First registry release. Built on Gufo 0.35.0; also tested as an installed module."
+        }
+      ],
+      "providers": [
+        {
+          "id": "inkling2",
+          "capability": "text",
+          "keys": [
+            "gguf:inkling2_loop",
+            "gguf:inkling2"
+          ],
+          "modelIds": [
+            "inkling-2-mini"
+          ]
+        }
+      ],
+      "options": []
     },
     {
       "name": "lfm3",
