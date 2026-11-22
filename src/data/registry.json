@@ -1,7 +1,7 @@
 {
   "registry": {
     "repository": "gufo-org/gufo-extension",
-    "revision": "ef07619b579be03686b802dc08a6df2bb9d70daf"
+    "revision": "ea39c22254323e117737da9672047b0d6feeab33"
   },
   "gufo": [
     {
@@ -126,6 +126,16 @@
         "@brunobarbosaux-ai"
       ],
       "releases": [
+        {
+          "version": "0.3.1",
+          "revision": "cb7303d5d21672e786f6989479eb428d3bc40193",
+          "digest": "sha256:a112bc6e7abc0f3094664301465eaf5e157391f7d8cb01828c87f20ebf2f13cd",
+          "apiVersion": ">= 0.3.0",
+          "platforms": [
+            "linux"
+          ],
+          "notes": "Long-context first-request stall fix: the retained-snapshot claim is capped at 8 GiB, so a full-context snapshot that the host would capture synchronously on the request thread (~15.7 GiB at -c 130000) is refused cheaply instead of copied. First request at 130k context: 14.2 s -> 0.47 s; prefix retention at normal contexts is preserved (8k: cached_tokens reused). No functional change to speculation, sampling or the DFlash2 cycle; gx 3/3 and memory 2/2 re-verified."
+        },
         {
           "version": "0.3.0",
           "revision": "b262cb6a23ad545ebb816710cc58da93f4adda97",
