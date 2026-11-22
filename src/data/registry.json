@@ -1,7 +1,7 @@
 {
   "registry": {
     "repository": "gufo-org/gufo-extension",
-    "revision": "ea39c22254323e117737da9672047b0d6feeab33"
+    "revision": "70f47634c387e3220cee4859306488e937a3d634"
   },
   "gufo": [
     {
@@ -115,6 +115,45 @@
           "help": "With --adapter: factor on the adapter's own scale (default: 1)"
         }
       ]
+    },
+    {
+      "name": "diffusion_gemma",
+      "description": "DiffusionGemma 26B-A4B block-diffusion text model on Strix Halo: batched denoising, continuation cache, tool calls and reasoning",
+      "homepage": "https://github.com/gabrielperales/diffusiongemma-gufo-extension",
+      "source": "https://github.com/gabrielperales/diffusiongemma-gufo-extension",
+      "license": "MIT",
+      "maintainers": [
+        "@gabrielperales"
+      ],
+      "releases": [
+        {
+          "version": "0.1.0",
+          "revision": "8941b24925d6c9a59c9dfe3405b0d11c63d3c05e",
+          "digest": "sha256:2ece3a4f6bbab5e10e9536173d7afab33636539dcd80b3e2930e23d18f46026a",
+          "apiVersion": ">= 0.3.20",
+          "platforms": [
+            "windows",
+            "linux"
+          ],
+          "notes": "First registry release. Built on Gufo 0.35.0. Run on the GPU on Windows (Radeon 8060S); Linux builds and passes the CPU tests but has not run on a GPU."
+        }
+      ],
+      "providers": [
+        {
+          "id": "diffusiongemma-26b-a4b",
+          "capability": "text",
+          "keys": [
+            "gguf:diffusion-gemma",
+            "safetensors:diffusion_gemma",
+            "safetensors:DiffusionGemmaForBlockDiffusion"
+          ],
+          "modelIds": [
+            "diffusiongemma-26b-a4b-it",
+            "diffusiongemma-26b"
+          ]
+        }
+      ],
+      "options": []
     },
     {
       "name": "flint",
