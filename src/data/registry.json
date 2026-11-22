@@ -1,7 +1,7 @@
 {
   "registry": {
     "repository": "gufo-org/gufo-extension",
-    "revision": "70f47634c387e3220cee4859306488e937a3d634"
+    "revision": "5132afe28ba3e9afebfb52214dfcf67296cd349c"
   },
   "gufo": [
     {
@@ -429,6 +429,54 @@
           "help": "Run the LFM3 backbone on the XDNA NPU (npu/README.md)"
         }
       ]
+    },
+    {
+      "name": "nemotron",
+      "description": "NVIDIA Nemotron 3.5 Bolt 74B-A9B on Strix Halo: LiLiCorr drafting, image input and Gufo's continuation cache",
+      "homepage": "https://github.com/gufo-extensions/nemotron",
+      "source": "https://github.com/gufo-extensions/nemotron",
+      "license": "MIT AND Apache-2.0 AND BSD-3-Clause AND LicenseRef-OpenMDW-1.1",
+      "maintainers": [
+        "@mduka"
+      ],
+      "releases": [
+        {
+          "version": "0.4.0",
+          "revision": "e7ab2dac7bd06a6b330485f40220ec712af6f2d8",
+          "digest": "sha256:a50d0bab981795cdf6a0b65cabaff4fc7c1e3c11acc847525610a3de8d212db1",
+          "apiVersion": ">= 0.3.11",
+          "platforms": [
+            "linux"
+          ],
+          "notes": "Gufo drops the separator after a prompt that closed reasoning (extension API 0.3.11); `gufo model install nemotron-3.5-bolt` installs the tested trunk, LiLiCorr drafter and vision projector. Built on Gufo 0.35.0."
+        },
+        {
+          "version": "0.3.2",
+          "revision": "e98e8a11a051f448b5e6cd6f9c943ac377f109d6",
+          "digest": "sha256:e96a6901e70f716a2b9dac9613d61a2ce1551543a9712b0fce63e00700bbf2d9",
+          "apiVersion": ">= 0.3.0",
+          "platforms": [
+            "linux"
+          ],
+          "notes": "Text generation from NVIDIA's QAD GGUF with optional LiLiCorr drafter (DFlash2) and vision projector; batched decoding, prompt passes split into layer groups beside decoding sessions. Built on Gufo 0.34.0."
+        }
+      ],
+      "providers": [
+        {
+          "id": "nemotron35-bolt",
+          "capability": "text",
+          "keys": [
+            "gguf:nemotron_h_moe"
+          ],
+          "modelIds": [
+            "nemotron-3.5-bolt"
+          ],
+          "speculative": [
+            "dflash2"
+          ]
+        }
+      ],
+      "options": []
     },
     {
       "name": "strycast_qwen35moe",
