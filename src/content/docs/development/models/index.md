@@ -13,6 +13,7 @@ to run the model and what speed to expect.
 | --- | --- | --- |
 | DeepSeek V4 Flash | Flash 0731 mixed IQ2/Q2/Q8 GGUF; text | [Usage and modes](/docs/development/models/deepseek-v4-flash) |
 | EmbeddingGemma 2 | BF16 safetensors; text/image to embeddings | [Usage](/docs/development/models/embeddinggemma-2) |
+| Loom packages | loom-fun packages: GGUF models on AMD Loom kernels | [Usage](/docs/development/models/loom) |
 | MiniMax H3 FL2VA | Pinned safetensors; text to audiovisual output | [Presets and usage](/docs/development/models/minimax-h3) |
 | Qwen-Image-2.1 | BF16 safetensors; generation and image editing | [Usage](/docs/development/models/qwen-image-2.1) |
 | Qwen3-ASR 1.7B | BF16 safetensors; audio to text | [Usage](/docs/development/models/qwen3-asr) |

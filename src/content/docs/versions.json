@@ -446,7 +446,7 @@
     "version": "development",
     "ref": "main",
     "release": false,
-    "date": "2026-11-22",
+    "date": "2026-11-23",
     "nav": [
       {
         "group": "Get started",
@@ -526,6 +526,10 @@
           {
             "title": "EmbeddingGemma 2",
             "slug": "models/embeddinggemma-2"
+          },
+          {
+            "title": "Loom packages",
+            "slug": "models/loom"
           },
           {
             "title": "MiniMax H3 FL2VA",
