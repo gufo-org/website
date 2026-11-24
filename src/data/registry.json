@@ -1,7 +1,7 @@
 {
   "registry": {
     "repository": "gufo-org/gufo-extension",
-    "revision": "062d31081850410c59f018761f82f1e47002667f"
+    "revision": "459aa24a7de7c80fbde7e9a2ff743ec27a2befcb"
   },
   "gufo": [
     {
@@ -516,6 +516,16 @@
         "@fedeizzo"
       ],
       "releases": [
+        {
+          "version": "0.1.3",
+          "revision": "3b3675c7f2fcab549b9f7a26606bc54255da183f",
+          "digest": "sha256:ffb3994a8490a02a979a74c38b6880c7c56982a14b5b514b37ef7af949e4cf27",
+          "apiVersion": ">= 0.3.46",
+          "platforms": [
+            "linux"
+          ],
+          "notes": "Faster decode GEMV (Wht128Signed + HalfPairScaled + vectorized staging/output) and prefill GEMM (permlanex16 without redundant copy) with bit-identical outputs across 2/3/4 bpw. Needs Gufo 831c55d3 or later; Linux only."
+        },
         {
           "version": "0.1.2",
           "revision": "9f1cac825391e362a142266807399940c38f677a",
