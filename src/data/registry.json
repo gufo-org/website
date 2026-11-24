@@ -1,7 +1,7 @@
 {
   "registry": {
     "repository": "gufo-org/gufo-extension",
-    "revision": "14ff2ec5629782107273791a1d3ab6a6f686a837"
+    "revision": "062d31081850410c59f018761f82f1e47002667f"
   },
   "gufo": [
     {
@@ -516,6 +516,16 @@
         "@fedeizzo"
       ],
       "releases": [
+        {
+          "version": "0.1.2",
+          "revision": "9f1cac825391e362a142266807399940c38f677a",
+          "digest": "sha256:1fd7bf1fed41325f73b28fdba7a094f5869b4f5a7f10105c450e6acc8ba61919",
+          "apiVersion": ">= 0.3.46",
+          "platforms": [
+            "linux"
+          ],
+          "notes": "Same production code as 0.1.1; the ops test now uses its own SwiGLU kernel instead of a private Gufo header. Needs Gufo 831c55d3 or later; Linux only."
+        },
         {
           "version": "0.1.1",
           "revision": "fd1c48c8ec234ba23f25ae89dbc5e4892208a9fc",
