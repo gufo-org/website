@@ -1,7 +1,7 @@
 {
   "registry": {
     "repository": "gufo-org/gufo-extension",
-    "revision": "0d4467913f7c5ed8818ffc7b122305f6806cc995"
+    "revision": "e41ed1828338f77d73c9015448208a9e7df4ad5e"
   },
   "gufo": [
     {
@@ -165,6 +165,16 @@
         "@brunobarbosaux-ai"
       ],
       "releases": [
+        {
+          "version": "0.4.0",
+          "revision": "cf9f7aa02991049647abe9487979681e8fd99e2b",
+          "digest": "sha256:3b8e9e867fe187bb7e6fa2a18c3d7a483c8c45d16afc4e9667e685653ff07557",
+          "apiVersion": ">= 0.3.0",
+          "platforms": [
+            "linux"
+          ],
+          "notes": "Native tool calls (OpenAI tools/tool_choice, flint-glm dialect, buffered and streamed) and a per-layer row continuation cache: each layer's K/V is append rows, so a capture copies only the valid tokens and a follow-up turn only the new tail; per-session memory is unchanged from 0.3.1. Prefill is split-invariant with even-row checkpoints; the drafter attends to history injected after a restore (8k repeat 41.5 -> 54.0 t/s, follow-up 43.5 -> 68.6); the GGUF mapping is released after upload (load RSS 26.3 -> 2.4 GB). Cache identity is flint-rocm-session-v2/flint-kv-rows-v2, so 0.3.1 disk caches are a miss by design. Greedy output is deterministic per build and spec-on equals spec-off; output can differ from 0.3.1 because prefill now runs every pass on the prefill kernels and the K-quant WMMA dot uses explicit FMAs. The 8 GiB retained-snapshot cap is unchanged. Built and validated on Gufo v0.36.0 (API 0.3.42); source builds on any 0.3.x host. At 262144 tokens, one session loads in ~10 s and two are admitted."
+        },
         {
           "version": "0.3.1",
           "revision": "cb7303d5d21672e786f6989479eb428d3bc40193",
