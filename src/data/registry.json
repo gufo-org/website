@@ -1,7 +1,7 @@
 {
   "registry": {
     "repository": "gufo-org/gufo-extension",
-    "revision": "e41ed1828338f77d73c9015448208a9e7df4ad5e"
+    "revision": "14ff2ec5629782107273791a1d3ab6a6f686a837"
   },
   "gufo": [
     {
@@ -26,7 +26,7 @@
     },
     {
       "version": "development",
-      "api": "0.3.45"
+      "api": "0.3.46"
     }
   ],
   "extensions": [
@@ -501,6 +501,73 @@
           ],
           "speculative": [
             "dflash2"
+          ]
+        }
+      ],
+      "options": []
+    },
+    {
+      "name": "qwen38_flash_next_exl3",
+      "description": "Qwen3.8 Flash-Next EXL3 4.05, 3.05 and 2.05 bpw checkpoints on Strix Halo with MTP speculative decoding",
+      "homepage": "https://github.com/gufo-org/qwen38-flash-next-exl3-gufo-extension",
+      "source": "https://github.com/gufo-org/qwen38-flash-next-exl3-gufo-extension",
+      "license": "MIT AND Apache-2.0",
+      "maintainers": [
+        "@fedeizzo"
+      ],
+      "releases": [
+        {
+          "version": "0.1.1",
+          "revision": "fd1c48c8ec234ba23f25ae89dbc5e4892208a9fc",
+          "digest": "sha256:58a14c011fb89cb8a3115b50212394ad669667424036e5d3173dfb6d69c9aaf6",
+          "apiVersion": ">= 0.3.46",
+          "platforms": [
+            "linux"
+          ],
+          "notes": "First release: EXL3 providers flash-next-exl3-4bpw, -3bpw and -2bpw (HIP, gfx1151) with checkpoint MTP drafting, built on Gufo's in-tree qwen38_flash_next runtime. Needs Gufo 831c55d3 or later (loadable modules with depends, gufo-org/gufo#1376); Linux only."
+        }
+      ],
+      "providers": [
+        {
+          "id": "flash-next-exl3-4bpw",
+          "capability": "text",
+          "keys": [
+            "safetensors:qwen4_exp",
+            "safetensors:Qwen4ExpForConditionalGeneration"
+          ],
+          "modelIds": [
+            "flash-next-exl3-4bpw"
+          ],
+          "speculative": [
+            "mtp"
+          ]
+        },
+        {
+          "id": "flash-next-exl3-3bpw",
+          "capability": "text",
+          "keys": [
+            "safetensors:qwen4_exp",
+            "safetensors:Qwen4ExpForConditionalGeneration"
+          ],
+          "modelIds": [
+            "flash-next-exl3-3bpw"
+          ],
+          "speculative": [
+            "mtp"
+          ]
+        },
+        {
+          "id": "flash-next-exl3-2bpw",
+          "capability": "text",
+          "keys": [
+            "safetensors:qwen4_exp",
+            "safetensors:Qwen4ExpForConditionalGeneration"
+          ],
+          "modelIds": [
+            "flash-next-exl3-2bpw"
+          ],
+          "speculative": [
+            "mtp"
           ]
         }
       ],
