@@ -1,7 +1,7 @@
 {
   "registry": {
     "repository": "gufo-org/gufo-extension",
-    "revision": "459aa24a7de7c80fbde7e9a2ff743ec27a2befcb"
+    "revision": "5da77d6b4ab41f6fdb4e9b643c5a81aa9f63c6d7"
   },
   "gufo": [
     {
@@ -375,6 +375,17 @@
         "@fedeizzo"
       ],
       "releases": [
+        {
+          "version": "0.6.2",
+          "revision": "a2135d8a5c134dd0e131753ce5ac62cf8e6513a3",
+          "digest": "sha256:3714c2681815f5d262f2b89b4516f47db0322de18dae61a153697584983584f8",
+          "apiVersion": ">= 0.3.20",
+          "platforms": [
+            "linux",
+            "windows"
+          ],
+          "notes": "Fixes SharePool most-vexing-parse bug and transposes short-convolution weights for SIMD in the NPU backbone (+13% to +19% NPU prefill across LFM3 models, exact GPU/NPU parity)."
+        },
         {
           "version": "0.6.1",
           "revision": "882e97b348c28bc3baf8517157b6ced0c66d00c3",
