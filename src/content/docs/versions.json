@@ -563,7 +563,7 @@
     "version": "development",
     "ref": "main",
     "release": false,
-    "date": "2026-11-24",
+    "date": "2026-11-25",
     "nav": [
       {
         "group": "Get started",
@@ -643,6 +643,10 @@
           {
             "title": "EmbeddingGemma 2",
             "slug": "models/embeddinggemma-2"
+          },
+          {
+            "title": "Inkling 2 Mini",
+            "slug": "models/inkling-2-mini"
           },
           {
             "title": "Loom packages",
