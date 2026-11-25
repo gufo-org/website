@@ -111,7 +111,8 @@ the same distribution.
 - `--speculative`: `off`, or the mode a model offers: `dflash2`
   ([Qwen3.8 27B](/docs/development/models/qwen3.8-27b)), `mtp`
   ([Qwen3.8 Flash-Next](/docs/development/models/qwen3.8-flash-next)), `dspark`
-  ([DeepSeek V4 Flash](/docs/development/models/deepseek-v4-flash)).
+  ([DeepSeek V4 Flash](/docs/development/models/deepseek-v4-flash),
+  [Inkling 2 Mini](/docs/development/models/inkling-2-mini)).
 - `--dflash-model`, `--mtp-model`, `--dspark-model`: the draft file.
 - `--draft-tokens`, `--min-draft-tokens`, `--draft-policy`: deprecated and
   ignored; they will be removed. Each model sets how many tokens it proposes.
