@@ -1,7 +1,7 @@
 {
   "registry": {
     "repository": "gufo-org/gufo-extension",
-    "revision": "8df034b7259edefd6a33ab8e1f364942bde3d869"
+    "revision": "e0562547f1f1228289956b2347693c4630474aac"
   },
   "gufo": [
     {
@@ -298,6 +298,53 @@
         {
           "name": "--image-tokens",
           "help": "Soft tokens per image: 70, 140, 280, 560 or 1120 (default: 280)"
+        }
+      ]
+    },
+    {
+      "name": "hy4flash",
+      "description": "Tencent Hy4 Flash on Strix Halo: DFly2 drafting, vision, tool calls and reasoning",
+      "homepage": "https://github.com/franzmoca/hy4-gufo-extension",
+      "source": "https://github.com/franzmoca/hy4-gufo-extension",
+      "license": "MIT",
+      "maintainers": [
+        "@franzmoca"
+      ],
+      "releases": [
+        {
+          "version": "0.3.1",
+          "revision": "fb7fa445ba24fc9bc1948d7cab26f0607ba7964d",
+          "digest": "sha256:3912244f6c780eb049c3b3104ce95719e72412e3979a5fe864c4bb68b3bc51b8",
+          "apiVersion": ">= 0.3.43",
+          "platforms": [
+            "linux"
+          ],
+          "notes": "Hy4 Flash (hy_v4_flash) on gfx1151: chat, reasoning, tool calls, image input, prompt cache and Tencent's DFly2 drafter; loads the Xylolabs and AngelSlim Q4_K_M GGUFs. Built on Gufo abebd1c0."
+        }
+      ],
+      "providers": [
+        {
+          "id": "hy4flash",
+          "capability": "text",
+          "keys": [
+            "gguf:hy_v4_flash"
+          ],
+          "modelIds": [
+            "Hy4 Flash"
+          ],
+          "speculative": [
+            "dfly"
+          ]
+        }
+      ],
+      "options": [
+        {
+          "name": "--dfly-model",
+          "help": "DFly2 drafter: its safetensors file or checkpoint directory"
+        },
+        {
+          "name": "--dfly-draft-tokens",
+          "help": "Most tokens DFly2 drafts per step, 1 to 7 (default 7)"
         }
       ]
     },
