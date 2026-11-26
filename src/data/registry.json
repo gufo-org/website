@@ -1,7 +1,7 @@
 {
   "registry": {
     "repository": "gufo-org/gufo-extension",
-    "revision": "46772943cfcde0fe20698ebc2ad1b6c5c2d389c6"
+    "revision": "032651b0af1cc78839a50f8bd13d95ea185f23c2"
   },
   "gufo": [
     {
@@ -659,6 +659,44 @@
           ],
           "modelIds": [
             "flash-next-exl3-2bpw"
+          ],
+          "speculative": [
+            "mtp"
+          ]
+        }
+      ],
+      "options": []
+    },
+    {
+      "name": "qwen38_flash_next_flavors",
+      "description": "Qwen3.8-Flash-Next (qwen4exp) containers on Strix Halo that gufo core rejects: pruned 256-expert coder builds and 512-expert requantizations, IQ1_M through Q5_1, with the per-layer n-gram table served from disk",
+      "homepage": "https://github.com/codibre/qwen38-flash-next-flavors-gufo-extension",
+      "source": "https://github.com/codibre/qwen38-flash-next-flavors-gufo-extension",
+      "license": "MIT",
+      "maintainers": [
+        "@codibre"
+      ],
+      "releases": [
+        {
+          "version": "0.2.0",
+          "revision": "c22d6ebeded7f34f5929503d54ba1d53b9867aad",
+          "digest": "sha256:028658fd6b160bbb145955ed735836f89b667ec0e2a65406975d83e8775e2d37",
+          "apiVersion": ">= 0.3.37",
+          "platforms": [
+            "linux"
+          ],
+          "notes": "First registry release, as qwen38_flash_next_flavors. Installs as a module against a released gufo 0.3.37, no core patch. Serves the ISTA GSQ-RCO Coder IQ1_M (256 experts, IQ4_NL n-gram table), AtomicChat AD-4.27bpw-Q4_K_M-M64 (512 experts, three shards, Q5_1 table) and the Swift 1.5 GSQ-RCO IQ3_S re-quantization. Measured on gfx1151 with 128 GiB unified memory."
+        }
+      ],
+      "providers": [
+        {
+          "id": "flash-next-flavors",
+          "capability": "text",
+          "keys": [
+            "gguf:qwen4exp-gsq"
+          ],
+          "modelIds": [
+            "flash-next-flavors"
           ],
           "speculative": [
             "mtp"
