@@ -1,7 +1,7 @@
 {
   "registry": {
     "repository": "gufo-org/gufo-extension",
-    "revision": "e0562547f1f1228289956b2347693c4630474aac"
+    "revision": "46772943cfcde0fe20698ebc2ad1b6c5c2d389c6"
   },
   "gufo": [
     {
@@ -40,6 +40,16 @@
         "@franzmoca"
       ],
       "releases": [
+        {
+          "version": "0.5.1",
+          "revision": "d78c48773bbd49caa3912482971ac02a10695ae9",
+          "digest": "sha256:384eec92ddb810f2d58713f578d5bd0780f824df9ff28c428f60e5e3dcd9a1dd",
+          "apiVersion": ">= 0.3.43",
+          "platforms": [
+            "linux"
+          ],
+          "notes": "Security fix in the GGUF loader (crafted table counts could overflow the tensor table). Expert streaming runs on Gufo's expert store (gufo-org/gufo#1318). Control-token spellings in request text stay text. Faster decode; --prefill-batch is removed. Built on Gufo 60c48924."
+        },
         {
           "version": "0.3.0",
           "revision": "8390e85c5bbd922adbdc8bbcd60473f08341cead",
@@ -89,10 +99,6 @@
         {
           "name": "--dspark-model",
           "help": "DSpark drafter GGUF for --speculative dspark"
-        },
-        {
-          "name": "--prefill-batch",
-          "help": "Most prompt tokens per prefill batch, 16 to 4096 (default: 2048)"
         },
         {
           "name": "--exact-prefill",
