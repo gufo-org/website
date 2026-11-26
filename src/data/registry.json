@@ -1,7 +1,7 @@
 {
   "registry": {
     "repository": "gufo-org/gufo-extension",
-    "revision": "0dd0afd98de0d8511793db37f3d77e2d90440267"
+    "revision": "666b38733cdd4dd2ee3e2c78304e6440dcd22ff5"
   },
   "gufo": [
     {
@@ -26,7 +26,7 @@
     },
     {
       "version": "development",
-      "api": "0.3.50"
+      "api": "0.3.51"
     }
   ],
   "extensions": [
@@ -351,80 +351,6 @@
         {
           "name": "--dfly-draft-tokens",
           "help": "Most tokens DFly2 drafts per step, 1 to 7 (default 7)"
-        }
-      ]
-    },
-    {
-      "name": "inkling2",
-      "description": "Inkling 2 Mini (looped MoE, native NVFP4 experts) on Strix Halo: Unsloth GGUFs, vision, tool calls, reasoning control, batched decode and a 1,000,000-token context",
-      "homepage": "https://github.com/headbouyJB/inkling2-gufo",
-      "source": "https://github.com/headbouyJB/inkling2-gufo",
-      "license": "MIT",
-      "maintainers": [
-        "@headbouyJB"
-      ],
-      "releases": [
-        {
-          "version": "0.1.4",
-          "revision": "24f8342d73efcb3a57bb7dcad33a36fe10e3eb48",
-          "digest": "sha256:7a092c1c6b01b7729287e0ff0d77d26467b06b60af364e7c895977d60a9971dc",
-          "apiVersion": ">= 0.3.20",
-          "platforms": [
-            "linux"
-          ],
-          "notes": "Faster prefill (tensor-core kernels for the loop controllers, contributed by vincentkelleher): 8 % faster at 512 tokens and 11.7 to 13.0 % faster from 2,048 to 32,000 tokens, decode unchanged, KL against the llama.cpp CPU reference unchanged. The weight upload goes through a pinned staging buffer (contributed by derptoolsmidland), which fixes a load that could hang when host memory was full of page cache in active use. Built on Gufo 0.35.0; also tested as an installed module."
-        },
-        {
-          "version": "0.1.3",
-          "revision": "03649d072e4988e0d6e583d9507b65a43d649d49",
-          "digest": "sha256:21b5e8acd24df234451f71cbd02720026d62ade64a50ac775c39fa1b3c081b8f",
-          "apiVersion": ">= 0.3.20",
-          "platforms": [
-            "linux"
-          ],
-          "notes": "Speculative decoding: prompt lookup (on by default; INKLING2_LOOKUP=0 turns it off) and the DSpark drafter via --dspark-model (Unsloth's original 402 MB drafter: the manifest's pinned file, named dspark-Inkling-2-Mini-Q8_0_Old.gguf on Unsloth's main), with an adaptive per-request policy. With default settings a single session's text is identical to plain decoding. One session against plain decoding: lookup alone x1.03 code, x1.18 summaries, x2.26 copy-heavy; with the drafter x1.15 code, x1.51 summaries, x2.23 copy-heavy, x0.96 chat; batches x0.99. Built on Gufo 0.35.0."
-        },
-        {
-          "version": "0.1.2",
-          "revision": "8bb6cd5eaa76c3aa27c74ca005622735aa294a98",
-          "digest": "sha256:de1fc1d266d4f1b5d5fa62e1eff88c709554d48067fc1ab376cff3cade060c7f",
-          "apiVersion": ">= 0.3.20",
-          "platforms": [
-            "linux"
-          ],
-          "notes": "Batched decode: routed-expert kernels run shared experts together; 4 sessions 79.6 to 86.2 tok/s, outputs bit-identical to 0.1.1. Built on Gufo 0.35.0; tested in-tree and as an installed module."
-        },
-        {
-          "version": "0.1.1",
-          "revision": "14fc91d77056153a7e080b165bce12f869d63bec",
-          "digest": "sha256:183dc1fe5c319cfdca9881be0e17b13358b10ce8c53eca209a58ed7c9bd37d34",
-          "apiVersion": ">= 0.3.20",
-          "platforms": [
-            "linux"
-          ],
-          "notes": "First registry release. Built on Gufo 0.35.0; also tested as an installed module."
-        }
-      ],
-      "providers": [
-        {
-          "id": "inkling2",
-          "capability": "text",
-          "keys": [
-            "gguf:inkling2_loop",
-            "gguf:inkling2"
-          ],
-          "modelIds": [
-            "inkling-2-mini"
-          ],
-          "speculative": [
-            "dspark"
-          ]
-        }
-      ],
-      "options": [
-        {
-          "name": "--dspark-model",
-          "help": "DSpark draft model path for speculative decoding"
         }
       ]
     },
