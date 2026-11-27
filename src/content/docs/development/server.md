@@ -196,9 +196,21 @@ a hung GPU, which fails nothing, into the same exit.
 
 `/metrics` exports llama-server's Prometheus counters: tokens processed and
 generated, cached prompt tokens, speeds, queue depth and speculative
-acceptance. `/slots` shows what each session is doing, `/props` which model,
-build and settings are running, and `POST /apply-template` the prompt a chat
-request becomes. [Troubleshooting](/docs/development/troubleshooting) covers the logs.
+acceptance. `gufo_request_queue_seconds` and
+`gufo_time_to_first_token_seconds` are histograms that start when the HTTP
+handler hands the request to the backend. Queue time stops when a session
+admits the request, after state wait and cache restore, and equals `queue_ms`
+in the request log. Time to first token stops at the first generated token.
+Requests that end before admission or before a token are not observed, and
+buckets run from 1 ms to 1,200 s. `/slots` shows what each session is doing,
+`/props` which model, build and settings are running, and
+`POST /apply-template` the prompt a chat request becomes.
+[Troubleshooting](/docs/development/troubleshooting) covers the logs.
+
+`gufo serve embedding` also answers `/metrics`, with `gufo_embedding_*`
+families instead of the llama-server ones: requests by outcome, input parts by
+modality, tokens embedded, request latency and requests in flight. Requests
+rejected as too long or malformed by the service count as `invalid`.
 
 ## llama-swap
 
